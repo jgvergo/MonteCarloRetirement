@@ -25,4 +25,5 @@ class UserDataForm(FlaskForm):
                                format='%m-%d-%Y', validators=[InputRequired(message='Required')])
     s_full_ss_amount = IntegerField(label='Your spouses expected Social Security if taken at his/her full retirement age')
 
-    submit = SubmitField('Save it')
+    submit = SubmitField('Save')
+    cancel = SubmitField('Cancel')

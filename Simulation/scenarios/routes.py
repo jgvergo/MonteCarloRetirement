@@ -40,6 +40,18 @@ def update_scenario(scenario_id):
         scenario.title = form.title.data
         scenario.total_amount = form.total_amount.data
         scenario.asset_class = form.asset_class.data
+        scenario.retirement_age = form.retirement_age.data
+        scenario.start_ss_date = form.start_ss_date.data
+        scenario.ret_income = form.ret_income.data
+        scenario.ret_job_ret_date = form.ret_job_ret_date.data
+        scenario.windfall_amount = form.windfall_amount.data
+        scenario.windfall_age = form.windfall_age.data
+        scenario.s_retirement_age = form.s_retirement_age.data
+        scenario.s_start_ss_date = form.s_start_ss_date.data
+        scenario.s_ret_income = form.s_ret_income.data
+        scenario.s_ret_job_ret_date = form.s_ret_job_ret_date.data
+        scenario.s_windfall_amount = form.s_windfall_amount.data
+        scenario.s_windfall_age = form.s_windfall_age.data
         db.session.commit()
         flash('Your scenario has been updated!', 'success')
         return redirect(url_for('scenarios.scenario', scenario_id=scenario.id))
@@ -47,6 +59,18 @@ def update_scenario(scenario_id):
         form.title.data = scenario.title
         form.total_amount.data = scenario.total_amount
         form.asset_class.data = scenario.asset_class
+        form.retirement_age.data = scenario.retirement_age
+        form.start_ss_date.data = scenario.start_ss_date
+        form.ret_income.data = scenario.ret_income
+        form.ret_job_ret_date.data = scenario.ret_job_ret_date
+        form.windfall_amount.data = scenario.windfall_amount
+        form.windfall_age.data = scenario.windfall_age
+        form.s_retirement_age.data = scenario.s_retirement_age
+        form.s_start_ss_date.data = scenario.s_start_ss_date
+        form.s_ret_income.data = scenario.s_ret_income
+        form.s_ret_job_ret_date.data = scenario.s_ret_job_ret_date
+        form.s_windfall_amount.data = scenario.s_windfall_amount
+        form.s_windfall_age.data = scenario.s_windfall_age
     return render_template('create_scenario.html', title='Update Scenario',
                            form=form, legend='Update Scenario')
 
