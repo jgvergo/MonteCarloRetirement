@@ -87,32 +87,58 @@ class Post(db.Model):
     def __repr__(self):
         return f"Post('{self.title}', '{self.date_posted}')"
 
-# Scenarios hold "variable" user information for the simulations. They are variable b/c the user may want to
-# change them to see how they impact their simulation outcomes
+# Scenarios hold the information for a single simulation.
 class Scenario(db.Model):
+    # Housekeeping information
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    total_amount = db.Column(db.Float, nullable=False)
-    asset_class = db.Column(db.String(20), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    retirement_age = db.Column(db.DateTime, nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+
+    birthdate = db.Column(db.Date, nullable=False)
+    s_birthdate = db.Column(db.Date, nullable=False)
+
+    current_income = db.Column(db.Integer, nullable=False)
+    s_current_income = db.Column(db.Integer, nullable=False)
+
     start_ss_date = db.Column(db.Date, nullable=False)
+    s_start_ss_date = db.Column(db.Date, nullable=False)
+
+    full_ss_amount = db.Column(db.Integer, nullable=False)
+    s_full_ss_amount = db.Column(db.Integer, nullable=False)
+
+    retirement_age = db.Column(db.Integer, nullable=False)
+    s_retirement_age = db.Column(db.Integer, nullable=False)
+
     ret_income = db.Column(db.Integer, nullable=False)
-    ret_job_ret_date = db.Column(db.Date, nullable=False)
-    windfall_amount = db.Column(db.Integer, nullable=False)
-    windfall_age = db.Column(db.DateTime, nullable=False)
-
-    # Need to add large ticket expenses (remodeling, weddings, etc.)
-    large_1time_expenses = []
-
-    s_retirement_age = db.Column(db.DateTime, nullable=False)
-    s_start_ss_date = db.Column(db.DateTime, nullable=False)
     s_ret_income = db.Column(db.Integer, nullable=False)
-    s_ret_job_ret_date = db.Column(db.Date, nullable=False)
-    s_windfall_amount = db.Column(db.Integer, nullable=False)
-    s_windfall_age = db.Column(db.DateTime, nullable=False)
+
+    ret_job_ret_age = db.Column(db.Integer, nullable=False)
+    s_ret_job_ret_age = db.Column(db.Integer, nullable=False)
+
+    lifespan_age = db.Column(db.Integer, nullable=False)
+    s_lifespan_age = db.Column(db.Integer, nullable=False)
+
+    windfall_amount = db.Column(db.Integer, nullable=False)
+    windfall_age = db.Column(db.Integer, nullable=False)
+
+    # Combined information for the two spouses
+    nestegg = db.Column(db.Integer, nullable=False)
+    drawdown = db.Column(db.Integer, nullable=False)
+    has_spouse = db.Column(db.Boolean, nullable=False)
+
+    current_age = db.Column(db.Integer, nullable=False) # Calculated every time we need it
+    s_current_age = db.Column(db.Integer, nullable=True) # Calculated every time we need it
+    full_ss_date = db.Column(db.Date, nullable=False)    #Calculate this from the birthdate
+    s_full_ss_date = db.Column(db.Date, nullable=True)  #Calculate this from the birthdate
+
+
+#    s_windfall_amount = db.Column(db.Integer, nullable=True)
+#    s_windfall_age = db.Column(db.DateTime, nullable=True)
+#    asset_class = db.Column(db.String(20), nullable=False)
+# Need to add large ticket expenses (remodeling, weddings, etc.)
+#    large_1time_expenses = []
 
     # Expand the fields to be printed as necessary
     def __repr__(self):
