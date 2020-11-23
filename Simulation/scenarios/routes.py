@@ -50,10 +50,12 @@ def new_scenario():
         scenario.drawdown = form.drawdown.data
 
         # Calculate age and full ss date from birthdate and save them
-        scenario.full_ss_date = calculate_full_ss_date(scenario.birthdate)
-        scenario.s_full_ss_date = calculate_full_ss_date(scenario.s_birthdate)
+        if(scenario.has_spouse):
+            scenario.s_full_ss_date = calculate_full_ss_date(scenario.s_birthdate)
+            scenario.s_current_age = calculate_age(form.s_birthdate.data)
+
         scenario.current_age = calculate_age(form.birthdate.data)
-        scenario.s_current_age = calculate_age(form.s_birthdate.data)
+        scenario.full_ss_date = calculate_full_ss_date(scenario.birthdate)
 
         db.session.add(scenario)
         db.session.commit()
@@ -112,9 +114,11 @@ def update_scenario(scenario_id):
 
         # Calculate age and full ss date from birthdate and save them
         scenario.full_ss_date = calculate_full_ss_date(scenario.birthdate)
-        scenario.s_full_ss_date = calculate_full_ss_date(scenario.s_birthdate)
         scenario.current_age = calculate_age(form.birthdate.data)
-        scenario.s_current_age = calculate_age(form.s_birthdate.data)
+
+        if(scenario.has_spouse):
+            scenario.s_full_ss_date = calculate_full_ss_date(scenario.s_birthdate)
+            scenario.s_current_age = calculate_age(form.s_birthdate.data)
 
         db.session.commit()
         flash('Your scenario has been updated!', 'success')

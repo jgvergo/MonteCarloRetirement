@@ -1,292 +1,363 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="content-section">
-    <form method="POST" action="">
+    <form action="" method="POST">
         {{ form.hidden_tag() }}
-        <fieldset class="form-group">
-            <legend class="border-bottom mb-12">{{ legend }}</legend>
-            <div class="form-group col-md-3">
-                {{ form.title.label(class="form-control-label") }}
+        <form>
+            <div class="form-group row">
+                {{ form.title.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.title.errors %}
-                    {{ form.title(class="form-control form-control-lg is-invalid") }}
+                    {{ form.title(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.title.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.title(class="form-control form-control-lg") }}
+                    <div class="col-md-8">
+                        {{ form.title(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-3">
-                {{ form.has_spouse.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.has_spouse.label(class="col-md-4 text-right") }}
                 {% if form.has_spouse.errors %}
-                    {{ form.has_spouse(class="form-control form-control-lg is-invalid") }}
+                    {{ form.has_spouse(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.has_spouse.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.has_spouse(class="form-control form-control-lg") }}
+                    <div class="col-md-8">
+                        {{ form.has_spouse(onclick='hasSpouseChanged()') }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.birthdate.label(class="form-control-label") }}
+            <div class="form-group row">
+                <div class="col-md-4 text-right"><p> </p></div>
+                <div class="col-md-4 text-center"><p>Self</p></div>
+                <div class="col-md-4 text-center"><p>Spouse</p></div>
+            </div>
+            <div class="form-group row">
+                {{ form.birthdate.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.birthdate.errors %}
-                    <div class="col-md-2">
-                    {{ form.birthdate(class="form-control form-control-lg is-invalid") }}
+                    {{ form.birthdate(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.birthdate.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.birthdate(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.birthdate(class="form-control") }}
+                    </div>
                 {% endif %}
                 {% if form.s_birthdate.errors %}
-                    {{ form.s_birthdate(class="form-control form-control-lg is-invalid") }}
+                    {{ form.s_birthdate(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.s_birthdate.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {% if form.has_spouse.data %}
-                        {{ form.s_birthdate(class="form-control form-control-lg") }}
-                    {% endif %}
+                    <div class="col-md-4">
+                        {{ form.s_birthdate(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.current_income.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.current_income.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.current_income.errors %}
-                    <div class="col-md-2">
-                    {{ form.current_income(class="form-control form-control-lg is-invalid") }}
+                    {{ form.current_income(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.current_income.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.current_income(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.current_income(class="form-control") }}
+                    </div>
                 {% endif %}
                 {% if form.s_current_income.errors %}
-                    {{ form.s_current_income(class="form-control form-control-lg is-invalid") }}
+                    {{ form.s_current_income(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.s_current_income.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.s_current_income(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.s_current_income(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.start_ss_date.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.start_ss_date.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.start_ss_date.errors %}
-                    <div class="col-md-2">
-                    {{ form.start_ss_date(class="form-control form-control-lg is-invalid") }}
+                    {{ form.start_ss_date(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.start_ss_date.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.start_ss_date(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.start_ss_date(class="form-control") }}
+                    </div>
                 {% endif %}
                 {% if form.s_start_ss_date.errors %}
-                    {{ form.s_start_ss_date(class="form-control form-control-lg is-invalid") }}
+                    {{ form.s_start_ss_date(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.s_start_ss_date.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.s_start_ss_date(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.s_start_ss_date(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.full_ss_amount.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.full_ss_amount.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.full_ss_amount.errors %}
-                    <div class="col-md-2">
-                    {{ form.full_ss_amount(class="form-control form-control-lg is-invalid") }}
+                    {{ form.full_ss_amount(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.full_ss_amount.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.full_ss_amount(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.full_ss_amount(class="form-control") }}
+                    </div>
                 {% endif %}
                 {% if form.s_full_ss_amount.errors %}
-                    {{ form.s_full_ss_amount(class="form-control form-control-lg is-invalid") }}
+                    {{ form.s_full_ss_amount(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.s_full_ss_amount.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.s_full_ss_amount(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.s_full_ss_amount(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.retirement_age.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.retirement_age.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.retirement_age.errors %}
-                    <div class="col-md-2">
-                    {{ form.retirement_age(class="form-control form-control-lg is-invalid") }}
+                    {{ form.retirement_age(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.retirement_age.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.retirement_age(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.retirement_age(class="form-control") }}
+                    </div>
                 {% endif %}
                 {% if form.s_retirement_age.errors %}
-                    {{ form.s_retirement_age(class="form-control form-control-lg is-invalid") }}
+                    {{ form.s_retirement_age(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.s_retirement_age.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.s_retirement_age(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.s_retirement_age(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.ret_income.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.ret_income.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.ret_income.errors %}
-                    <div class="col-md-2">
-                    {{ form.ret_income(class="form-control form-control-lg is-invalid") }}
+                    {{ form.ret_income(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.ret_income.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.ret_income(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.ret_income(class="form-control") }}
+                    </div>
                 {% endif %}
                 {% if form.s_ret_income.errors %}
-                    {{ form.s_ret_income(class="form-control form-control-lg is-invalid") }}
+                    {{ form.s_ret_income(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.s_ret_income.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.s_ret_income(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.s_ret_income(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.ret_job_ret_age.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.ret_job_ret_age.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.ret_job_ret_age.errors %}
-                    <div class="col-md-2">
-                    {{ form.ret_job_ret_age(class="form-control form-control-lg is-invalid") }}
+                    {{ form.ret_job_ret_age(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.ret_job_ret_age.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.ret_job_ret_age(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.ret_job_ret_age(class="form-control") }}
+                    </div>
                 {% endif %}
                 {% if form.s_ret_job_ret_age.errors %}
-                    {{ form.s_ret_job_ret_age(class="form-control form-control-lg is-invalid") }}
+                    {{ form.s_ret_job_ret_age(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.s_ret_job_ret_age.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.s_ret_job_ret_age(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.s_ret_job_ret_age(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.lifespan_age.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.lifespan_age.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.lifespan_age.errors %}
-                    <div class="col-md-2">
-                    {{ form.lifespan_age(class="form-control form-control-lg is-invalid") }}
+                    {{ form.lifespan_age(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.lifespan_age.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.lifespan_age(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.lifespan_age(class="form-control") }}
+                    </div>
                 {% endif %}
                 {% if form.s_lifespan_age.errors %}
-                    {{ form.s_lifespan_age(class="form-control form-control-lg is-invalid") }}
+                    {{ form.s_lifespan_age(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.s_lifespan_age.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.s_lifespan_age(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.s_lifespan_age(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.nestegg.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.nestegg.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.nestegg.errors %}
-                    <div class="col-md-2">
-                    {{ form.nestegg(class="form-control form-control-lg is-invalid") }}
+                    {{ form.nestegg(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.nestegg.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.nestegg(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.nestegg(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.windfall_amount.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.windfall_amount.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.windfall_amount.errors %}
-                    <div class="col-md-2">
-                    {{ form.windfall_amount(class="form-control form-control-lg is-invalid") }}
+                    {{ form.windfall_amount(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.windfall_amount.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.windfall_amount(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.windfall_amount(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.windfall_age.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.windfall_age.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.windfall_age.errors %}
-                    <div class="col-md-2">
-                    {{ form.windfall_age(class="form-control form-control-lg is-invalid") }}
+                    {{ form.windfall_age(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.windfall_age.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.windfall_age(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.windfall_age(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-            <div class="form-group col-md-4">
-                {{ form.drawdown.label(class="form-control-label") }}
+            <div class="form-group row">
+                {{ form.drawdown.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.drawdown.errors %}
-                    <div class="col-md-2">
-                    {{ form.drawdown(class="form-control form-control-lg is-invalid") }}
+                    {{ form.drawdown(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
                         {% for error in form.drawdown.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ form.drawdown(class="form-control form-control-lg") }}
+                    <div class="col-md-4">
+                        {{ form.drawdown(class="form-control") }}
+                    </div>
                 {% endif %}
             </div>
-        </fieldset>
-        <div class="form-group">
-            {{ form.submit(class="btn btn-outline-info") }}
-            {{ form.submitrun(class="btn btn-outline-info") }}
-            {{ form.cancel(class="btn btn-outline-info") }}
-        </div>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-info") }}
+                {{ form.submitrun(class="btn btn-outline-info") }}
+                {{ form.cancel(class="btn btn-outline-info") }}
+            </div>
+        </form>
     </form>
+    <script>
+      // Hide or show spousal fields
+      function hasSpouseChanged()
+      {
+        var sb = document.getElementById('s_birthdate');
+        var sci = document.getElementById('s_current_income');
+        var sssd = document.getElementById('s_start_ss_date');
+        var sfsa = document.getElementById('s_full_ss_amount');
+        var sra = document.getElementById('s_retirement_age');
+        var sri = document.getElementById('s_ret_income');
+        var srjrd = document.getElementById('s_ret_job_ret_age');
+        var sla = document.getElementById('s_lifespan_age');
+        if (document.getElementById('has_spouse').checked == true)
+        {
+          sb.style.display = 'block';
+          sci.style.display = 'block';
+          sssd.style.display = 'block';
+          sfsa.style.display = 'block';
+          sra.style.display = 'block';
+          sri.style.display = 'block';
+          srjrd.style.display = 'block';
+          sla.style.display = 'block';
+        }
+        else
+        {
+          sb.style.display = 'none';
+          sci.style.display = 'none';
+          sssd.style.display = 'none';
+          sfsa.style.display = 'none';
+          sra.style.display = 'none';
+          sri.style.display = 'none';
+          srjrd.style.display = 'none';
+          sla.style.display = 'none';
+        }
+      }
+    </script>
 </div>
+<body onload="hasSpouseChanged()">
 {% endblock content %}

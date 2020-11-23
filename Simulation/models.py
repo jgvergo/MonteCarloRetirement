@@ -1,19 +1,15 @@
-from datetime import datetime, date
+from datetime import datetime
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from Simulation.extensions import login_manager
 from flask_login import UserMixin
 from flask import current_app
 from Simulation.extensions import db
-from Simulation.users.utils import calculate_age
 
-
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 # The User class holds the account information
 class User(db.Model, UserMixin):
@@ -38,10 +34,10 @@ class UserData(db.Model):
     user = db.relationship('User', back_populates="userdata", uselist=False, lazy=True)
     title = db.Column(db.String(100), nullable=True)
     birthdate = db.Column(db.Date, nullable=False)
-    current_age = db.Column(db.Integer, nullable=False) # Calculated every time we need it
+    current_age = db.Column(db.Integer, nullable=False)  # Calculated every time we need it
     current_income = db.Column(db.Integer, nullable=False)
     lifespan_age = db.Column(db.Integer, nullable=False)
-    full_ss_date = db.Column(db.Date, nullable=False)    #Calculate this from the birthdate
+    full_ss_date = db.Column(db.Date, nullable=False)    # Calculate this from the birthdate
     full_ss_amount = db.Column(db.Integer, nullable=False)
     nestegg = db.Column(db.Integer, nullable=False)
     drawdown = db.Column(db.Integer, nullable=False)
@@ -49,10 +45,10 @@ class UserData(db.Model):
     # Information for spouse
     has_spouse = db.Column(db.Boolean, nullable=False)
     s_birthdate = db.Column(db.Date, nullable=True)
-    s_current_age = db.Column(db.Integer, nullable=True) # Calculated every time we need it
+    s_current_age = db.Column(db.Integer, nullable=True)  # Calculated every time we need it
     s_current_income = db.Column(db.Integer, nullable=True)
     s_lifespan_age = db.Column(db.Integer, nullable=True)
-    s_full_ss_date = db.Column(db.Date, nullable=True)  #Calculate this from the birthdate
+    s_full_ss_date = db.Column(db.Date, nullable=True)  # Calculate this from the birthdate
     s_full_ss_amount = db.Column(db.Integer, nullable=True)
 
     # Need to add large ticket expenses (remodeling, weddings, etc.)
@@ -60,9 +56,11 @@ class UserData(db.Model):
     def __repr__(self):
         return f"UserData('{self.birthdate}', '{self.current_age}')"
 
+
 def get_reset_token(self, expires_sec=1800):
     s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
     return s.dumps({'user_id': self.id}).decode('utf-8')
+
 
 @staticmethod
 def verify_reset_token(token):
@@ -72,6 +70,7 @@ def verify_reset_token(token):
     except:
         return None
     return User.query.get(user_id)
+
 
 def __repr__(self):
     return f"User('{self.username}', '{self.email}', '{self.image_file}')"
@@ -87,6 +86,7 @@ class Post(db.Model):
     def __repr__(self):
         return f"Post('{self.title}', '{self.date_posted}')"
 
+
 # Scenarios hold the information for a single simulation.
 class Scenario(db.Model):
     # Housekeeping information
@@ -97,33 +97,32 @@ class Scenario(db.Model):
     title = db.Column(db.String(100), nullable=False)
 
     birthdate = db.Column(db.Date, nullable=False)
-    s_birthdate = db.Column(db.Date, nullable=False)
+    s_birthdate = db.Column(db.Date, nullable=True)
 
     current_income = db.Column(db.Integer, nullable=False)
-    s_current_income = db.Column(db.Integer, nullable=False)
+    s_current_income = db.Column(db.Integer, nullable=True)
 
     start_ss_date = db.Column(db.Date, nullable=False)
-    s_start_ss_date = db.Column(db.Date, nullable=False)
+    s_start_ss_date = db.Column(db.Date, nullable=True)
 
     full_ss_amount = db.Column(db.Integer, nullable=False)
-    s_full_ss_amount = db.Column(db.Integer, nullable=False)
+    s_full_ss_amount = db.Column(db.Integer, nullable=True)
 
     retirement_age = db.Column(db.Integer, nullable=False)
-    s_retirement_age = db.Column(db.Integer, nullable=False)
+    s_retirement_age = db.Column(db.Integer, nullable=True)
 
     ret_income = db.Column(db.Integer, nullable=False)
-    s_ret_income = db.Column(db.Integer, nullable=False)
+    s_ret_income = db.Column(db.Integer, nullable=True)
 
     ret_job_ret_age = db.Column(db.Integer, nullable=False)
-    s_ret_job_ret_age = db.Column(db.Integer, nullable=False)
+    s_ret_job_ret_age = db.Column(db.Integer, nullable=True)
 
     lifespan_age = db.Column(db.Integer, nullable=False)
-    s_lifespan_age = db.Column(db.Integer, nullable=False)
-
-    windfall_amount = db.Column(db.Integer, nullable=False)
-    windfall_age = db.Column(db.Integer, nullable=False)
+    s_lifespan_age = db.Column(db.Integer, nullable=True)
 
     # Combined information for the two spouses
+    windfall_amount = db.Column(db.Integer, nullable=False)
+    windfall_age = db.Column(db.Integer, nullable=False)
     nestegg = db.Column(db.Integer, nullable=False)
     drawdown = db.Column(db.Integer, nullable=False)
     has_spouse = db.Column(db.Boolean, nullable=False)
@@ -132,13 +131,6 @@ class Scenario(db.Model):
     s_current_age = db.Column(db.Integer, nullable=True) # Calculated every time we need it
     full_ss_date = db.Column(db.Date, nullable=False)    #Calculate this from the birthdate
     s_full_ss_date = db.Column(db.Date, nullable=True)  #Calculate this from the birthdate
-
-
-#    s_windfall_amount = db.Column(db.Integer, nullable=True)
-#    s_windfall_age = db.Column(db.DateTime, nullable=True)
-#    asset_class = db.Column(db.String(20), nullable=False)
-# Need to add large ticket expenses (remodeling, weddings, etc.)
-#    large_1time_expenses = []
 
     # Expand the fields to be printed as necessary
     def __repr__(self):
