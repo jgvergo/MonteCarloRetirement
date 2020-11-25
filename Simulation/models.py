@@ -127,23 +127,26 @@ class Scenario(db.Model):
     drawdown = db.Column(db.Integer, nullable=False)
     has_spouse = db.Column(db.Boolean, nullable=False)
 
-    current_age = db.Column(db.Integer, nullable=False) # Calculated every time we need it
-    s_current_age = db.Column(db.Integer, nullable=True) # Calculated every time we need it
-    full_ss_date = db.Column(db.Date, nullable=False)    #Calculate this from the birthdate
-    s_full_ss_date = db.Column(db.Date, nullable=True)  #Calculate this from the birthdate
+    current_age = db.Column(db.Integer, nullable=False)  # Calculated every time we need it
+    s_current_age = db.Column(db.Integer, nullable=True)  # Calculated every time we need it
+    full_ss_date = db.Column(db.Date, nullable=False)    # Calculate this from the birthdate
+    s_full_ss_date = db.Column(db.Date, nullable=True)  # Calculate this from the birthdate
+
+    image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
 
     # Expand the fields to be printed as necessary
     def __repr__(self):
         return f"Scenario('{self.title}', '{self.date_posted}')"
 
+
 # These data are kept in an object for convenience. They typically don't change
-class sim_data():
-    num_exp = 10000
+class SimData:
+    num_exp = 1000
     num_sim_bins = 100
     cola = 1.02
-    inflation = [[1.027, 0.011]]
+    inflation = [1.027, 0.011]
     asset_classes = []
-    spend_decay = [[0.02, 0.001]]
+    spend_decay = [0.02, 0.001]
 
 
 def init_db(app):

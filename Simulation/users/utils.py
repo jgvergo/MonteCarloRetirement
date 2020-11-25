@@ -4,7 +4,6 @@ from PIL import Image
 from flask import url_for, current_app
 from flask_mail import Message
 from Simulation import mail
-from datetime import date
 from dateutil.relativedelta import relativedelta
 
 
@@ -32,9 +31,8 @@ If you did not make this request then simply ignore this email and no changes wi
 '''
     mail.send(msg)
 
-# Calculate age in years given a birthday
-def calculate_age(born):
-    today = date.today()
+# Calculate age in years given two dates
+def calculate_age(today, born):
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
 def calculate_full_ss_date(birthday):

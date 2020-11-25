@@ -1,23 +1,86 @@
-from datetime import date
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import pandas as pd
 import numpy as np
+from Simulation.users.utils import calculate_age
 import io
+import base64
+
+mpl.use('Agg')
+
+
+def do_sim(sd, scenario) -> plt.figure():
+    plt.style.use('ggplot')
+
+    # Number of years to simulate (e.g. "until Spouse1 is 95 years old")
+    n_yrs = max(scenario.lifespan_age - scenario.current_age, scenario.s_lifespan_age - scenario.s_current_age)
+    output = [0 for i in range(sd.num_exp)]
+
+    # Create a dataframe that will hold the result of a single simulation
+    df = createresultdf(1)
+
+    # Provide this temporarily. Need to support "Asset classes" in the future
+    investment = [[1.09391, 0.197028],
+                  [(1.09391 + 1.03) / 2, 0.197028 / 2],
+                  [1.04, 0.01]]
+    # Run the simulation with the configuration based on the UI
+    run_simulation(
+        scenario.retirement_age,
+        scenario.s_retirement_age,
+        scenario.ret_job_ret_age,
+        scenario.s_ret_job_ret_age,
+        calculate_age(scenario.start_ss_date, scenario.birthdate),
+        calculate_age(scenario.s_start_ss_date, scenario.s_birthdate),
+        sd.inflation,
+        investment[0],
+        sd.spend_decay,
+        n_yrs,
+        sd.num_exp,
+        output,
+        df,
+        scenario.lifespan_age,
+        scenario, sd)
+
+    return plot_output(df.SimOutput[0],
+                float(scenario.retirement_age), float(scenario.s_retirement_age),
+                float(scenario.ret_job_ret_age), float(scenario.s_ret_job_ret_age),
+                float(calculate_age(scenario.start_ss_date, scenario.birthdate)),
+                float(calculate_age(scenario.s_start_ss_date, scenario.s_birthdate)),
+                float(scenario.lifespan_age),
+                sd.inflation[0], sd.inflation[1],
+                investment[0][0], investment[0][1],
+                sd.spend_decay[0], sd.spend_decay[1],
+                scenario.windfall_amount,
+                sd.num_sim_bins)
+
 
 def run_simulation(s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_sim,
-                   inf_sim, inv_sim, spend_decay_sim, n_yrs_sim, num_exp, output, sim_num, df, ls_sim, progress_w=0):
+                   inf_sim, inv_sim, spend_decay_sim, n_yrs_sim, num_exp, output, df, ls_sim, scenario, sd):
+    # Initialize stuff
+    sim_num = 0  # Tracks the number of the current experiment
+
     # Run the experiments
     for experiment in range(num_exp):
 
         # These variables need to be re-initialized before every experiment
-        s1_age = s1_current_age
-        s2_age = s2_current_age
-        s1_income = s1_current_income
-        s2_income = s2_current_income
+        s1_age = scenario.current_age
+        s2_age = scenario.s_current_age
+        if s1_age >= s1ra_sim:
+            s1_income = scenario.ret_income
+        else:
+            s1_income = scenario.current_income
+
+        if s2_age >= s2ra_sim:
+            s2_income = scenario.s_ret_income
+        else:
+            s2_income = scenario.s_current_income
+
+        # Starting assumption is SS is currently zero
         s1ss = 0
         s2ss = 0
-        nestegg = nestegg_current
-        drawdown = income_replacement * (s1_current_income + s2_current_income)
+
+        nestegg = scenario.nestegg
+        drawdown = scenario.drawdown
 
         # Generate a random sequence of investment annual returns based on a normal distribution
         s_invest = sim(inv_sim[0], inv_sim[1], n_yrs_sim)
@@ -39,11 +102,11 @@ def run_simulation(s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_si
 
             # At retirement, switch income to be my second job income
             if s1_age == s1ra_sim:
-                s1_income = s1_sec_job
+                s1_income = scenario.ret_income
 
             # At retirement, switch income to be Linda's second job income
             if s2_age == s2ra_sim:
-                s2_income = s2_sec_job
+                s2_income = scenario.s_ret_income
 
             # Increase income based on inflation. When final ret age is reached, set income to zero
             if s1_age <= s1rra_sim:
@@ -57,28 +120,14 @@ def run_simulation(s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_si
             else:
                 s2_income = 0
 
-            if s1_age == windfall_age:
-                nestegg += windfall
+            if s1_age == scenario.windfall_age:
+                nestegg += scenario.windfall_amount
             # Add SS to the nestegg
             if s1_age >= s1ssa_sim:
-                if s1ssa_sim == 62:
-                    s1ss = s1_ss_at_62 * (cola ** i)
-                elif s1ssa_sim == 66:
-                    s1ss = s1_ss_at_66 * (cola ** i)
-                elif s1ssa_sim == 70:
-                    s1ss = s1_ss_at_70 * (cola ** i)
-                else:
-                    print("Error in SS")
+                s1ss = scenario.full_ss_amount * (sd.cola ** i)
 
             if s2_age >= s2ssa_sim:
-                if s2ssa_sim == 62:
-                    s2ss = s2_ss_at_62 * (cola ** i)
-                elif s2ssa_sim == 66:
-                    s2ss = s2_ss_at_66 * (cola ** i)
-                elif s2ssa_sim == 70:
-                    s2ss = s2_ss_at_70 * (cola ** i)
-                else:
-                    print("Error in SS")
+                s2ss = scenario.s_full_ss_amount * (sd.cola ** i)
 
             # Add the income to the nestegg
             nestegg += (s1_income + s2_income + s1ss + s2ss)
@@ -87,7 +136,7 @@ def run_simulation(s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_si
             nestegg *= s_invest[i]
         #        print('Final Drawdown = ', drawdown)
         output[experiment] = nestegg  # Record the final nestegg in the output list
-
+        print(experiment)
     # Sort the output
     output.sort()
 
@@ -104,8 +153,6 @@ def run_simulation(s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_si
     df.iloc[sim_num] = [s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_sim, ls_sim,
                         inf_sim[0], inf_sim[1], inv_sim[0], inv_sim[1], spend_decay_sim[0], spend_decay_sim[1],
                         p0, median, avg, o_min, o_max, output]
-    if progress_w != 0:
-        progress_w.value = sim_num
     return sim_num
 
 
@@ -117,7 +164,8 @@ def plot_output(output,
                 inflation_mean, inflation_stddev,
                 invest_mean, invest_stddev,
                 spend_decay_mean, spend_decay_stddev,
-                windfall_amount):
+                windfall_amount, num_sim_bins):
+    img = io.BytesIO()
     output.sort()
 #    o_max = max(output)
 #    o_min = min(output)
@@ -193,8 +241,11 @@ def plot_output(output,
     plt.text(xpos, ypos - 19 * yinc,
              'Percentage over 0: {0:,.2f}%'.format(100 * (sum(i >= 0 for i in output) / len(output))))
     plt.text(xpos, ypos - 20 * yinc, 'Minimum: {0:,.2f}%'.format(min(output)))
-    plt.show()
-    return
+
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plot_url = base64.b64encode(img.getvalue()).decode()
+    return plot_url
 
 
 # This function is called by the RetirementFrontEnd notebook in addition to this notebook
@@ -212,50 +263,6 @@ def createresultdf(num_combos):
 def sim(mean, stddev, num):
     return np.random.normal(mean, stddev, num)
 
-
-def do_sim(b):
-    # NB: b is the button object. It is automatically passed to this function by ipywidgets
-
-    # Number of years to simulate (e.g. "until Spouse1 is 95 years old")
-    n_yrs = int(s1_ls_w.value) - s1_current_age
-#    income_replacement = float(income_replacement_w.value)
-    windfall = float(windfall_w.value)
-    # Run the simulation with the configuration based on the UI
-    run_simulation(
-        int(s1_ret_age_w.value),
-        int(s2_ret_age_w.value),
-        int(s1_ret_ret_age_w.value),
-        int(s2_ret_ret_age_w.value),
-        int(s1_ss_age_w.value),
-        int(s2_ss_age_w.value),
-        inflation[0],
-        ast.literal_eval(investment_w.value),
-        spend_decay[0],
-        n_yrs,
-        num_exp,
-        output,
-        0,  # sim_num
-        df,
-        int(s1_ls_w.value)
-    )
-    #    print_assumptions_results(df.SimOutput[0],
-    #                              s1_ret_age_w.value, s2_ret_age_w.value,
-    #                              s1_ret_ret_age_w.value, s2_ret_ret_age_w.value,
-    #                              s1_ss_age_w.value, s2_ss_age_w.value,
-    #                              s1_ls_w.value,
-    #                              inflation[0][0], inflation[0][1],
-    #                              ast.literal_eval(investment_w.value)[0],ast.literal_eval(investment_w.value)[1])
-    plot_output(df.SimOutput[0],
-                float(s1_ret_age_w.value), float(s2_ret_age_w.value),
-                float(s1_ret_ret_age_w.value), float(s2_ret_ret_age_w.value),
-                float(s1_ss_age_w.value), float(s2_ss_age_w.value),
-                float(s1_ls_w.value),
-                inflation[0][0], inflation[0][1],
-                ast.literal_eval(investment_w.value)[0], ast.literal_eval(investment_w.value)[1],
-                spend_decay[0][0], spend_decay[0][1], windfall)
-
-# Starting assumptions
-# s1 = spouse #1, s2 = spouse #2
 
 """
 s1_current_age = calculate_age(date(1957, 10, 18))
@@ -327,111 +334,4 @@ plt.style.use('ggplot')
 
 # Create a dataframe that will hold the result of a single simulation
 df = createresultdf(1)
-
-
-style = {'description_width': 'initial', 'width': 'initial'}
-
-s1_label_w = widgets.Label(value="Spouse 1:", style=style)
-s1_ss_age_w = widgets.RadioButtons(
-    options=list(map(str, s1_ss_age)),
-    value='66',
-    description='SS age:',
-    description_tooltip='Age at which Spouse 1 will start taking Social Security',
-    disabled=False,
-    style=style
-)
-s1_ret_age_w = widgets.RadioButtons(
-    options=list(map(str, s1_ret_age)),
-    value='62',
-    description='Retirement age:',
-    description_tooltip='Age of retirement from primary job',
-    disabled=False,
-    style=style
-)
-s1_ret_ret_age_w = widgets.RadioButtons(
-    options=list(map(str, s1_ret_ret_age)),
-    value='65',
-    description='Final Retirement Age:',
-    description_tooltip='Age of retirement from secondary job',
-    disabled=False,
-    style=style
-)
-s1_ls_w = widgets.RadioButtons(
-    options=list(map(str, s1_lifespan)),
-    value='95',
-    description='Spouse 1 lifespan:',
-    description_tooltip='How long Spouse 1 expects to live',
-    disabled=False,
-    style=style
-)
-
-s2_label_w = widgets.Label(value="Spouse 2:", style=style)
-s2_ss_age_w = widgets.RadioButtons(
-    options=list(map(str, s2_ss_age)),
-    value='66',
-    description='SS age:',
-    description_tooltip='Age at which Spouse 2 will start taking Social Security',
-    disabled=False,
-    style=style
-)
-s2_ret_age_w = widgets.RadioButtons(
-    options=list(map(str, s2_ret_age)),
-    value='59',
-    description='Retirement age:',
-    description_tooltip='Age of retirement from primary job',
-    disabled=False,
-    style=style
-)
-s2_ret_ret_age_w = widgets.RadioButtons(
-    options=list(map(str, s2_ret_ret_age)),
-    value='66',
-    description='Final Retirement Age:',
-    description_tooltip='Age of retirement from secondary job',
-    disabled=False,
-    style=style
-)
-investment_w = widgets.RadioButtons(
-    options=list(map(str, investment)),
-    description='Investment:',
-    description_tooltip='Mean return and standard deviation of investment',
-    disabled=False,
-    style=style
-)
-income_replacement_w = widgets.FloatText(
-    value=120000,
-    description='Desired annual income:',
-    description_tooltip='Desired income replacement as an absolute value',
-    disabled=False,
-    style=style
-)
-windfall_w = widgets.FloatText(
-    value=4000000,
-    description='Windfall:',
-    description_tooltip='Windfall',
-    disabled=False,
-    style=style
-)
-windfall_age_w = widgets.IntText(
-    value=67,
-    description='Windfall age:',
-    description_tooltip='Windfall age',
-    disabled=False,
-    style=style
-)
-
-run_sim_w = widgets.Button(
-    description='Run Simulation',
-    disabled=False,
-    button_style='',  # 'success', 'info', 'warning', 'danger' or ''
-    tooltip='Click me',
-    icon='check'
-)
-row1 = HBox([s1_label_w, s1_ret_age_w, s1_ret_ret_age_w, s1_ss_age_w])
-row2 = HBox([s2_label_w, s2_ret_age_w, s2_ret_ret_age_w, s2_ss_age_w])
-row3 = HBox([s1_ls_w, investment_w])
-row4 = HBox([income_replacement_w])
-row5 = HBox([windfall_age_w, windfall_w])
-v = VBox([row1, row2, row3, row4, row5])
-display(v, run_sim_w)
-run_sim_w.on_click(do_sim)
 """

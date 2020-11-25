@@ -1,9 +1,11 @@
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
+from flask_login import current_user, login_required
 from Simulation import db
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm
 from Simulation.models import Scenario
-from flask_login import current_user, login_required
-from Simulation.users.utils import calculate_age, calculate_full_ss_date
+from Simulation.users.utils import calculate_age, calculate_full_ss_date,save_picture
+from datetime import date
+
 
 scenarios = Blueprint('scenarios', __name__)
 
@@ -52,9 +54,9 @@ def new_scenario():
         # Calculate age and full ss date from birthdate and save them
         if(scenario.has_spouse):
             scenario.s_full_ss_date = calculate_full_ss_date(scenario.s_birthdate)
-            scenario.s_current_age = calculate_age(form.s_birthdate.data)
+            scenario.s_current_age = calculate_age(date.today(), form.s_birthdate.data)
 
-        scenario.current_age = calculate_age(form.birthdate.data)
+        scenario.current_age = calculate_age(date.today(), form.birthdate.data)
         scenario.full_ss_date = calculate_full_ss_date(scenario.birthdate)
 
         db.session.add(scenario)
@@ -114,11 +116,11 @@ def update_scenario(scenario_id):
 
         # Calculate age and full ss date from birthdate and save them
         scenario.full_ss_date = calculate_full_ss_date(scenario.birthdate)
-        scenario.current_age = calculate_age(form.birthdate.data)
+        scenario.current_age = calculate_age(date.today(), form.birthdate.data)
 
         if(scenario.has_spouse):
             scenario.s_full_ss_date = calculate_full_ss_date(scenario.s_birthdate)
-            scenario.s_current_age = calculate_age(form.s_birthdate.data)
+            scenario.s_current_age = calculate_age(date.today(), form.s_birthdate.data)
 
         db.session.commit()
         flash('Your scenario has been updated!', 'success')
@@ -172,14 +174,22 @@ def delete_scenario(scenario_id):
     flash('Your scenario has been deleted!', 'success')
     return redirect(url_for('main.home'))
 
+
+from Simulation.MCSim import do_sim
+from Simulation.models import SimData
 @scenarios.route("/scenario/<int:scenario_id>/run", methods=['GET', 'POST'])
 @login_required
 def run_scenario(scenario_id):
     scenario = Scenario.query.get_or_404(scenario_id)
+
+    sd = SimData()
+
+    # This does all the work
+    plot_url = do_sim(sd, scenario)
+
     if scenario.author != current_user:
         abort(403)
     form = DisplaySimResultForm()
     form.title.data = scenario.title
-    form.image = '/static/profile_pics/eb8a48c7f4cf0cba.png'
     return render_template('display_sim_result.html', title='Simulated Scenario',
-                               form=form, legend='Simulated Scenario', image_file=form.image)
+                               form=form, legend='Simulated Scenario', plot_url=plot_url)

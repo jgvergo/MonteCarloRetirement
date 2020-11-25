@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, BooleanField, IntegerField, DateField
 from wtforms.validators import InputRequired, NumberRange
-
+from flask_wtf.file import FileField, FileAllowed
 
 class ScenarioForm(FlaskForm):
     title = StringField(label='Title',
