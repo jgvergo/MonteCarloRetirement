@@ -1,13 +1,21 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="content-section">
-    <row>
-        <div class="media-body">
-          <h2 class="account-heading">{{ form.title }}</h2>
-        </div>
-    </row>
-    <div class="media" >
-        <img src="data:image/png;base64, {{ plot_url }}">
-    </div>
+    <form action="" method="POST">
+        {{ form.hidden_tag() }}
+        <form>
+            <row>
+                <div class="media-body">
+                  <h2 class="account-heading">{{ form.title.label }}</h2>
+                </div>
+            </row>
+            <div class="media">
+                <img src="data:image/png;base64, {{ plot_url }}">
+            </div>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-info") }}
+            </div>
+        </form>
+    </form>
 </div>
 {% endblock content %}

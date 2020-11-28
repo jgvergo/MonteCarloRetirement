@@ -32,7 +32,7 @@ def do_sim(sd, scenario) -> plt.figure():
         calculate_age(scenario.start_ss_date, scenario.birthdate),
         calculate_age(scenario.s_start_ss_date, scenario.s_birthdate),
         sd.inflation,
-        investment[0],
+        investment[1],
         sd.spend_decay,
         n_yrs,
         sd.num_exp,
@@ -180,7 +180,7 @@ def plot_output(output,
 
     binsize = (g_max - g_min) / num_sim_bins
     bins = np.arange(g_min, g_max, binsize)
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(9, 8))
 
     plt.xlim(g_min, g_max)
 

@@ -58,10 +58,8 @@ class ScenarioForm(FlaskForm):
 
     submit = SubmitField('Save')
     submitrun = SubmitField('Save and Run')
-    cancel = SubmitField('Cancel')
 
 
 class DisplaySimResultForm(FlaskForm):
-    title = StringField(label='Scenario title',
-                        validators=[InputRequired(message='Title is required')])
-    submit = SubmitField('Home')
+    title = StringField()
+    submit = SubmitField('Update scenario')
