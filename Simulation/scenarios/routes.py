@@ -64,7 +64,13 @@ def new_scenario():
         db.session.add(scenario)
         db.session.commit()
         flash('Your scenario has been created!', 'success')
-        return redirect(url_for('main.home'))
+
+        if form.submit.data:
+            flash('Your scenario has been updated!', 'success')
+            return redirect(url_for('main.home'))
+        elif form.submitrun.data:
+            return redirect(url_for('scenarios.run_scenario', scenario_id=scenario.id))
+
     return render_template('create_scenario.html', title='New Scenario',
                            form=form, legend='New Scenario')
 
