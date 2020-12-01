@@ -61,7 +61,7 @@ def update_asset_class(asset_class_id):
 @login_required
 def list_asset_classes():
     page = request.args.get('page', 1, type=int)
-    asset_class_list = AssetClass.query.order_by(AssetClass.date_created.desc()).paginate(page=page, per_page=7)
+    asset_class_list = AssetClass.query.order_by(AssetClass.title.asc()).paginate(page=page, per_page=7)
     form = AssetClassListForm()
 
     if form.validate_on_submit():
