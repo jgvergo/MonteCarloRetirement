@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section">
+        <form method="POST" action="" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Asset Classes</legend>
+                {% for asset_class in asset_classes.items %}
+                    <article class="media content-section">
+                        <div class="media-body">
+                            <h2>
+                                <a class="article-title" href="{{ url_for('asset_classes.update_asset_class', asset_class_id=asset_class.id) }}">{{ asset_class.title }}</a>
+                            </h2>
+                      </div>
+                    </article>
+                {% endfor %}
+                {% for page_num in asset_classes.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        {% if asset_classes.page == page_num %}
+                            <a class="btn btn-info mb-4" href="{{ url_for('asset_classes.list_asset_classes', page=page_num) }}">{{page_num}}</a>
+                        {% else %}
+                            <a class="btn btn-outline-info mb-4" href="{{ url_for('asset_classes.list_asset_classes', page=page_num) }}">{{page_num}}</a>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </fieldset>
+            <div class="form-group">
+                {{ form.nas(class="btn btn-outline-info") }}
+                {{ form.home(class="btn btn-outline-info") }}
+            </div>
+        </form>
+    </div>
+{% endblock content %}
