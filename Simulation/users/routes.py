@@ -3,7 +3,7 @@ from flask import render_template, url_for, flash, redirect, request
 from Simulation.extensions import db, bcrypt
 from Simulation.users.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
                                     RequestResetForm, ResetPasswordForm)
-from Simulation.models import User, Post, Scenario, UserData
+from Simulation.models import User, Post, Scenario, AssetClass
 from flask_login import login_user, current_user, logout_user, login_required
 from Simulation.users.utils import save_picture, send_reset_email
 

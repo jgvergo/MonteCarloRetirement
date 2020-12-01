@@ -13,7 +13,9 @@ def load_user(user_id):
 
 # The User class holds the account information
 class User(db.Model, UserMixin):
+    # Housekeeping information
     id = db.Column(db.Integer, primary_key=True)
+
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
@@ -22,39 +24,20 @@ class User(db.Model, UserMixin):
 
     # User attributes needed for simulations
     scenarios = db.relationship('Scenario', backref='author', lazy=True)
-    userdata = db.relationship('UserData', back_populates="user", uselist=False, lazy=True)
 
 
-# The UserData class holds "constant" user information used in the simulations
-# "Constant" is not strictly true. The idea is that the variables in this class don't change
-# on a scenario by scenario basis. For example, current_income is typically a "set" value. Of course
-# it may change if you take a new job, but most scenarios will be based on a user's actual current income
-class UserData(db.Model):
-    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    user = db.relationship('User', back_populates="userdata", uselist=False, lazy=True)
+# AssetClasses are investment vehicles.
+class AssetClass(db.Model):
+    # Housekeeping information
+    id = db.Column(db.Integer, primary_key=True)
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
     title = db.Column(db.String(100), nullable=True)
-    birthdate = db.Column(db.Date, nullable=False)
-    current_age = db.Column(db.Integer, nullable=False)  # Calculated every time we need it
-    current_income = db.Column(db.Integer, nullable=False)
-    lifespan_age = db.Column(db.Integer, nullable=False)
-    full_ss_date = db.Column(db.Date, nullable=False)    # Calculate this from the birthdate
-    full_ss_amount = db.Column(db.Integer, nullable=False)
-    nestegg = db.Column(db.Integer, nullable=False)
-    drawdown = db.Column(db.Integer, nullable=False)
-
-    # Information for spouse
-    has_spouse = db.Column(db.Boolean, nullable=False)
-    s_birthdate = db.Column(db.Date, nullable=True)
-    s_current_age = db.Column(db.Integer, nullable=True)  # Calculated every time we need it
-    s_current_income = db.Column(db.Integer, nullable=True)
-    s_lifespan_age = db.Column(db.Integer, nullable=True)
-    s_full_ss_date = db.Column(db.Date, nullable=True)  # Calculate this from the birthdate
-    s_full_ss_amount = db.Column(db.Integer, nullable=True)
-
-    # Need to add large ticket expenses (remodeling, weddings, etc.)
+    avg_ret = db.Column(db.Float, nullable=False)
+    std_dev = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
-        return f"UserData('{self.birthdate}', '{self.current_age}')"
+        return f"AssetClass('{self.title}', '{self.avg_ret}', '{self.std_dev})"
 
 
 def get_reset_token(self, expires_sec=1800):

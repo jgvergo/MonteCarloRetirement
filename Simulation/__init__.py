@@ -20,14 +20,14 @@ def create_app(config_class=Config):
     from Simulation.users.routes import users
     from Simulation.posts.routes import posts
     from Simulation.scenarios.routes import scenarios
-    from Simulation.userdata.routes import userdata
+    from Simulation.asset_classes.routes import asset_classes
     from Simulation.errors.handlers import errors
 
     app.register_blueprint(main)
     app.register_blueprint(users)
     app.register_blueprint(posts)
     app.register_blueprint(scenarios)
-    app.register_blueprint(userdata)
+    app.register_blueprint(asset_classes)
     app.register_blueprint(errors)
 
     return app

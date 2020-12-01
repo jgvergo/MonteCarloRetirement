@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section">
+        <form method="POST" action="" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">{{ legend }}</legend>
+                <div class="form-group row">
+                    {{ form.title.label(class="col-md-4 col-form-label text-right") }}
+                    {% if form.title.errors %}
+                        {{ form.title(class="form-control form-control-md is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.title.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.title(class="form-control form-control-md col-md-4") }}
+                    {% endif %}
+                </div>
+                <div class="form-group row">
+                    {{ form.avg_ret.label(class="col-md-4 col-form-label text-right") }}
+                    {% if form.avg_ret.errors %}
+                        {{ form.avg_ret(class="form-control form-control-md is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.avg_ret.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.avg_ret(class="form-control form-control-md col-md-4") }}
+                    {% endif %}
+                </div>
+                <div class="form-group row">
+                    {{ form.std_dev.label(class="col-md-4 col-form-label text-right") }}
+                    {% if form.std_dev.errors %}
+                        {{ form.std_dev(class="form-control form-control-md is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.std_dev.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.std_dev(class="form-control form-control-md col-md-4") }}
+                    {% endif %}
+                </div>
+            </fieldset>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-info") }}
+            </div>
+        </form>
+    </div>
+{% endblock content %}

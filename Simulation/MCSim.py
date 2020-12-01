@@ -48,7 +48,7 @@ def do_sim(sd, scenario) -> plt.figure():
                 float(calculate_age(scenario.s_start_ss_date, scenario.s_birthdate)),
                 float(scenario.lifespan_age),
                 sd.inflation[0], sd.inflation[1],
-                investment[0][0], investment[0][1],
+                investment[1][0], investment[1][1],
                 sd.spend_decay[0], sd.spend_decay[1],
                 scenario.windfall_amount,
                 sd.num_sim_bins)
