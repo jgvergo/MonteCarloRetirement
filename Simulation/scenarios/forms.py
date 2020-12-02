@@ -62,4 +62,47 @@ class ScenarioForm(FlaskForm):
 
 class DisplaySimResultForm(FlaskForm):
     title = StringField()
+
+    mode = IntegerField(label="Mode", render_kw={'readonly': True})
+    median = IntegerField(label="Median", render_kw={'readonly': True})
+    mean = IntegerField(label="Mean", render_kw={'readonly': True})
+
+    birthdate = DateField(label='Date of birth (MM-DD-YYYY)',
+                          format='%m-%d-%Y', render_kw={'readonly': True})
+    s_birthdate = DateField(label='Date of birth(MM-DD-YYYY)',
+                            format='%m-%d-%Y', render_kw={'readonly': True})
+
+    current_income = IntegerField(label='Current income',
+                                  render_kw={'readonly': True})
+    s_current_income = IntegerField(label="Spouse's current income", render_kw={'readonly': True})
+
+    start_ss_date = DateField(label='Date you will take Social Security (MM-DD-YYYY)',
+                              format='%m-%d-%Y',
+                              render_kw = {'readonly': True})
+    s_start_ss_date = DateField(label='Date your spouse will take Social Security(MM-DD-YYYY)',
+                                format='%m-%d-%Y', render_kw={'readonly': True})
+
+    full_ss_amount = IntegerField(label='Full SS amount',
+                                  render_kw={'readonly': True})
+    s_full_ss_amount = IntegerField(label="Spouse's full SS amount", render_kw={'readonly': True})
+
+    retirement_age = IntegerField(label='Retirement age', render_kw={'readonly': True})
+    s_retirement_age = IntegerField(label="Spouse's retirement age", render_kw={'readonly': True})
+
+    ret_income = IntegerField(label='Retirement income', render_kw={'readonly': True})
+    s_ret_income = IntegerField(label="Spouse's retirement income", render_kw={'readonly': True})
+
+    ret_job_ret_age = IntegerField(label='Age at which you will fully retire', render_kw={'readonly': True})
+    s_ret_job_ret_age = IntegerField(label='Age at which your spouse will fully retire', render_kw={'readonly': True})
+
+    lifespan_age = IntegerField(label='Expected lifespan in years', render_kw={'readonly': True})
+    s_lifespan_age = IntegerField(label="Spouse's expected lifespan in years", render_kw={'readonly': True})
+
+    windfall_amount = IntegerField(label='Windfall amount', render_kw={'readonly': True})
+    windfall_age = IntegerField(label='Windfall age', render_kw={'readonly': True})
+
+    nestegg = IntegerField(label="Your investable savings", render_kw={'readonly': True})
+    drawdown = IntegerField(label="Expected annual spending in retirement", render_kw={'readonly': True})
+    has_spouse = BooleanField(label='Married', default=True, render_kw={'readonly': True})
+
     submit = SubmitField('Update scenario')
