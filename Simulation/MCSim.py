@@ -136,7 +136,6 @@ def run_simulation(s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_si
             nestegg *= s_invest[i]
         #        print('Final Drawdown = ', drawdown)
         output[experiment] = nestegg  # Record the final nestegg in the output list
-        print(experiment)
     # Sort the output
     output.sort()
 
