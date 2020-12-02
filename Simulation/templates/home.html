@@ -7,8 +7,7 @@
             <div class="article-metadata">
               <small class="text-muted">{{ scenario.date_posted.strftime('%Y-%m-%d') }}</small>
             </div>
-            <h2><a class="article-title" href="{{ url_for('scenarios.scenario', scenario_id=scenario.id) }}">{{ scenario.title }}</a></h2>
-            <p class="article-content">{{ scenario.content }}</p>
+            <h5><a class="article-title" href="{{ url_for('scenarios.scenario', scenario_id=scenario.id) }}">{{ scenario.title }}</a></h5>
           </div>
         </article>
     {% endfor %}
