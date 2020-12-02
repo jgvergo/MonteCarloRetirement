@@ -12,6 +12,302 @@
             <div class="media">
                 <img src="data:image/png;base64, {{ plot_url }}">
             </div>
+            <div class="form-group row">
+                {{ form.has_spouse.label(class="col-md-4 text-right") }}
+                {% if form.has_spouse.errors %}
+                    {{ form.has_spouse(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.has_spouse.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-8">
+                        {{ form.has_spouse(onclick='hasSpouseChanged()') }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                <div class="col-md-4 text-right"><p> </p></div>
+                <div class="col-md-4 text-center"><p>Self</p></div>
+                <div class="col-md-4 text-center"><p>Spouse</p></div>
+            </div>
+            <div class="form-group row">
+                {{ form.birthdate.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.birthdate.errors %}
+                    {{ form.birthdate(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.birthdate.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.birthdate(class="form-control") }}
+                    </div>
+                {% endif %}
+                {% if form.s_birthdate.errors %}
+                    {{ form.s_birthdate(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.s_birthdate.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.s_birthdate(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                {{ form.current_income.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.current_income.errors %}
+                    {{ form.current_income(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.current_income.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.current_income(class="form-control") }}
+                    </div>
+                {% endif %}
+                {% if form.s_current_income.errors %}
+                    {{ form.s_current_income(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.s_current_income.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.s_current_income(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                {{ form.start_ss_date.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.start_ss_date.errors %}
+                    {{ form.start_ss_date(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.start_ss_date.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.start_ss_date(class="form-control") }}
+                    </div>
+                {% endif %}
+                {% if form.s_start_ss_date.errors %}
+                    {{ form.s_start_ss_date(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.s_start_ss_date.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.s_start_ss_date(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                {{ form.full_ss_amount.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.full_ss_amount.errors %}
+                    {{ form.full_ss_amount(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.full_ss_amount.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.full_ss_amount(class="form-control") }}
+                    </div>
+                {% endif %}
+                {% if form.s_full_ss_amount.errors %}
+                    {{ form.s_full_ss_amount(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.s_full_ss_amount.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.s_full_ss_amount(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                {{ form.retirement_age.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.retirement_age.errors %}
+                    {{ form.retirement_age(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.retirement_age.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.retirement_age(class="form-control") }}
+                    </div>
+                {% endif %}
+                {% if form.s_retirement_age.errors %}
+                    {{ form.s_retirement_age(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.s_retirement_age.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.s_retirement_age(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                {{ form.ret_income.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.ret_income.errors %}
+                    {{ form.ret_income(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.ret_income.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.ret_income(class="form-control") }}
+                    </div>
+                {% endif %}
+                {% if form.s_ret_income.errors %}
+                    {{ form.s_ret_income(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.s_ret_income.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.s_ret_income(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                {{ form.ret_job_ret_age.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.ret_job_ret_age.errors %}
+                    {{ form.ret_job_ret_age(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.ret_job_ret_age.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.ret_job_ret_age(class="form-control") }}
+                    </div>
+                {% endif %}
+                {% if form.s_ret_job_ret_age.errors %}
+                    {{ form.s_ret_job_ret_age(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.s_ret_job_ret_age.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.s_ret_job_ret_age(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                {{ form.lifespan_age.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.lifespan_age.errors %}
+                    {{ form.lifespan_age(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.lifespan_age.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.lifespan_age(class="form-control") }}
+                    </div>
+                {% endif %}
+                {% if form.s_lifespan_age.errors %}
+                    {{ form.s_lifespan_age(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.s_lifespan_age.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.s_lifespan_age(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                {{ form.nestegg.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.nestegg.errors %}
+                    {{ form.nestegg(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.nestegg.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.nestegg(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                {{ form.windfall_amount.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.windfall_amount.errors %}
+                    {{ form.windfall_amount(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.windfall_amount.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.windfall_amount(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                {{ form.windfall_age.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.windfall_age.errors %}
+                    {{ form.windfall_age(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.windfall_age.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.windfall_age(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
+                {{ form.drawdown.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.drawdown.errors %}
+                    {{ form.drawdown(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.drawdown.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.drawdown(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
             <div class="form-group">
                 {{ form.submit(class="btn btn-outline-info") }}
             </div>
