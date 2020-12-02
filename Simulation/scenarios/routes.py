@@ -233,10 +233,40 @@ def run_scenario(scenario_id):
         form.drawdown.data = scenario.drawdown
         form.has_spouse.data = scenario.has_spouse
         return redirect(url_for('scenarios.update_scenario', scenario_id=scenario.id))
-#        return render_template('create_scenario.html', form=form)
     else:
+        # Do the simulation
         sd = SimData()
         plot_url = do_sim(sd, scenario)
         form.title.label = scenario.title
+        form.birthdate.data = scenario.birthdate
+        form.s_birthdate.data = scenario.s_birthdate
+
+        form.current_income.data = scenario.current_income
+        form.s_current_income.data = scenario.s_current_income
+
+        form.start_ss_date.data = scenario.start_ss_date
+        form.s_start_ss_date.data = scenario.s_start_ss_date
+
+        form.full_ss_amount.data = scenario.full_ss_amount
+        form.s_full_ss_amount.data = scenario.s_full_ss_amount
+
+        form.retirement_age.data = scenario.retirement_age
+        form.s_retirement_age.data = scenario.s_retirement_age
+
+        form.ret_income.data = scenario.ret_income
+        form.s_ret_income.data = scenario.s_ret_income
+
+        form.ret_job_ret_age.data = scenario.ret_job_ret_age
+        form.s_ret_job_ret_age.data = scenario.s_ret_job_ret_age
+
+        form.lifespan_age.data = scenario.lifespan_age
+        form.s_lifespan_age.data = scenario.s_lifespan_age
+
+        form.windfall_amount.data = scenario.windfall_amount
+        form.windfall_age.data = scenario.windfall_age
+
+        form.nestegg.data = scenario.nestegg
+        form.drawdown.data = scenario.drawdown
+        form.has_spouse.data = scenario.has_spouse
         return render_template('display_sim_result.html', title='Simulated Scenario',
                                form=form, legend='Simulated Scenario', plot_url=plot_url)
