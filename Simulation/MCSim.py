@@ -179,7 +179,7 @@ def plot_output(output,
 
     binsize = (g_max - g_min) / num_sim_bins
     bins = np.arange(g_min, g_max, binsize)
-    plt.figure(figsize=(9, 8))
+    plt.figure(figsize=(8, 7))
 
     plt.xlim(g_min, g_max)
 
@@ -217,29 +217,29 @@ def plot_output(output,
     plt.axvline(avg, color='b', linestyle='dashed', linewidth=1)  # Mean
     plt.text(avg + xlen / 100, ypos - 2 * yinc, 'Average: ${0:,.0f}'.format(avg))
 
-    xpos = xmin + 0.75 * xlen
+    xpos = xmin + 0.5 * xlen
 
-    plt.text(xpos, ypos, 'Assumptions')
-    plt.text(xpos, ypos - yinc, '-----------')
-    plt.text(xpos, ypos - 2 * yinc, 'Spouse1 Ret age: {0:,.0f}'.format(s1_ret_age))
-    plt.text(xpos, ypos - 3 * yinc, 'Spouse1 SS age: {0:,.0f}'.format(s1_ss_age))
-    plt.text(xpos, ypos - 4 * yinc, 'Spouse1 Final ret age: {0:,.0f}'.format(s1_ret_ret_age))
-    plt.text(xpos, ypos - 5 * yinc, 'Spouse1 Lifespan: {0:,.0f}'.format(s1_lifespan))
-    plt.text(xpos, ypos - 6 * yinc, 'Spouse2 Ret age: {0:,.0f}'.format(s2_ret_age))
-    plt.text(xpos, ypos - 7 * yinc, 'Spouse2 SS age: {0:,.0f}'.format(s2_ss_age))
-    plt.text(xpos, ypos - 8 * yinc, 'Spouse2 Final ret age: {0:,.0f}'.format(s2_ret_ret_age))
-    plt.text(xpos, ypos - 9 * yinc, 'Inflation mean: {0:,.4f}'.format(inflation_mean))
-    plt.text(xpos, ypos - 10 * yinc, 'Inflation std dev: {0:,.4f}'.format(inflation_stddev))
-    plt.text(xpos, ypos - 11 * yinc, 'Investment mean: {0:,.4f}'.format(invest_mean))
-    plt.text(xpos, ypos - 12 * yinc, 'Investment std dev: {0:,.4f}'.format(invest_stddev))
-    plt.text(xpos, ypos - 13 * yinc, 'Spend decay mean: {0:,.4f}'.format(spend_decay_mean))
-    plt.text(xpos, ypos - 14 * yinc, 'Spend decay std dev: {0:,.4f}'.format(spend_decay_stddev))
-    plt.text(xpos, ypos - 15 * yinc, 'Windfall amount: {0:,.0f}'.format(windfall_amount))
-    plt.text(xpos, ypos - 17 * yinc, 'Results')
-    plt.text(xpos, ypos - 18 * yinc, '-------')
-    plt.text(xpos, ypos - 19 * yinc,
+
+#    plt.text(xpos, ypos, 'Assumptions')
+#    plt.text(xpos, ypos - yinc, '-----------')
+#    plt.text(xpos, ypos - 2 * yinc, 'Spouse1 Ret age: {0:,.0f}'.format(s1_ret_age))
+#    plt.text(xpos, ypos - 3 * yinc, 'Spouse1 SS age: {0:,.0f}'.format(s1_ss_age))
+#    plt.text(xpos, ypos - 4 * yinc, 'Spouse1 Final ret age: {0:,.0f}'.format(s1_ret_ret_age))
+#    plt.text(xpos, ypos - 5 * yinc, 'Spouse1 Lifespan: {0:,.0f}'.format(s1_lifespan))
+#    plt.text(xpos, ypos - 6 * yinc, 'Spouse2 Ret age: {0:,.0f}'.format(s2_ret_age))
+#    plt.text(xpos, ypos - 7 * yinc, 'Spouse2 SS age: {0:,.0f}'.format(s2_ss_age))
+#    plt.text(xpos, ypos - 8 * yinc, 'Spouse2 Final ret age: {0:,.0f}'.format(s2_ret_ret_age))
+#    plt.text(xpos, ypos - 9 * yinc, 'Inflation mean: {0:,.4f}'.format(inflation_mean))
+#    plt.text(xpos, ypos - 10 * yinc, 'Inflation std dev: {0:,.4f}'.format(inflation_stddev))
+#    plt.text(xpos, ypos - 11 * yinc, 'Investment mean: {0:,.4f}'.format(invest_mean))
+#    plt.text(xpos, ypos - 12 * yinc, 'Investment std dev: {0:,.4f}'.format(invest_stddev))
+#    plt.text(xpos, ypos - 13 * yinc, 'Spend decay mean: {0:,.4f}'.format(spend_decay_mean))
+#    plt.text(xpos, ypos - 14 * yinc, 'Spend decay std dev: {0:,.4f}'.format(spend_decay_stddev))
+#    plt.text(xpos, ypos - 15 * yinc, 'Windfall amount: {0:,.0f}'.format(windfall_amount))
+
+
+    plt.text(xpos, ypos - 10 * yinc,
              'Percentage over 0: {0:,.2f}%'.format(100 * (sum(i >= 0 for i in output) / len(output))))
-    plt.text(xpos, ypos - 20 * yinc, 'Minimum: {0:,.2f}%'.format(min(output)))
 
     plt.savefig(img, format='png')
     img.seek(0)
