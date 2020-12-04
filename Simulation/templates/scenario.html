@@ -1,20 +1,18 @@
 {% extends "layout.html" %}
 {% block content %}
   <article class="media content-section">
-    <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + scenario.author.image_file) }}">
     <div class="media-body">
       <div class="article-metadata">
-        <a class="mr-2" href="{{ url_for('users.user_scenarios', username=scenario.author.username) }}">{{ scenario.author.username }}</a>
+        <h2 class="article-title">{{ scenario.title }}</h2>
         <small class="text-muted">{{ scenario.date_posted.strftime('%Y-%m-%d') }}</small>
         {% if scenario.author == current_user %}
           <div>
             <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('scenarios.run_scenario', scenario_id=scenario.id) }}">Run Simulation</a>
-            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('scenarios.update_scenario', scenario_id=scenario.id) }}">Update</a>
-            <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('scenarios.update_scenario', scenario_id=scenario.id) }}">Update scenario</a>
+            <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete scenario</button>
           </div>
         {% endif %}
       </div>
-      <h2 class="article-title">{{ scenario.title }}</h2>
     </div>
   </article>
   <!-- Modal -->
