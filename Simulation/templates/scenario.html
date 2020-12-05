@@ -4,7 +4,7 @@
     <div class="media-body">
       <div class="article-metadata">
         <h2 class="article-title">{{ scenario.title }}</h2>
-        <small class="text-muted">{{ scenario.date_posted.strftime('%Y-%m-%d') }}</small>
+        <small class="text-muted">Created on {{ scenario.date_posted.strftime('%Y-%m-%d') }}</small>
         {% if scenario.author == current_user %}
           <div>
             <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('scenarios.run_scenario', scenario_id=scenario.id) }}">Run Simulation</a>

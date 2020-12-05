@@ -88,8 +88,8 @@ class Scenario(db.Model):
     start_ss_date = db.Column(db.Date, nullable=False)
     s_start_ss_date = db.Column(db.Date, nullable=True)
 
-    full_ss_amount = db.Column(db.Integer, nullable=False)
-    s_full_ss_amount = db.Column(db.Integer, nullable=True)
+    ss_amount = db.Column(db.Integer, nullable=False)
+    s_ss_amount = db.Column(db.Integer, nullable=True)
 
     retirement_age = db.Column(db.Integer, nullable=False)
     s_retirement_age = db.Column(db.Integer, nullable=True)
@@ -124,8 +124,8 @@ class Scenario(db.Model):
 
 # These data are kept in an object for convenience. They typically don't change
 class SimData:
-    num_exp = 5000
-    num_sim_bins = 200
+    num_exp = 10000
+    num_sim_bins = 100
     cola = 1.02
     inflation = [1.027, 0.011]
     asset_classes = []

@@ -31,8 +31,8 @@ def new_scenario():
         scenario.start_ss_date = form.start_ss_date.data
         scenario.s_start_ss_date = form.s_start_ss_date.data
 
-        scenario.full_ss_amount = form.full_ss_amount.data
-        scenario.s_full_ss_amount = form.s_full_ss_amount.data
+        scenario.ss_amount = form.full_ss_amount.data
+        scenario.s_ss_amount = form.s_full_ss_amount.data
 
         scenario.retirement_age = form.retirement_age.data
         scenario.s_retirement_age = form.s_retirement_age.data
@@ -100,8 +100,8 @@ def update_scenario(scenario_id):
         scenario.start_ss_date = form.start_ss_date.data
         scenario.s_start_ss_date = form.s_start_ss_date.data
 
-        scenario.full_ss_amount = form.full_ss_amount.data
-        scenario.s_full_ss_amount = form.s_full_ss_amount.data
+        scenario.ss_amount = form.full_ss_amount.data
+        scenario.s_ss_amount = form.s_full_ss_amount.data
 
         scenario.retirement_age = form.retirement_age.data
         scenario.s_retirement_age = form.s_retirement_age.data
@@ -150,8 +150,8 @@ def update_scenario(scenario_id):
         form.start_ss_date.data = scenario.start_ss_date
         form.s_start_ss_date.data = scenario.s_start_ss_date
 
-        form.full_ss_amount.data = scenario.full_ss_amount
-        form.s_full_ss_amount.data = scenario.s_full_ss_amount
+        form.full_ss_amount.data = scenario.ss_amount
+        form.s_full_ss_amount.data = scenario.s_ss_amount
 
         form.retirement_age.data = scenario.retirement_age
         form.s_retirement_age.data = scenario.s_retirement_age
@@ -211,8 +211,8 @@ def run_scenario(scenario_id):
         form.start_ss_date.data = scenario.start_ss_date
         form.s_start_ss_date.data = scenario.s_start_ss_date
 
-        form.full_ss_amount.data = scenario.full_ss_amount
-        form.s_full_ss_amount.data = scenario.s_full_ss_amount
+        form.full_ss_amount.data = scenario.ss_amount
+        form.s_full_ss_amount.data = scenario.s_ss_amount
 
         form.retirement_age.data = scenario.retirement_age
         form.s_retirement_age.data = scenario.s_retirement_age
@@ -247,8 +247,8 @@ def run_scenario(scenario_id):
         form.start_ss_date.data = scenario.start_ss_date
         form.s_start_ss_date.data = scenario.s_start_ss_date
 
-        form.full_ss_amount.data = scenario.full_ss_amount
-        form.s_full_ss_amount.data = scenario.s_full_ss_amount
+        form.full_ss_amount.data = scenario.ss_amount
+        form.s_full_ss_amount.data = scenario.s_ss_amount
 
         form.retirement_age.data = scenario.retirement_age
         form.s_retirement_age.data = scenario.s_retirement_age

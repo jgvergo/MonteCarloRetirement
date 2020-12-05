@@ -32,8 +32,8 @@ If you did not make this request then simply ignore this email and no changes wi
     mail.send(msg)
 
 # Calculate age in years given two dates
-def calculate_age(today, born):
-    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+def calculate_age(date1, date2):
+    return date1.year - date2.year - ((date1.month, date1.day) < (date2.month, date2.day))
 
 def calculate_full_ss_date(birthday):
     if birthday.year <= 1937:

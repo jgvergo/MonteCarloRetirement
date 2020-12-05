@@ -22,7 +22,7 @@ class ScenarioForm(FlaskForm):
     s_start_ss_date = DateField(label='Date your spouse will take Social Security(MM-DD-YYYY)',
                                 format='%m-%d-%Y')
 
-    full_ss_amount = IntegerField(label='Full SS amount',
+    full_ss_amount = IntegerField(label='SS amount',
                                   validators=[InputRequired(message='Required(can be 0)')])
     s_full_ss_amount = IntegerField(label="Spouse's full SS amount")
 
@@ -82,7 +82,7 @@ class DisplaySimResultForm(FlaskForm):
     s_start_ss_date = DateField(label='Date your spouse will take Social Security(MM-DD-YYYY)',
                                 format='%m-%d-%Y', render_kw={'readonly': True})
 
-    full_ss_amount = IntegerField(label='Full SS amount',
+    full_ss_amount = IntegerField(label='SS amount',
                                   render_kw={'readonly': True})
     s_full_ss_amount = IntegerField(label="Spouse's full SS amount", render_kw={'readonly': True})
 

@@ -9,12 +9,12 @@ import base64
 mpl.use('Agg')
 
 
-def do_sim(sd, scenario) -> plt.figure():
+def do_sim(sim_data, scenario) -> plt.figure():
     plt.style.use('ggplot')
 
-    # Number of years to simulate (e.g. "until Spouse1 is 95 years old")
+    # Number of years to simulate
     n_yrs = max(scenario.lifespan_age - scenario.current_age, scenario.s_lifespan_age - scenario.s_current_age)
-    output = [0 for i in range(sd.num_exp)]
+    output = [0 for i in range(sim_data.num_exp)]
 
     # Create a dataframe that will hold the result of a single simulation
     df = createresultdf(1)
@@ -24,40 +24,29 @@ def do_sim(sd, scenario) -> plt.figure():
                   [(1.09391 + 1.03) / 2, 0.197028 / 2],
                   [1.04, 0.01]]
     # Run the simulation with the configuration based on the UI
-    run_simulation(
-        scenario.retirement_age,
-        scenario.s_retirement_age,
-        scenario.ret_job_ret_age,
-        scenario.s_ret_job_ret_age,
-        calculate_age(scenario.start_ss_date, scenario.birthdate),
-        calculate_age(scenario.s_start_ss_date, scenario.s_birthdate),
-        sd.inflation,
-        investment[1],
-        sd.spend_decay,
-        n_yrs,
-        sd.num_exp,
-        output,
-        df,
-        scenario.lifespan_age,
-        scenario, sd)
+    run_simulation(scenario, sim_data, investment[1], n_yrs, output, df)
 
-    return plot_output(df.SimOutput[0], sd.num_sim_bins)
+    return plot_output(df.SimOutput[0], sim_data.num_sim_bins)
 
 
-def run_simulation(s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_sim,
-                   inf_sim, inv_sim, spend_decay_sim, n_yrs_sim, num_exp, output, df, ls_sim, scenario, sd):
+def run_simulation(scenario, sim_data, inv_sim, n_yrs_sim, output, df):
+
+    # Calculate the age at which each spouse will take social security
+    s1ssa_sim = calculate_age(scenario.start_ss_date, scenario.birthdate)
+    s2ssa_sim = calculate_age(scenario.s_start_ss_date, scenario.s_birthdate)
 
     # Run the experiments
-    for experiment in range(num_exp):
+    for experiment in range(sim_data.num_exp):
         # These variables need to be re-initialized before every experiment
         s1_age = scenario.current_age
         s2_age = scenario.s_current_age
-        if s1_age >= s1ra_sim:
+
+        if s1_age >= scenario.retirement_age:
             s1_income = scenario.ret_income
         else:
             s1_income = scenario.current_income
 
-        if s2_age >= s2ra_sim:
+        if s2_age >= scenario.s_retirement_age:
             s2_income = scenario.s_ret_income
         else:
             s2_income = scenario.s_current_income
@@ -73,10 +62,10 @@ def run_simulation(s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_si
         s_invest = sim(inv_sim[0], inv_sim[1], n_yrs_sim)
 
         # Generate a random sequence of annual inflation rates using a normal distribution
-        s_inflation = sim(inf_sim[0], inf_sim[1], n_yrs_sim)
+        s_inflation = sim(sim_data.inflation[0], sim_data.inflation[1], n_yrs_sim)
 
         # Generate a random sequence of annual spend decay
-        s_spend_decay = sim(spend_decay_sim[0], spend_decay_sim[1], n_yrs_sim)
+        s_spend_decay = sim(sim_data.spend_decay[0], sim_data.spend_decay[1], n_yrs_sim)
 
         for i in range(n_yrs_sim):
             s1_age += 1
@@ -87,21 +76,21 @@ def run_simulation(s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_si
             drawdown *= s_inflation[i]
             drawdown *= (1.0 - s_spend_decay[i])
 
-            if s1_age == s1ra_sim:
+            if s1_age == scenario.retirement_age:
                 s1_income = scenario.ret_income
 
             # At retirement, switch income to be Linda's second job income
-            if s2_age == s2ra_sim:
+            if s2_age == scenario.s_retirement_age:
                 s2_income = scenario.s_ret_income
 
             # Increase income based on inflation. When final ret age is reached, set income to zero
-            if s1_age <= s1rra_sim:
+            if s1_age <= scenario.ret_job_ret_age:
                 s1_income = s1_income * s_inflation[i]
             else:
                 s1_income = 0
 
             # Same for Linda
-            if s2_age <= s2rra_sim:
+            if s2_age <= scenario.s_ret_job_ret_age:
                 s2_income = s2_income * s_inflation[i]
             else:
                 s2_income = 0
@@ -112,10 +101,10 @@ def run_simulation(s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_si
 
             # Add SS to the nestegg
             if s1_age >= s1ssa_sim:
-                s1ss = scenario.ss_amount * (sd.cola ** i)
+                s1ss = scenario.ss_amount * (sim_data.cola ** i)
 
             if s2_age >= s2ssa_sim:
-                s2ss = scenario.s_ss_amount * (sd.cola ** i)
+                s2ss = scenario.s_ss_amount * (sim_data.cola ** i)
 
             # Add the income to the nestegg
             nestegg += (s1_income + s2_income + s1ss + s2ss)
@@ -137,9 +126,12 @@ def run_simulation(s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_si
     p0 = 100 * (sum(i > 0 for i in output) / len(output))
 
     # Save the results in a dataframe
-    df.iloc[0] = [s1ra_sim, s2ra_sim, s1rra_sim, s2rra_sim, s1ssa_sim, s2ssa_sim, ls_sim,
-                        inf_sim[0], inf_sim[1], inv_sim[0], inv_sim[1], spend_decay_sim[0], spend_decay_sim[1],
-                        p0, median, avg, o_min, o_max, output]
+    df.iloc[0] = [scenario.retirement_age, scenario.s_retirement_age,
+                  scenario.ret_job_ret_age, scenario.s_ret_job_ret_age,
+                  s1ssa_sim, s2ssa_sim,
+                  sim_data.inflation[0], sim_data.inflation[1], inv_sim[0], inv_sim[1],
+                  sim_data.spend_decay[0], sim_data.spend_decay[1],
+                  p0, median, avg, o_min, o_max, output]
     return
 
 
@@ -195,25 +187,6 @@ def plot_output(output, num_sim_bins):
 
     xpos = xmin + 0.5 * xlen
 
-
-#    plt.text(xpos, ypos, 'Assumptions')
-#    plt.text(xpos, ypos - yinc, '-----------')
-#    plt.text(xpos, ypos - 2 * yinc, 'Spouse1 Ret age: {0:,.0f}'.format(s1_ret_age))
-#    plt.text(xpos, ypos - 3 * yinc, 'Spouse1 SS age: {0:,.0f}'.format(s1_ss_age))
-#    plt.text(xpos, ypos - 4 * yinc, 'Spouse1 Final ret age: {0:,.0f}'.format(s1_ret_ret_age))
-#    plt.text(xpos, ypos - 5 * yinc, 'Spouse1 Lifespan: {0:,.0f}'.format(s1_lifespan))
-#    plt.text(xpos, ypos - 6 * yinc, 'Spouse2 Ret age: {0:,.0f}'.format(s2_ret_age))
-#    plt.text(xpos, ypos - 7 * yinc, 'Spouse2 SS age: {0:,.0f}'.format(s2_ss_age))
-#    plt.text(xpos, ypos - 8 * yinc, 'Spouse2 Final ret age: {0:,.0f}'.format(s2_ret_ret_age))
-#    plt.text(xpos, ypos - 9 * yinc, 'Inflation mean: {0:,.4f}'.format(inflation_mean))
-#    plt.text(xpos, ypos - 10 * yinc, 'Inflation std dev: {0:,.4f}'.format(inflation_stddev))
-#    plt.text(xpos, ypos - 11 * yinc, 'Investment mean: {0:,.4f}'.format(invest_mean))
-#    plt.text(xpos, ypos - 12 * yinc, 'Investment std dev: {0:,.4f}'.format(invest_stddev))
-#    plt.text(xpos, ypos - 13 * yinc, 'Spend decay mean: {0:,.4f}'.format(spend_decay_mean))
-#    plt.text(xpos, ypos - 14 * yinc, 'Spend decay std dev: {0:,.4f}'.format(spend_decay_stddev))
-#    plt.text(xpos, ypos - 15 * yinc, 'Windfall amount: {0:,.0f}'.format(windfall_amount))
-
-
     plt.text(xpos, ypos - 10 * yinc,
              'Percentage over 0: {0:,.2f}%'.format(100 * (sum(i >= 0 for i in output) / len(output))))
 
@@ -227,7 +200,7 @@ def plot_output(output, num_sim_bins):
 def createresultdf(num_combos):
     # Create the dataframe that will hold the complete set of simulation results
     cols = ['s1RetAge', 's2RetAge', 's1RetRetAge', 's2RetRetAge', 's1SSAge', 's2SSAge',
-            's1Lifespan', 'InflationMean', 'InflationStd', 'InvestmentMean', 'InvestmentStd', 'SpendDecayMean',
+            'InflationMean', 'InflationStd', 'InvestmentMean', 'InvestmentStd', 'SpendDecayMean',
             'SpendDecayStd',
             'PercentOver0', 'Median', 'Average', 'Min', 'Max', 'SimOutput']
     df = pd.DataFrame(columns=cols, index=np.arange(0, num_combos))
