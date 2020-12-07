@@ -1,35 +1,36 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import pandas as pd
 import numpy as np
 from Simulation.users.utils import calculate_age
 import io
 import base64
+from itertools import chain
+
 
 mpl.use('Agg')
+plt.style.use('ggplot')
 
 
 def do_sim(sim_data, scenario) -> plt.figure():
-    plt.style.use('ggplot')
 
     # Number of years to simulate
     n_yrs = max(scenario.lifespan_age - scenario.current_age, scenario.s_lifespan_age - scenario.s_current_age)
-    output = [0 for i in range(sim_data.num_exp)]
 
-    # Create a dataframe that will hold the result of a single simulation
-    df = createresultdf(1)
+    # output is an numpy.ndarray which holds the simulation results
+    # [year][experiment]output
+    output = np.zeros((n_yrs, sim_data.num_exp))
 
     # Provide this temporarily. Need to support "Asset classes" in the future
     investment = [[1.09391, 0.197028],
                   [(1.09391 + 1.03) / 2, 0.197028 / 2],
                   [1.04, 0.01]]
     # Run the simulation with the configuration based on the UI
-    run_simulation(scenario, sim_data, investment[1], n_yrs, output, df)
+    run_simulation(scenario, sim_data, investment[1], n_yrs, output)
 
-    return plot_output(df.SimOutput[0], sim_data.num_sim_bins)
+    return plot_output(output, sim_data.num_sim_bins)
 
 
-def run_simulation(scenario, sim_data, inv_sim, n_yrs_sim, output, df):
+def run_simulation(scenario, sim_data, inv_sim, n_yrs_sim, output):
 
     # Calculate the age at which each spouse will take social security
     s1ssa_sim = calculate_age(scenario.start_ss_date, scenario.birthdate)
@@ -67,14 +68,14 @@ def run_simulation(scenario, sim_data, inv_sim, n_yrs_sim, output, df):
         # Generate a random sequence of annual spend decay
         s_spend_decay = sim(sim_data.spend_decay[0], sim_data.spend_decay[1], n_yrs_sim)
 
-        for i in range(n_yrs_sim):
+        for year in range(n_yrs_sim):
             s1_age += 1
             s2_age += 1
 
             # Spend the nestegg
             nestegg -= drawdown
-            drawdown *= s_inflation[i]
-            drawdown *= (1.0 - s_spend_decay[i])
+            drawdown *= s_inflation[year]
+            drawdown *= (1.0 - s_spend_decay[year])
 
             if s1_age == scenario.retirement_age:
                 s1_income = scenario.ret_income
@@ -85,13 +86,13 @@ def run_simulation(scenario, sim_data, inv_sim, n_yrs_sim, output, df):
 
             # Increase income based on inflation. When final ret age is reached, set income to zero
             if s1_age <= scenario.ret_job_ret_age:
-                s1_income = s1_income * s_inflation[i]
+                s1_income = s1_income * s_inflation[year]
             else:
                 s1_income = 0
 
             # Same for Linda
             if s2_age <= scenario.s_ret_job_ret_age:
-                s2_income = s2_income * s_inflation[i]
+                s2_income = s2_income * s_inflation[year]
             else:
                 s2_income = 0
 
@@ -101,110 +102,136 @@ def run_simulation(scenario, sim_data, inv_sim, n_yrs_sim, output, df):
 
             # Add SS to the nestegg
             if s1_age >= s1ssa_sim:
-                s1ss = scenario.ss_amount * (sim_data.cola ** i)
+                s1ss = scenario.ss_amount * (sim_data.cola ** year)
 
             if s2_age >= s2ssa_sim:
-                s2ss = scenario.s_ss_amount * (sim_data.cola ** i)
+                s2ss = scenario.s_ss_amount * (sim_data.cola ** year)
 
             # Add the income to the nestegg
             nestegg += (s1_income + s2_income + s1ss + s2ss)
 
             # Grow the nestegg
-            nestegg *= s_invest[i]
-
-        output[experiment] = nestegg  # Record the final nestegg in the output list
-    # Sort the output
-    output.sort()
-
-    # Calculate the key statistics
-    o_max = max(output)
-    o_min = min(output)
-    avg = sum(output) / len(output)
-    median = output[int(len(output) / 2)]
-
-    # p0 is the percent of the experiments that resulted in a final value > 0
-    p0 = 100 * (sum(i > 0 for i in output) / len(output))
-
-    # Save the results in a dataframe
-    df.iloc[0] = [scenario.retirement_age, scenario.s_retirement_age,
-                  scenario.ret_job_ret_age, scenario.s_ret_job_ret_age,
-                  s1ssa_sim, s2ssa_sim,
-                  sim_data.inflation[0], sim_data.inflation[1], inv_sim[0], inv_sim[1],
-                  sim_data.spend_decay[0], sim_data.spend_decay[1],
-                  p0, median, avg, o_min, o_max, output]
+            nestegg *= s_invest[year]
+            output[year][experiment] = nestegg  # Record the final nestegg in the output list
     return
 
 
 def plot_output(output, num_sim_bins):
     img = io.BytesIO()
-    output.sort()
+    for i in range(output.shape[0]):
+        output[i].sort()
 
-    # Don't display the bottom or top 2% because they are part of a "long tail" and mess up the visuals; Leave min at 0
-    min_index = int(0.0 * len(output))
-    max_index = int(0.98 * len(output)) - 1
+    # This is the year we will plot - TEMPORARY
+    years = output.shape[0]
+    num_exp = output.shape[1]
 
-    g_min = output[min_index]  # This is the min that we will graph
-    g_max = output[max_index]  # This is the max that we will graph
+    n_graphs = int(years/5) + 3
 
-    binsize = (g_max - g_min) / num_sim_bins
-    bins = np.arange(g_min, g_max, binsize)
-    plt.figure(figsize=(8, 7))
+    # Don't display the top 2% because they are part of a "long tail" and mess up the visuals; Leave min at 0
+    min_index = 0
+    max_index = int(0.98 * num_exp) - 1
+    plt.figure(figsize=(8, 6.5*n_graphs))
+    plt.subplots(n_graphs, 1, figsize=(8, 50))
 
-    plt.xlim(g_min, g_max)
+    # concatenated range will be 0, 10, 20 and then include the last year of simulation
+    concatenated_range = chain(range(0, years, 5), range(years-1, years))
+    fig_num=1
+    for year in concatenated_range:
+        plt.subplot(n_graphs, 1, fig_num)
+        fig_num += 1
+        g_min = output[year][min_index]  # This is the min that we will graph
+        g_max = output[year][max_index]  # This is the max that we will graph
+
+        binsize = (g_max - g_min) / num_sim_bins
+        bins = np.arange(g_min, g_max, binsize)
+
+        plt.xlim(g_min, g_max)
+
+        # Format the x axis so it shows normal number format with commas (not scientific notation)
+        ax = plt.gca()
+
+        ax.get_xaxis().set_major_formatter(
+            mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        ax.get_xaxis().set_major_locator(plt.MaxNLocator(5))
+
+        plt.xlabel('Final portfolio value')
+        plt.ylabel('Experiment count')
+
+        n, arr, patches = plt.hist(output[year], bins=bins)
+
+
+        ax.set_title('Year {year:.0f}'.format(year=year+1))
+
+        ypos = n[np.argmax(n)] + 2  # Y position of the bin with the maximum count
+
+        # These are the logical coordinates of the graph
+        xmin = output[year][min_index]
+        xmax = output[year][max_index]
+        xlen = xmax - xmin
+
+        yinc = ypos / 31  # Determined empirically, based on font and graph size
+
+        # Put a line for the mode and label it
+        mode = arr[np.argmax(n)]
+        plt.axvline(mode + binsize / 2, color='k', linestyle='solid', linewidth=1)  # Mode
+        plt.text(mode + xlen / 50, ypos, 'Mode: ${0:,.0f}'.format(mode), color='k')
+
+        # Put a line for the median and label it
+        med = output[year][int(num_exp/2)]
+        plt.axvline(med + binsize / 2, color='g', linestyle='solid', linewidth=1)
+        plt.text(med + xlen / 50, ypos - yinc, 'Median: ${0:,.0f}'.format(med), color='g')
+
+        # Put a line for the average and label it
+        avg = sum(output[year]) / num_exp
+        plt.axvline(avg + binsize / 2, color='b', linestyle='solid', linewidth=1)  # Mean
+        plt.text(avg + xlen / 50, ypos - 2 * yinc, 'Average: ${0:,.0f}'.format(avg), color='b')
+
+        xpos = xmin + 0.5 * xlen
+
+        plt.text(xpos, ypos - 10 * yinc,
+                 'Percentage over 0: {0:,.2f}%'.format(100 * (sum(i >= 0 for i in output[year]) / num_exp)))
+
+    two_pct = output[:, int(0.02*num_exp)]
+    ten_pct = output[:, int(0.1*num_exp)]
+    t5_pct = output[:, int(0.25 * num_exp)]
+    fif_pct = output[:, int(0.5 * num_exp)]
+    s5_pct = output[:, int(0.75 * num_exp)]
+    nt_pct = output[:, int(0.9 * num_exp)]
+    n8_pct = output[:, int(0.98 * num_exp)]
+
+    plt.subplot(n_graphs, 1, fig_num)
+    g_max = n8_pct[years-1]  # This is the max that we will graph
+
+    plt.xlim(1, years)
+    plt.ylim(0, g_max+3000000)
 
     # Format the x axis so it shows normal number format with commas (not scientific notation)
     ax = plt.gca()
     ax.get_xaxis().set_major_formatter(
         mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
-    n, arr, patches = plt.hist(output, bins=bins)
-    plt.xlabel('Final value')
-    plt.ylabel('count')
+    ax.get_yaxis().set_major_formatter(
+        mpl.ticker.FuncFormatter(lambda y, p: format(int(y/1000000), ',')))
 
-    ypos = n[np.argmax(n)] + 2  # Y position of the bin with the maximum count
+    plt.plot(two_pct, marker='o', markerfacecolor='blue', markersize=3, color='blue', linewidth=2)
+    plt.plot(ten_pct, marker='o', markerfacecolor='blue', markersize=3, color='blue', linewidth=2)
+    plt.plot(t5_pct, marker='o', markerfacecolor='blue', markersize=3, color='blue', linewidth=2)
+    plt.plot(fif_pct, marker='o', markerfacecolor='blue', markersize=3, color='blue', linewidth=2)
+    plt.plot(s5_pct, marker='o', markerfacecolor='blue', markersize=3, color='blue', linewidth=2)
+    plt.plot(nt_pct, marker='o', markerfacecolor='blue', markersize=3, color='blue', linewidth=2)
+    plt.plot(n8_pct, marker='o', markerfacecolor='blue', markersize=3, color='blue', linewidth=2)
 
-    # These are the logical coordinates of the graph
-    xmin = output[min_index]
-    xmax = output[max_index]
-    xlen = xmax - xmin
+    plt.legend()
 
-    yinc = ypos / 31  # Determined empirically, based on font and graph size
+    plt.xlabel('Year')
+    plt.ylabel('Portfolio value($M)')
 
-    # Put a line for the mode and label it
-    mode = arr[np.argmax(n)]
-    plt.axvline(mode + binsize / 2, color='k', linestyle='solid', linewidth=1)  # Mode
-    plt.text(mode + xlen / 50, ypos, 'Mode: ${0:,.0f}'.format(mode), color='k')
-
-    # Put a line for the median and label it
-    med = output[int(len(output) / 2)]
-    plt.axvline(med + binsize / 2, color='g', linestyle='solid', linewidth=1)
-    plt.text(med + xlen / 50, ypos - yinc, 'Median: ${0:,.0f}'.format(med), color='g')
-
-    # Put a line for the average and label it
-    avg = sum(output) / len(output)
-    plt.axvline(avg + binsize / 2, color='b', linestyle='solid', linewidth=1)  # Mean
-    plt.text(avg + xlen / 50, ypos - 2 * yinc, 'Average: ${0:,.0f}'.format(avg), color='b')
-
-    xpos = xmin + 0.5 * xlen
-
-    plt.text(xpos, ypos - 10 * yinc,
-             'Percentage over 0: {0:,.2f}%'.format(100 * (sum(i >= 0 for i in output) / len(output))))
+    ax.set_title('Percentiles: 2/10/25/50/75/90/98')
 
     plt.savefig(img, format='png')
     img.seek(0)
     plot_url = base64.b64encode(img.getvalue()).decode()
     return plot_url
-
-
-# This function is called by the RetirementFrontEnd notebook in addition to this notebook
-def createresultdf(num_combos):
-    # Create the dataframe that will hold the complete set of simulation results
-    cols = ['s1RetAge', 's2RetAge', 's1RetRetAge', 's2RetRetAge', 's1SSAge', 's2SSAge',
-            'InflationMean', 'InflationStd', 'InvestmentMean', 'InvestmentStd', 'SpendDecayMean',
-            'SpendDecayStd',
-            'PercentOver0', 'Median', 'Average', 'Min', 'Max', 'SimOutput']
-    df = pd.DataFrame(columns=cols, index=np.arange(0, num_combos))
-    return df
 
 
 # Returns a random sequence of numbers of length num that are randomly drawn from the specified normal distribution
