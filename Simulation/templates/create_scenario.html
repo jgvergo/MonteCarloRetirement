@@ -94,6 +94,33 @@
                 {% endif %}
             </div>
             <div class="form-group row">
+                {{ form.savings_rate.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.savings_rate.errors %}
+                    {{ form.savings_rate(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.savings_rate.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.savings_rate(class="form-control") }}
+                    </div>
+                {% endif %}
+                {% if form.s_savings_rate.errors %}
+                    {{ form.s_savings_rate(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.s_savings_rate.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-4">
+                        {{ form.s_savings_rate(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group row">
                 {{ form.start_ss_date.label(class="col-md-4 col-form-label text-right") }}
                 {% if form.start_ss_date.errors %}
                     {{ form.start_ss_date(class="form-control form-control-md is-invalid") }}
@@ -327,6 +354,7 @@
       {
         var sb = document.getElementById('s_birthdate');
         var sci = document.getElementById('s_current_income');
+        var ssr = document.getElementById('s_savings_rate');
         var sssd = document.getElementById('s_start_ss_date');
         var sfsa = document.getElementById('s_full_ss_amount');
         var sra = document.getElementById('s_retirement_age');
@@ -337,6 +365,7 @@
         {
           sb.style.display = 'block';
           sci.style.display = 'block';
+          ssr.style.display = 'block';
           sssd.style.display = 'block';
           sfsa.style.display = 'block';
           sra.style.display = 'block';
@@ -348,6 +377,7 @@
         {
           sb.style.display = 'none';
           sci.style.display = 'none';
+          ssr.style.display = 'none';
           sssd.style.display = 'none';
           sfsa.style.display = 'none';
           sra.style.display = 'none';
