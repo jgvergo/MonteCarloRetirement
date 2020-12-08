@@ -97,6 +97,9 @@ def update_scenario(scenario_id):
         scenario.current_income = form.current_income.data
         scenario.s_current_income = form.s_current_income.data
 
+        scenario.savings_rate = form.savings_rate.data
+        scenario.s_savings_rate = form.s_savings_rate.data
+
         scenario.start_ss_date = form.start_ss_date.data
         scenario.s_start_ss_date = form.s_start_ss_date.data
 
@@ -146,6 +149,9 @@ def update_scenario(scenario_id):
 
         form.current_income.data = scenario.current_income
         form.s_current_income.data = scenario.s_current_income
+
+        form.savings_rate.data = scenario.savings_rate
+        form.s_savings_rate.data = scenario.s_savings_rate
 
         form.start_ss_date.data = scenario.start_ss_date
         form.s_start_ss_date.data = scenario.s_start_ss_date
@@ -208,6 +214,9 @@ def run_scenario(scenario_id):
         form.current_income.data = scenario.current_income
         form.s_current_income.data = scenario.s_current_income
 
+        form.savings_rate.data = scenario.savings_rate
+        form.s_savings_rate.data = scenario.s_savings_rate
+
         form.start_ss_date.data = scenario.start_ss_date
         form.s_start_ss_date.data = scenario.s_start_ss_date
 
@@ -243,6 +252,9 @@ def run_scenario(scenario_id):
 
         form.current_income.data = scenario.current_income
         form.s_current_income.data = scenario.s_current_income
+
+        form.savings_rate.data = scenario.savings_rate
+        form.s_savings_rate.data = scenario.s_savings_rate
 
         form.start_ss_date.data = scenario.start_ss_date
         form.s_start_ss_date.data = scenario.s_start_ss_date
