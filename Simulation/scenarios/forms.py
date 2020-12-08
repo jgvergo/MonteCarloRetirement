@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, BooleanField, IntegerField, DateField
+from wtforms import StringField, SubmitField, BooleanField, IntegerField, DateField, DecimalField
 from wtforms.validators import InputRequired, NumberRange
 from flask_wtf.file import FileField, FileAllowed
 
@@ -15,6 +15,10 @@ class ScenarioForm(FlaskForm):
     current_income = IntegerField(label='Current income',
                                   validators=[InputRequired(message='Required(can be 0)')])
     s_current_income = IntegerField(label="Spouse's current income")
+
+    savings_rate = DecimalField(label='Savings rate',
+                                  validators=[InputRequired(message='Required(can be 0)')])
+    s_savings_rate = DecimalField(label="Spouse's spouse's savings rate")
 
     start_ss_date = DateField(label='Date you will take Social Security (MM-DD-YYYY)',
                               format='%m-%d-%Y',
@@ -75,6 +79,10 @@ class DisplaySimResultForm(FlaskForm):
     current_income = IntegerField(label='Current income',
                                   render_kw={'readonly': True})
     s_current_income = IntegerField(label="Spouse's current income", render_kw={'readonly': True})
+
+    savings_rate = DecimalField(label='Savings rate', render_kw={'readonly': True})
+
+    s_savings_rate = DecimalField(label="Spouse's spouse's savings rate", render_kw={'readonly': True})
 
     start_ss_date = DateField(label='Date you will take Social Security (MM-DD-YYYY)',
                               format='%m-%d-%Y',
