@@ -2,6 +2,7 @@ from flask import render_template, url_for, flash, redirect, request, abort, Blu
 from flask_login import current_user, login_required
 from Simulation import db
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm
+from Simulation.asset_classes.forms import populateInvestmentDropdown, getInvestmentDataFromSelectField
 from Simulation.models import Scenario
 from Simulation.users.utils import calculate_age, calculate_full_ss_date
 from Simulation.MCSim import do_sim
@@ -14,8 +15,12 @@ scenarios = Blueprint('scenarios', __name__)
 
 @scenarios.route("/scenario/new", methods=['GET', 'POST'])
 @login_required
-def new_scenario():
+def new_scenario(titles=None):
+    # User has clicked on "New Scenario" or has clicked "Save" after filling out a blank form or has clicked "Save and
+    # Run" after filling out a blank form
     form = ScenarioForm()
+    populateInvestmentDropdown(form.investment)
+
     if form.validate_on_submit():
         scenario = Scenario()
         scenario.user_id = current_user.id
@@ -27,6 +32,9 @@ def new_scenario():
 
         scenario.current_income = form.current_income.data
         scenario.s_current_income = form.s_current_income.data
+
+        scenario.savings_rate = form.savings_rate.data
+        scenario.s_savings_rate = form.s_savings_rate.data
 
         scenario.start_ss_date = form.start_ss_date.data
         scenario.s_start_ss_date = form.s_start_ss_date.data
@@ -61,6 +69,9 @@ def new_scenario():
         scenario.current_age = calculate_age(date.today(), form.birthdate.data)
         scenario.full_ss_date = calculate_full_ss_date(scenario.birthdate)
 
+        ac_index, asset_class = getInvestmentDataFromSelectField(form.investment)
+        scenario.ac_index = ac_index
+
         db.session.add(scenario)
         db.session.commit()
         flash('Your scenario has been created!', 'success')
@@ -71,6 +82,7 @@ def new_scenario():
         elif form.submitrun.data:
             return redirect(url_for('scenarios.run_scenario', scenario_id=scenario.id))
 
+    # If we get here, the user has selected "New Scenario" and we are rendering a from with no data
     return render_template('create_scenario.html', title='New Scenario',
                            form=form, legend='New Scenario')
 
@@ -133,6 +145,9 @@ def update_scenario(scenario_id):
             scenario.s_full_ss_date = calculate_full_ss_date(scenario.s_birthdate)
             scenario.s_current_age = calculate_age(date.today(), form.s_birthdate.data)
 
+        ac_index, asset_class = getInvestmentDataFromSelectField(form.investment)
+        scenario.ac_index = ac_index
+
         db.session.commit()
 
         if form.submit.data:
@@ -177,6 +192,8 @@ def update_scenario(scenario_id):
         form.nestegg.data = scenario.nestegg
         form.drawdown.data = scenario.drawdown
         form.has_spouse.data = scenario.has_spouse
+
+        populateInvestmentDropdown(form.investment, scenario.ac_index)
 
     return render_template('create_scenario.html', title='Update Scenario',
                            form=form, legend='Update Scenario')

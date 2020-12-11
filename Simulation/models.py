@@ -25,6 +25,10 @@ class User(db.Model, UserMixin):
     # User attributes needed for simulations
     scenarios = db.relationship('Scenario', backref='author', lazy=True)
 
+    def get_reset_token(self, expires_sec=1800):
+        s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
+        return s.dumps({'user_id': self.id}).decode('utf-8')
+
 
 # AssetClasses are investment vehicles.
 class AssetClass(db.Model):
@@ -38,11 +42,6 @@ class AssetClass(db.Model):
 
     def __repr__(self):
         return f"AssetClass('{self.title}', '{self.avg_ret}', '{self.std_dev})"
-
-
-def get_reset_token(self, expires_sec=1800):
-    s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
-    return s.dumps({'user_id': self.id}).decode('utf-8')
 
 
 @staticmethod
@@ -112,6 +111,8 @@ class Scenario(db.Model):
     nestegg = db.Column(db.Integer, nullable=False)
     drawdown = db.Column(db.Integer, nullable=False)
     has_spouse = db.Column(db.Boolean, nullable=False)
+
+    ac_index = db.Column(db.Integer, nullable=False)  #  This is the *index* of the SelectField list of asset classes
 
     current_age = db.Column(db.Integer, nullable=False)  # Calculated every time we need it
     s_current_age = db.Column(db.Integer, nullable=True)  # Calculated every time we need it

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
 from Simulation.users.utils import calculate_age
+from Simulation.asset_classes.forms import getAssetClass
 import io
 import base64
 from itertools import chain
@@ -18,17 +19,14 @@ def do_sim(sim_data, scenario) -> plt.figure():
     # [year][experiment]output
     output = np.zeros((n_yrs+1, sim_data.num_exp))
 
-    # Provide this temporarily. Need to support "Asset classes" in the future
-    investment = [[1.09391, 0.197028],
-                  [(1.09391 + 1.03) / 2, 0.197028 / 2],
-                  [1.04, 0.01]]
     # Run the simulation with the configuration based on the UI
-    run_simulation(scenario, sim_data, investment[1], n_yrs, output)
+    asset_class = getAssetClass(scenario.ac_index)
+    run_simulation(scenario, sim_data, asset_class.avg_ret, asset_class.std_dev, n_yrs, output)
 
     return plot_output(output, sim_data.num_sim_bins)
 
 
-def run_simulation(scenario, sim_data, inv_sim, n_yrs_sim, output):
+def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, output):
     # Calculate the age at which each spouse will take social security
     s1ssa_sim = calculate_age(scenario.start_ss_date, scenario.birthdate)
     s2ssa_sim = calculate_age(scenario.s_start_ss_date, scenario.s_birthdate)
@@ -68,7 +66,7 @@ def run_simulation(scenario, sim_data, inv_sim, n_yrs_sim, output):
         drawdown = scenario.drawdown
 
         # Generate a random sequence of investment annual returns based on a normal distribution
-        s_invest = sim(inv_sim[0], inv_sim[1], n_yrs_sim)
+        s_invest = sim(invest_avg, invest_std_dev, n_yrs_sim)
 
         # Generate a random sequence of annual inflation rates using a normal distribution
         s_inflation = sim(sim_data.inflation[0], sim_data.inflation[1], n_yrs_sim)
@@ -287,10 +285,6 @@ def sim(mean, stddev, num):
 # s2_ss_at_62 = 18348  # at 62
 # s2_ss_at_66 = 28872  # at 66 years and 6 months
 # s2_ss_at_70 = 37476  # at 70
-
-# investment = [[1.09391, 0.197028],
-#              [(1.09391 + 1.03) / 2, 0.197028 / 2],
-#              [1.04, 0.01]]
 
 # The following S&P 500 and inflation data are based on info I found on the net
 # Initialize Inflation data#inflation_mean = 1.027

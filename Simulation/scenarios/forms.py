@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, BooleanField, IntegerField, DateField, DecimalField
+from wtforms import StringField, SubmitField, BooleanField, IntegerField, DateField, DecimalField, SelectField
 from wtforms.validators import InputRequired, NumberRange
-from flask_wtf.file import FileField, FileAllowed
+
 
 class ScenarioForm(FlaskForm):
     title = StringField(label='Title',
@@ -59,6 +59,8 @@ class ScenarioForm(FlaskForm):
     drawdown = IntegerField(label="Expected annual spending in retirement",
                             validators=[InputRequired(message='Required')])
     has_spouse = BooleanField(label='Married', default=True)
+
+    investment = SelectField(label='Investment', coerce=int, validate_choice=False)
 
     submit = SubmitField('Save')
     submitrun = SubmitField('Save and Run')

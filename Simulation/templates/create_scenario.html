@@ -357,6 +357,21 @@
                         </div>
                     {% endif %}
                 </div>
+                <div class="form-group row">
+                    {{ form.investment.label(class="col-md-4 col-form-label text-right") }}
+                    {% if form.investment.errors %}
+                        {{ form.investment(class="form-control form-control-md is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.investment.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="col-md-4">
+                            {{ form.investment(class="form-control") }}
+                        </div>
+                    {% endif %}
+                </div>
             </div>
             <div class="form-group">
                 {{ form.submit(class="btn btn-outline-info") }}
