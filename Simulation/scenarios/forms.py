@@ -20,15 +20,15 @@ class ScenarioForm(FlaskForm):
                                   validators=[InputRequired(message='Required(can be 0)')])
     s_savings_rate = DecimalField(label="Spouse's spouse's savings rate")
 
-    start_ss_date = DateField(label='Date you will take Social Security (MM-DD-YYYY)',
+    ss_date = DateField(label='Date you will take Social Security (MM-DD-YYYY)',
                               format='%m-%d-%Y',
                               validators=[InputRequired(message='Required')])
-    s_start_ss_date = DateField(label='Date your spouse will take Social Security(MM-DD-YYYY)',
+    s_ss_date = DateField(label='Date your spouse will take Social Security(MM-DD-YYYY)',
                                 format='%m-%d-%Y')
 
-    full_ss_amount = IntegerField(label='SS amount',
+    ss_amount = IntegerField(label='SS amount',
                                   validators=[InputRequired(message='Required(can be 0)')])
-    s_full_ss_amount = IntegerField(label="Spouse's full SS amount")
+    s_ss_amount = IntegerField(label="Spouse's SS amount")
 
     retirement_age = IntegerField(label='Retirement age',
                                   validators=[NumberRange(min=35, max=100,
@@ -86,15 +86,15 @@ class DisplaySimResultForm(FlaskForm):
 
     s_savings_rate = DecimalField(label="Spouse's spouse's savings rate", render_kw={'readonly': True})
 
-    start_ss_date = DateField(label='Date you will take Social Security (MM-DD-YYYY)',
+    ss_date = DateField(label='Date you will take Social Security (MM-DD-YYYY)',
                               format='%m-%d-%Y',
                               render_kw = {'readonly': True})
-    s_start_ss_date = DateField(label='Date your spouse will take Social Security(MM-DD-YYYY)',
+    s_ss_date = DateField(label='Date your spouse will take Social Security(MM-DD-YYYY)',
                                 format='%m-%d-%Y', render_kw={'readonly': True})
 
-    full_ss_amount = IntegerField(label='SS amount',
+    ss_amount = IntegerField(label='SS amount',
                                   render_kw={'readonly': True})
-    s_full_ss_amount = IntegerField(label="Spouse's full SS amount", render_kw={'readonly': True})
+    s_ss_amount = IntegerField(label="Spouse's SS amount", render_kw={'readonly': True})
 
     retirement_age = IntegerField(label='Retirement age', render_kw={'readonly': True})
     s_retirement_age = IntegerField(label="Spouse's retirement age", render_kw={'readonly': True})
