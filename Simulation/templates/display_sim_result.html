@@ -6,7 +6,7 @@
         <form>
             <row>
                 <div class="media-body">
-                  <h2 class="account-heading">{{ form.title.label }}</h2>
+                  <h2 class="account-heading">{{ form.title }}</h2>
                 </div>
             </row>
             <div class="media">
@@ -87,56 +87,56 @@
                 {% endif %}
             </div>
             <div class="form-group row">
-                {{ form.start_ss_date.label(class="col-md-4 col-form-label text-right") }}
-                {% if form.start_ss_date.errors %}
-                    {{ form.start_ss_date(class="form-control form-control-md is-invalid") }}
+                {{ form.ss_date.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.ss_date.errors %}
+                    {{ form.ss_date(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
-                        {% for error in form.start_ss_date.errors %}
+                        {% for error in form.ss_date.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
                     <div class="col-md-4">
-                        {{ form.start_ss_date(class="form-control") }}
+                        {{ form.ss_date(class="form-control") }}
                     </div>
                 {% endif %}
-                {% if form.s_start_ss_date.errors %}
-                    {{ form.s_start_ss_date(class="form-control form-control-md is-invalid") }}
+                {% if form.s_ss_date.errors %}
+                    {{ form.s_ss_date(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
-                        {% for error in form.s_start_ss_date.errors %}
+                        {% for error in form.s_ss_date.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
                     <div class="col-md-4">
-                        {{ form.s_start_ss_date(class="form-control") }}
+                        {{ form.s_ss_date(class="form-control") }}
                     </div>
                 {% endif %}
             </div>
             <div class="form-group row">
-                {{ form.full_ss_amount.label(class="col-md-4 col-form-label text-right") }}
-                {% if form.full_ss_amount.errors %}
-                    {{ form.full_ss_amount(class="form-control form-control-md is-invalid") }}
+                {{ form.ss_amount.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.ss_amount.errors %}
+                    {{ form.ss_amount(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
-                        {% for error in form.full_ss_amount.errors %}
+                        {% for error in form.ss_amount.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
                     <div class="col-md-4">
-                        {{ form.full_ss_amount(class="form-control") }}
+                        {{ form.ss_amount(class="form-control") }}
                     </div>
                 {% endif %}
-                {% if form.s_full_ss_amount.errors %}
-                    {{ form.s_full_ss_amount(class="form-control form-control-md is-invalid") }}
+                {% if form.s_ss_amount.errors %}
+                    {{ form.s_ss_amount(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
-                        {% for error in form.s_full_ss_amount.errors %}
+                        {% for error in form.s_ss_amount.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
                     <div class="col-md-4">
-                        {{ form.s_full_ss_amount(class="form-control") }}
+                        {{ form.s_ss_amount(class="form-control") }}
                     </div>
                 {% endif %}
             </div>
