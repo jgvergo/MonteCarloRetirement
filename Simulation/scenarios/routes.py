@@ -70,7 +70,7 @@ def update_scenario(scenario_id):
     elif request.method == 'GET':
         copyScenario2Form(scenario, form)
 
-        populateInvestmentDropdown(form.investment, scenario.ac_index)
+        populateInvestmentDropdown(form.investment, scenario.asset_class_id)
 
     return render_template('create_scenario.html', title='Update Scenario',
                            form=form, legend='Update Scenario')
@@ -191,6 +191,6 @@ def copyForm2Scenario(form, scenario):
     if (scenario.has_spouse):
         scenario.s_current_age = calculate_age(date.today(), form.s_birthdate.data)
 
-    ac_index, asset_class = getInvestmentDataFromSelectField(form.investment)
-    scenario.ac_index = ac_index
+    asset_class_id, asset_class = getInvestmentDataFromSelectField(form.investment)
+    scenario.asset_class_id = asset_class_id
     return

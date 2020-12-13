@@ -20,7 +20,7 @@ def do_sim(sim_data, scenario) -> plt.figure():
     output = np.zeros((n_yrs+1, sim_data.num_exp))
 
     # Run the simulation with the configuration based on the UI
-    asset_class = getAssetClass(scenario.ac_index)
+    asset_class = getAssetClass(scenario.asset_class_id)
     run_simulation(scenario, sim_data, asset_class.avg_ret, asset_class.std_dev, n_yrs, output)
 
     return plot_output(output, sim_data.num_sim_bins)
