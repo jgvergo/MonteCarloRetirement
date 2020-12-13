@@ -4,7 +4,7 @@ from Simulation import db
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm
 from Simulation.asset_classes.forms import populateInvestmentDropdown, getInvestmentDataFromSelectField
 from Simulation.models import Scenario
-from Simulation.users.utils import calculate_age, calculate_full_ss_date
+from Simulation.users.utils import calculate_age
 from Simulation.MCSim import do_sim
 from Simulation.models import SimData
 from datetime import date
@@ -25,52 +25,7 @@ def new_scenario(titles=None):
         scenario = Scenario()
         scenario.user_id = current_user.id
 
-        scenario.title = form.title.data
-
-        scenario.birthdate = form.birthdate.data
-        scenario.s_birthdate = form.s_birthdate.data
-
-        scenario.current_income = form.current_income.data
-        scenario.s_current_income = form.s_current_income.data
-
-        scenario.savings_rate = form.savings_rate.data
-        scenario.s_savings_rate = form.s_savings_rate.data
-
-        scenario.start_ss_date = form.start_ss_date.data
-        scenario.s_start_ss_date = form.s_start_ss_date.data
-
-        scenario.ss_amount = form.full_ss_amount.data
-        scenario.s_ss_amount = form.s_full_ss_amount.data
-
-        scenario.retirement_age = form.retirement_age.data
-        scenario.s_retirement_age = form.s_retirement_age.data
-
-        scenario.ret_income = form.ret_income.data
-        scenario.s_ret_income = form.s_ret_income.data
-
-        scenario.ret_job_ret_age = form.ret_job_ret_age.data
-        scenario.s_ret_job_ret_age = form.s_ret_job_ret_age.data
-
-        scenario.lifespan_age = form.lifespan_age.data
-        scenario.s_lifespan_age = form.s_lifespan_age.data
-
-        scenario.windfall_amount = form.windfall_amount.data
-        scenario.windfall_age = form.windfall_age.data
-
-        scenario.has_spouse = form.has_spouse.data
-        scenario.nestegg = form.nestegg.data
-        scenario.drawdown = form.drawdown.data
-
-        # Calculate age and full ss date from birthdate and save them
-        if(scenario.has_spouse):
-            scenario.s_full_ss_date = calculate_full_ss_date(scenario.s_birthdate)
-            scenario.s_current_age = calculate_age(date.today(), form.s_birthdate.data)
-
-        scenario.current_age = calculate_age(date.today(), form.birthdate.data)
-        scenario.full_ss_date = calculate_full_ss_date(scenario.birthdate)
-
-        ac_index, asset_class = getInvestmentDataFromSelectField(form.investment)
-        scenario.ac_index = ac_index
+        copyForm2Scenario(form, scenario)
 
         db.session.add(scenario)
         db.session.commit()
@@ -101,52 +56,8 @@ def update_scenario(scenario_id):
         abort(403)
     form = ScenarioForm()
     if form.validate_on_submit():
-        scenario.title = form.title.data
-
-        scenario.birthdate = form.birthdate.data
-        scenario.s_birthdate = form.s_birthdate.data
-
-        scenario.current_income = form.current_income.data
-        scenario.s_current_income = form.s_current_income.data
-
-        scenario.savings_rate = form.savings_rate.data
-        scenario.s_savings_rate = form.s_savings_rate.data
-
-        scenario.start_ss_date = form.start_ss_date.data
-        scenario.s_start_ss_date = form.s_start_ss_date.data
-
-        scenario.ss_amount = form.full_ss_amount.data
-        scenario.s_ss_amount = form.s_full_ss_amount.data
-
-        scenario.retirement_age = form.retirement_age.data
-        scenario.s_retirement_age = form.s_retirement_age.data
-
-        scenario.ret_income = form.ret_income.data
-        scenario.s_ret_income = form.s_ret_income.data
-
-        scenario.ret_job_ret_age = form.ret_job_ret_age.data
-        scenario.s_ret_job_ret_age = form.s_ret_job_ret_age.data
-
-        scenario.lifespan_age = form.lifespan_age.data
-        scenario.s_lifespan_age = form.s_lifespan_age.data
-
-        scenario.windfall_amount = form.windfall_amount.data
-        scenario.windfall_age = form.windfall_age.data
-
-        scenario.has_spouse = form.has_spouse.data
-        scenario.nestegg = form.nestegg.data
-        scenario.drawdown = form.drawdown.data
-
-        # Calculate age and full ss date from birthdate and save them
-        scenario.full_ss_date = calculate_full_ss_date(scenario.birthdate)
-        scenario.current_age = calculate_age(date.today(), form.birthdate.data)
-
-        if(scenario.has_spouse):
-            scenario.s_full_ss_date = calculate_full_ss_date(scenario.s_birthdate)
-            scenario.s_current_age = calculate_age(date.today(), form.s_birthdate.data)
-
-        ac_index, asset_class = getInvestmentDataFromSelectField(form.investment)
-        scenario.ac_index = ac_index
+        # Copy the info from the form to a Scenario object and save it to the DB
+        copyForm2Scenario(form, scenario)
 
         db.session.commit()
 
@@ -157,41 +68,7 @@ def update_scenario(scenario_id):
             return redirect(url_for('scenarios.run_scenario', scenario_id=scenario.id))
 
     elif request.method == 'GET':
-        form.title.data = scenario.title
-
-        form.birthdate.data = scenario.birthdate
-        form.s_birthdate.data = scenario.s_birthdate
-
-        form.current_income.data = scenario.current_income
-        form.s_current_income.data = scenario.s_current_income
-
-        form.savings_rate.data = scenario.savings_rate
-        form.s_savings_rate.data = scenario.s_savings_rate
-
-        form.start_ss_date.data = scenario.start_ss_date
-        form.s_start_ss_date.data = scenario.s_start_ss_date
-
-        form.full_ss_amount.data = scenario.ss_amount
-        form.s_full_ss_amount.data = scenario.s_ss_amount
-
-        form.retirement_age.data = scenario.retirement_age
-        form.s_retirement_age.data = scenario.s_retirement_age
-
-        form.ret_income.data = scenario.ret_income
-        form.s_ret_income.data = scenario.s_ret_income
-
-        form.ret_job_ret_age.data = scenario.ret_job_ret_age
-        form.s_ret_job_ret_age.data = scenario.s_ret_job_ret_age
-
-        form.lifespan_age.data = scenario.lifespan_age
-        form.s_lifespan_age.data = scenario.s_lifespan_age
-
-        form.windfall_amount.data = scenario.windfall_amount
-        form.windfall_age.data = scenario.windfall_age
-
-        form.nestegg.data = scenario.nestegg
-        form.drawdown.data = scenario.drawdown
-        form.has_spouse.data = scenario.has_spouse
+        copyScenario2Form(scenario, form)
 
         populateInvestmentDropdown(form.investment, scenario.ac_index)
 
@@ -223,79 +100,97 @@ def run_scenario(scenario_id):
     if form.validate_on_submit():
         form = ScenarioForm()
         form.id = scenario_id
-        form.title.data = scenario.title
-
-        form.birthdate.data = scenario.birthdate
-        form.s_birthdate.data = scenario.s_birthdate
-
-        form.current_income.data = scenario.current_income
-        form.s_current_income.data = scenario.s_current_income
-
-        form.savings_rate.data = scenario.savings_rate
-        form.s_savings_rate.data = scenario.s_savings_rate
-
-        form.start_ss_date.data = scenario.start_ss_date
-        form.s_start_ss_date.data = scenario.s_start_ss_date
-
-        form.full_ss_amount.data = scenario.ss_amount
-        form.s_full_ss_amount.data = scenario.s_ss_amount
-
-        form.retirement_age.data = scenario.retirement_age
-        form.s_retirement_age.data = scenario.s_retirement_age
-
-        form.ret_income.data = scenario.ret_income
-        form.s_ret_income.data = scenario.s_ret_income
-
-        form.ret_job_ret_age.data = scenario.ret_job_ret_age
-        form.s_ret_job_ret_age.data = scenario.s_ret_job_ret_age
-
-        form.lifespan_age.data = scenario.lifespan_age
-        form.s_lifespan_age.data = scenario.s_lifespan_age
-
-        form.windfall_amount.data = scenario.windfall_amount
-        form.windfall_age.data = scenario.windfall_age
-
-        form.nestegg.data = scenario.nestegg
-        form.drawdown.data = scenario.drawdown
-        form.has_spouse.data = scenario.has_spouse
+        copyScenario2Form(scenario, form)
         return redirect(url_for('scenarios.update_scenario', scenario_id=scenario.id))
     else:
         # Do the simulation
         sd = SimData()
         plot_url = do_sim(sd, scenario)
-        form.title.label = scenario.title
-        form.birthdate.data = scenario.birthdate
-        form.s_birthdate.data = scenario.s_birthdate
 
-        form.current_income.data = scenario.current_income
-        form.s_current_income.data = scenario.s_current_income
+        copyScenario2Form(scenario, form)
 
-        form.savings_rate.data = scenario.savings_rate
-        form.s_savings_rate.data = scenario.s_savings_rate
-
-        form.start_ss_date.data = scenario.start_ss_date
-        form.s_start_ss_date.data = scenario.s_start_ss_date
-
-        form.full_ss_amount.data = scenario.ss_amount
-        form.s_full_ss_amount.data = scenario.s_ss_amount
-
-        form.retirement_age.data = scenario.retirement_age
-        form.s_retirement_age.data = scenario.s_retirement_age
-
-        form.ret_income.data = scenario.ret_income
-        form.s_ret_income.data = scenario.s_ret_income
-
-        form.ret_job_ret_age.data = scenario.ret_job_ret_age
-        form.s_ret_job_ret_age.data = scenario.s_ret_job_ret_age
-
-        form.lifespan_age.data = scenario.lifespan_age
-        form.s_lifespan_age.data = scenario.s_lifespan_age
-
-        form.windfall_amount.data = scenario.windfall_amount
-        form.windfall_age.data = scenario.windfall_age
-
-        form.nestegg.data = scenario.nestegg
-        form.drawdown.data = scenario.drawdown
-        form.has_spouse.data = scenario.has_spouse
         return render_template('display_sim_result.html', title='Simulated Scenario',
                                form=form, legend='Simulated Scenario', plot_url=plot_url)
+
+def copyScenario2Form(scenario, form):
+    form.title.data = scenario.title
+    form.birthdate.data = scenario.birthdate
+    form.s_birthdate.data = scenario.s_birthdate
+
+    form.current_income.data = scenario.current_income
+    form.s_current_income.data = scenario.s_current_income
+
+    form.savings_rate.data = scenario.savings_rate
+    form.s_savings_rate.data = scenario.s_savings_rate
+
+    form.ss_date.data = scenario.ss_date
+    form.s_ss_date.data = scenario.s_ss_date
+
+    form.ss_amount.data = scenario.ss_amount
+    form.s_ss_amount.data = scenario.s_ss_amount
+
+    form.retirement_age.data = scenario.retirement_age
+    form.s_retirement_age.data = scenario.s_retirement_age
+
+    form.ret_income.data = scenario.ret_income
+    form.s_ret_income.data = scenario.s_ret_income
+
+    form.ret_job_ret_age.data = scenario.ret_job_ret_age
+    form.s_ret_job_ret_age.data = scenario.s_ret_job_ret_age
+
+    form.lifespan_age.data = scenario.lifespan_age
+    form.s_lifespan_age.data = scenario.s_lifespan_age
+
+    form.windfall_amount.data = scenario.windfall_amount
+    form.windfall_age.data = scenario.windfall_age
+
+    form.nestegg.data = scenario.nestegg
+    form.drawdown.data = scenario.drawdown
+    form.has_spouse.data = scenario.has_spouse
+    return
+
+def copyForm2Scenario(form, scenario):
+    scenario.title = form.title.data
+
+    scenario.birthdate = form.birthdate.data
+    scenario.s_birthdate = form.s_birthdate.data
+
+    scenario.current_income = form.current_income.data
+    scenario.s_current_income = form.s_current_income.data
+
+    scenario.savings_rate = form.savings_rate.data
+    scenario.s_savings_rate = form.s_savings_rate.data
+
+    scenario.ss_date = form.ss_date.data
+    scenario.s_ss_date = form.s_ss_date.data
+
+    scenario.ss_amount = form.ss_amount.data
+    scenario.s_ss_amount = form.s_ss_amount.data
+
+    scenario.retirement_age = form.retirement_age.data
+    scenario.s_retirement_age = form.s_retirement_age.data
+
+    scenario.ret_income = form.ret_income.data
+    scenario.s_ret_income = form.s_ret_income.data
+
+    scenario.ret_job_ret_age = form.ret_job_ret_age.data
+    scenario.s_ret_job_ret_age = form.s_ret_job_ret_age.data
+
+    scenario.lifespan_age = form.lifespan_age.data
+    scenario.s_lifespan_age = form.s_lifespan_age.data
+
+    scenario.windfall_amount = form.windfall_amount.data
+    scenario.windfall_age = form.windfall_age.data
+
+    scenario.has_spouse = form.has_spouse.data
+    scenario.nestegg = form.nestegg.data
+    scenario.drawdown = form.drawdown.data
+
+    # Calculate ages from birthdates and save the,
+    scenario.current_age = calculate_age(date.today(), form.birthdate.data)
+    if (scenario.has_spouse):
+        scenario.s_current_age = calculate_age(date.today(), form.s_birthdate.data)
+
+    ac_index, asset_class = getInvestmentDataFromSelectField(form.investment)
+    scenario.ac_index = ac_index
+    return
