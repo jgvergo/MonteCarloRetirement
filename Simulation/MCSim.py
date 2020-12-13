@@ -28,37 +28,40 @@ def do_sim(sim_data, scenario) -> plt.figure():
 
 def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, output):
     # Calculate the age at which each spouse will take social security
-    s1ssa_sim = calculate_age(scenario.start_ss_date, scenario.birthdate)
-    s2ssa_sim = calculate_age(scenario.s_start_ss_date, scenario.s_birthdate)
+    s1ssa_sim = calculate_age(scenario.ss_date, scenario.birthdate)
+    if scenario.has_spouse:
+        s2ssa_sim = calculate_age(scenario.s_ss_date, scenario.s_birthdate)
 
     # Run the experiments
     for experiment in range(sim_data.num_exp):
 
         # These variables need to be re-initialized before every experiment
         s1_age = scenario.current_age
-        s2_age = scenario.s_current_age
+        if scenario.has_spouse:
+            s2_age = scenario.s_current_age
 
         # Set the initial income for the primary user
-        if s1_age < scenario.retirement_age:  # Working
+        if s1_age < scenario.retirement_age:        # Working
             s1_income = scenario.current_income
 
-        elif s1_age <= scenario.ret_job_ret_age:  # Partially retired
+        elif s1_age <= scenario.ret_job_ret_age:    # Partially retired
             s1_income = scenario.ret_income
 
-        else:  # Fully retired
+        else:                                       # Fully retired
             s1_income = 0
 
         # Set the initial income for the spouse
-        if s2_age < scenario.s_retirement_age:  # Working
-            s2_income = scenario.s_current_income
+        if scenario.has_spouse:
+            if s2_age < scenario.s_retirement_age:      # Working
+                s2_income = scenario.s_current_income
 
-        elif s2_age <= scenario.s_ret_job_ret_age:  # Partially retired
-            s2_income = scenario.s_ret_income
+            elif s2_age <= scenario.s_ret_job_ret_age:  # Partially retired
+                s2_income = scenario.s_ret_income
 
-        else:  # Fully retired
-            s2_income = 0
+            else:                                       # Fully retired
+                s2_income = 0
 
-        # Starting assumption is SS is currently zero
+        # Set the initial social security amount to 0.
         s1ss = 0
         s2ss = 0
 
@@ -74,14 +77,20 @@ def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, ou
         # Generate a random sequence of annual spend decay
         s_spend_decay = sim(sim_data.spend_decay[0], sim_data.spend_decay[1], n_yrs_sim)
 
-        output[0][experiment] = nestegg  # Record the nestegg starting point in the output list
+        # Generate a random sequence of social security cost of living increases
+        cola = sim(sim_data.cola[0], sim_data.cola[1], n_yrs_sim)
+
+        # Record the nestegg starting point in the output list
+        output[0][experiment] = nestegg
+
         for year in range(n_yrs_sim):
             s1_age += 1
-            s2_age += 1
+            if scenario.has_spouse:
+                s2_age += 1
 
+            # Calculate the primary user's new salary, nestegg and drawdown amount
             if s1_age < scenario.retirement_age:            # Working
-                nestegg += s1_income * scenario.savings_rate +\
-                           s2_income * scenario.s_savings_rate
+                nestegg += s1_income * scenario.savings_rate
                 s1_income *= s_inflation[year]
 
             elif s1_age == scenario.retirement_age:         # Year of retirement
@@ -90,7 +99,7 @@ def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, ou
                 drawdown *= (1.0 - s_spend_decay[year])
                 if (nestegg > 0):
                     nestegg -= drawdown
-                nestegg += s1_income + s2_income
+                nestegg += s1_income
 
 
             elif s1_age < scenario.ret_job_ret_age:         # Partially retired
@@ -98,7 +107,7 @@ def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, ou
                 drawdown *= (1.0 - s_spend_decay[year])
                 if (nestegg > 0 ):
                     nestegg -= drawdown
-                nestegg += s1_income + s2_income
+                nestegg += s1_income
                 s1_income *= s_inflation[year]
 
             else:                                           # Fully retired
@@ -109,36 +118,44 @@ def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, ou
                     nestegg -= drawdown
 
             # For spouse, just adjust the income
-            if s2_age < scenario.s_retirement_age:  # Working
-                s2_income *= s_inflation[year]
+            if scenario.has_spouse:
+                if s2_age < scenario.s_retirement_age:  # Working
+                    nestegg += s1_income * scenario.savings_rate
+                    s2_income *= s_inflation[year]
 
-            elif s2_age == scenario.s_retirement_age:  # Year of retirement
-                s2_income = scenario.s_ret_income
+                elif s2_age == scenario.s_retirement_age:  # Year of retirement
+                    s2_income = scenario.s_ret_income
 
-            elif s2_age < scenario.s_ret_job_ret_age:  # Partially retired
-                s2_income *= s_inflation[year]
+                elif s2_age < scenario.s_ret_job_ret_age:  # Partially retired
+                    s2_income *= s_inflation[year]
 
-            else:  # Fully retired
-                s2_income = 0
+                else:  # Fully retired
+                    s2_income = 0
+
 
             # Add windfall to the nestegg
             if s1_age == scenario.windfall_age:
                 nestegg += scenario.windfall_amount
 
             # Add SS to the nestegg
-            if s1_age >= s1ssa_sim:
-                s1ss = scenario.ss_amount * (sim_data.cola ** (s1_age-s1ssa_sim))
+            if s1_age == s1ssa_sim:
+                s1ss = scenario.ss_amount
+                nestegg += s1ss
+            if s1_age > s1ssa_sim :
+                s1ss *= cola[year]
+                nestegg += s1ss
 
-            if s2_age >= s2ssa_sim:
-                s2ss = scenario.s_ss_amount * (sim_data.cola ** (s2_age-s2ssa_sim))
-
-            # Add social security to the nestegg
-            nestegg += s1ss + s2ss
+            if s2_age == s2ssa_sim:
+                s2ss = scenario.s_ss_amount
+                nestegg += s2ss
+            if s2_age > s2ssa_sim:
+                s2ss *= cola[year]
+                nestegg += s2ss
 
             # Grow the nestegg
-            nestegg *= s_invest[year]
+            nestegg *= (1+s_invest[year])
 
-            if nestegg < drawdown:
+            if (s1_age > scenario.ret_job_ret_age) and (nestegg < 0):
                 nestegg = 0.0
             output[year+1][experiment] = nestegg  # Record the final nestegg in the output list
     return
@@ -154,9 +171,9 @@ def plot_output(output, num_sim_bins):
 
     n_graphs = 2  # The final year and the percentile graph
 
-    # Don't display the top 2% because they are part of a "long tail" and mess up the visuals; Leave min at 0
+    # Don't display the top 5% because they are part of a "long tail" and mess up the visuals; Leave min at 0
     min_index = 0
-    max_index = int(0.98 * num_exp) - 1
+    max_index = int(0.95 * num_exp) - 1
     plt.figure(figsize=(8, 6.5 * n_graphs))
     plt.subplots(n_graphs, 1, figsize=(8, 12))
 
@@ -218,16 +235,16 @@ def plot_output(output, num_sim_bins):
              'Percentage over 0: {0:,.2f}%'.format(100 * (sum(i > 0.0 for i in output[year]) / num_exp)))
 
     fig_num += 1
-    two_pct = output[:, int(0.98 * num_exp)]
+    fiv_pct = output[:, int(0.95 * num_exp)]
     ten_pct = output[:, int(0.9 * num_exp)]
     t5_pct = output[:, int(0.75 * num_exp)]
     fif_pct = output[:, int(0.5 * num_exp)]
     s5_pct = output[:, int(0.25 * num_exp)]
     nt_pct = output[:, int(0.1 * num_exp)]
-    n8_pct = output[:, int(0.02 * num_exp)]
+    n5_pct = output[:, int(0.05 * num_exp)]
 
     plt.subplot(n_graphs, 1, fig_num)
-    g_max = max(two_pct)  # This is the max that we will graph
+    g_max = max(fiv_pct)  # This is the max that we will graph
     plt.xlim(0, year)
     plt.ylim(0, g_max + 3000000)
 
@@ -239,23 +256,28 @@ def plot_output(output, num_sim_bins):
     ax.get_yaxis().set_major_formatter(
         mpl.ticker.FuncFormatter(lambda y, p: format(int(y / 1000000), ',')))
 
-    line1 = ax.plot(two_pct, marker='o', markerfacecolor='red', markersize=2, linewidth=1, label="2%")
+    line1 = ax.plot(fiv_pct, marker='o', markerfacecolor='red', markersize=2, linewidth=1, label="5%")
     line2, = ax.plot(ten_pct, marker='o', markerfacecolor='blue', markersize=2, linewidth=1, label="10%")
     line3, = ax.plot(t5_pct, marker='o', markerfacecolor='purple', markersize=2, linewidth=1, label="25%")
     line4, = ax.plot(fif_pct, marker='o', markerfacecolor='black', markersize=2, linewidth=1, label="50%")
     line5, = ax.plot(s5_pct, marker='o', markerfacecolor='orange', markersize=2, linewidth=1, label="75%")
     line6, = ax.plot(nt_pct, marker='o', markerfacecolor='green', markersize=2, linewidth=1, label="90%")
-    line7, = ax.plot(n8_pct, marker='o', markerfacecolor='pink', markersize=2, linewidth=1, label="98%")
+    line7, = ax.plot(n5_pct, marker='o', markerfacecolor='pink', markersize=2, linewidth=1, label="95%")
     ax.legend((line1, line2, line3, line4, line5, line6, line7), ('2%', '10%', '25%', '50%', '75%', '90%', '98%'))
     ax.legend(loc='upper left')
 
-    plt.text(year - (year / 7), two_pct[year], '${0:,.0f}'.format(two_pct[year]), color='red')
-    plt.text(year - (year / 7), ten_pct[year], '${0:,.0f}'.format(ten_pct[year]), color='blue')
-    plt.text(year - (year / 7), t5_pct[year], '${0:,.0f}'.format(t5_pct[year]), color='purple')
-    plt.text(year - (year / 7), fif_pct[year], '${0:,.0f}'.format(fif_pct[year]), color='black')
-    plt.text(year - (year / 7), s5_pct[year], '${0:,.0f}'.format(s5_pct[year]), color='orange')
-    plt.text(year - (year / 7), nt_pct[year], '${0:,.0f}'.format(nt_pct[year]), color='green')
-    plt.text(year - (year / 7), n8_pct[year], '${0:,.0f}'.format(n8_pct[year]), color='pink')
+    vert_range = g_max + 3000000
+    yinc = vert_range/20
+    y_start = .944*vert_range
+
+    # Plot the final outputs next to the legend entries
+    plt.text((year / 6.9), y_start - 0*yinc, '${0:,.0f}'.format(fiv_pct[year]), color='red')
+    plt.text((year / 6.9), y_start - 1*yinc, '${0:,.0f}'.format(ten_pct[year]), color='blue')
+    plt.text((year / 6.9), y_start - 2*yinc, '${0:,.0f}'.format(t5_pct[year]), color='purple')
+    plt.text((year / 6.9), y_start - 3*yinc, '${0:,.0f}'.format(fif_pct[year]), color='black')
+    plt.text((year / 6.9), y_start - 4*yinc, '${0:,.0f}'.format(s5_pct[year]), color='orange')
+    plt.text((year / 6.9), y_start - 5*yinc, '${0:,.0f}'.format(nt_pct[year]), color='green')
+    plt.text((year / 6.9), y_start - 6*yinc, '${0:,.0f}'.format(n5_pct[year]), color='pink')
 
     plt.xlabel('Year')
     plt.ylabel('Portfolio value($M)')
