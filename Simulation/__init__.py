@@ -2,7 +2,7 @@ from Simulation.config import Config
 from flask import Flask
 from Simulation.extensions import db, bcrypt, login_manager, mail
 from Simulation.models import init_db
-
+from Simulation.asset_classes.forms import initAssetClasses
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -29,5 +29,7 @@ def create_app(config_class=Config):
     app.register_blueprint(scenarios)
     app.register_blueprint(asset_classes)
     app.register_blueprint(errors)
+
+    initAssetClasses()
 
     return app
