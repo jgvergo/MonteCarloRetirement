@@ -87,8 +87,8 @@ class Scenario(db.Model):
     savings_rate = db.Column(db.Float, nullable=False)
     s_savings_rate = db.Column(db.Float, nullable=False)
 
-    start_ss_date = db.Column(db.Date, nullable=False)
-    s_start_ss_date = db.Column(db.Date, nullable=True)
+    ss_date = db.Column(db.Date, nullable=False)
+    s_ss_date = db.Column(db.Date, nullable=True)
 
     ss_amount = db.Column(db.Integer, nullable=False)
     s_ss_amount = db.Column(db.Integer, nullable=True)
@@ -116,8 +116,6 @@ class Scenario(db.Model):
 
     current_age = db.Column(db.Integer, nullable=False)  # Calculated every time we need it
     s_current_age = db.Column(db.Integer, nullable=True)  # Calculated every time we need it
-    full_ss_date = db.Column(db.Date, nullable=False)    # Calculate this from the birthdate
-    s_full_ss_date = db.Column(db.Date, nullable=True)  # Calculate this from the birthdate
 
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
 
@@ -130,7 +128,7 @@ class Scenario(db.Model):
 class SimData:
     num_exp = 10000
     num_sim_bins = 100
-    cola = 1.02
+    cola = [0.03632608696, 0.02904712979]
     inflation = [1.027, 0.011]
     asset_classes = []
     spend_decay = [0.02, 0.001]
