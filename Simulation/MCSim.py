@@ -13,7 +13,10 @@ plt.style.use('ggplot')
 
 def do_sim(sim_data, scenario) -> plt.figure():
     # Number of years to simulate
-    n_yrs = max(scenario.lifespan_age - scenario.current_age, scenario.s_lifespan_age - scenario.s_current_age)
+    if scenario.has_spouse:
+        n_yrs = max(scenario.lifespan_age - scenario.current_age, scenario.s_lifespan_age - scenario.s_current_age)
+    else:
+        n_yrs = scenario.lifespan_age - scenario.current_age
 
     # output is an numpy.ndarray which holds the simulation results
     # [year][experiment]output
@@ -114,8 +117,7 @@ def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, ou
                 s1_income = 0
                 drawdown *= s_inflation[year]
                 drawdown *= (1.0 - s_spend_decay[year])
-                if (nestegg > 0 ):
-                    nestegg -= drawdown
+                nestegg -= drawdown
 
             # For spouse, just adjust the income
             if scenario.has_spouse:
@@ -142,16 +144,17 @@ def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, ou
                 s1ss = scenario.ss_amount
                 nestegg += s1ss
             if s1_age > s1ssa_sim :
-                s1ss *= cola[year]
+                s1ss *= (1+cola[year])
                 nestegg += s1ss
 
             # Add spouse's SS to the nestegg
-            if s2_age == s2ssa_sim:
-                s2ss = scenario.s_ss_amount
-                nestegg += s2ss
-            if s2_age > s2ssa_sim:
-                s2ss *= cola[year]
-                nestegg += s2ss
+            if scenario.has_spouse:
+                if s2_age == s2ssa_sim:
+                    s2ss = scenario.s_ss_amount
+                    nestegg += s2ss
+                if s2_age > s2ssa_sim:
+                    s2ss *= (1+cola[year])
+                    nestegg += s2ss
 
             # Grow the nestegg
             nestegg *= (1+s_invest[year])
@@ -245,9 +248,10 @@ def plot_output(output, num_sim_bins):
     n5_pct = output[:, int(0.05 * num_exp)]
 
     plt.subplot(n_graphs, 1, fig_num)
-    g_max = max(fiv_pct)  # This is the max that we will graph
+    g_max = max(fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(), nt_pct.max(), n5_pct.max())  # This is the max that we will graph
+    g_min = min(fiv_pct.min(), ten_pct.min(), t5_pct.min(), fif_pct.min(), s5_pct.min(), nt_pct.min(), n5_pct.min())  # This is the min that we will graph
     plt.xlim(0, year)
-    plt.ylim(0, g_max + 3000000)
+    plt.ylim(g_min, g_max)
 
     # Format the x axis so it shows normal number format with commas (not scientific notation)
     ax = plt.gca()
@@ -255,7 +259,7 @@ def plot_output(output, num_sim_bins):
         mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 
     ax.get_yaxis().set_major_formatter(
-        mpl.ticker.FuncFormatter(lambda y, p: format(int(y / 1000000), ',')))
+        mpl.ticker.FuncFormatter(lambda y, p: format(int(y / 1000), ',')))
 
     line1 = ax.plot(fiv_pct, marker='o', markerfacecolor='red', markersize=2, linewidth=1, label="5%")
     line2, = ax.plot(ten_pct, marker='o', markerfacecolor='blue', markersize=2, linewidth=1, label="10%")
@@ -265,11 +269,17 @@ def plot_output(output, num_sim_bins):
     line6, = ax.plot(nt_pct, marker='o', markerfacecolor='green', markersize=2, linewidth=1, label="90%")
     line7, = ax.plot(n5_pct, marker='o', markerfacecolor='pink', markersize=2, linewidth=1, label="95%")
     ax.legend((line1, line2, line3, line4, line5, line6, line7), ('2%', '10%', '25%', '50%', '75%', '90%', '98%'))
-    ax.legend(loc='upper left')
 
-    vert_range = g_max + 3000000
-    yinc = vert_range/20
-    y_start = .944*vert_range
+    vert_range = g_max - g_min  # Y axis range
+    yinc = vert_range / 20      # space between legend entries, determined empirically
+
+    if fiv_pct[0] > (g_max - 0.05*g_max):
+        #  Plotted lines emanate from the upper left, so place the legend in the lower left
+        ax.legend(loc='lower left')
+        y_start = (g_min + 7*yinc)*0.956
+    else:
+        ax.legend(loc='upper left')
+        y_start = g_min + 0.944 * vert_range
 
     # Plot the final outputs next to the legend entries
     plt.text((year / 6.9), y_start - 0*yinc, '${0:,.0f}'.format(fiv_pct[year]), color='red')
@@ -281,7 +291,7 @@ def plot_output(output, num_sim_bins):
     plt.text((year / 6.9), y_start - 6*yinc, '${0:,.0f}'.format(n5_pct[year]), color='pink')
 
     plt.xlabel('Year')
-    plt.ylabel('Portfolio value($M)')
+    plt.ylabel('Portfolio value($1,000)')
 
     ax.set_title('Outcome percentiles by year')
 
