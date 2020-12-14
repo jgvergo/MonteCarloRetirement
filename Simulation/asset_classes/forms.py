@@ -22,12 +22,12 @@ def populateInvestmentDropdown(investment, asset_class_id = 0):
 
     # Populate the investment asset classes dropdown
     asset_class_list = AssetClass.query.order_by(AssetClass.title.asc())
-    titles=[]
+    titles = []
     for asset_class in asset_class_list:
         titles.append((asset_class.id, asset_class.title))
 
     # Set up the SelectField dropdown
-    investment.choices=titles
+    investment.choices = titles
     investment.data = asset_class_id
     return
 
@@ -37,9 +37,8 @@ def getInvestmentDataFromSelectField(investment : SelectField):
     # Populate the investment asset classes from the database
     asset_class_list = AssetClass.query.order_by(AssetClass.title.asc())
     asset_class_id = int(investment.data)
-    for ac in asset_class_list:
-        if ac.id == asset_class_id:
-            return asset_class_id, ac
+    item = next(ac for ac in asset_class_list if ac.id == asset_class_id)
+    return item.id, item
 
 
 # Given an index, get the AssetClass
@@ -47,9 +46,8 @@ def getAssetClass(asset_class_id : int):
 
     # Populate the investment asset classes dropdown
     asset_class_list = AssetClass.query.order_by(AssetClass.title.asc())
-    for ac in asset_class_list:
-        if ac.id == asset_class_id:
-            return ac
+    item = next(ac for ac in asset_class_list if ac.id == asset_class_id)
+    return item
 
 
 def initDatabase():
@@ -94,7 +92,7 @@ def initDatabase():
         # Create a single, current scenario
         scenario = Scenario()
         scenario.user_id = user.id
-        scenario.title = 'Current - 12-12-2020'
+        scenario.title = 'Current scenario 12-12-2020'
 
         scenario.birthdate = date(month=10, day=18, year=1957)
         scenario.s_birthdate = date(month=2, day=12, year=1960)
@@ -128,7 +126,7 @@ def initDatabase():
 
         scenario.has_spouse = True
         scenario.nestegg = 2500000
-        scenario.drawdown = 150
+        scenario.drawdown = 150000
 
         # Calculate ages from birthdates and save the,
         scenario.current_age = calculate_age(date.today(), scenario.birthdate)
