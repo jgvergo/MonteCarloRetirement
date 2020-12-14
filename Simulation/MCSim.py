@@ -131,7 +131,7 @@ def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, ou
 
                 else:  # Fully retired
                     s2_income = 0
-
+                nestegg += s2_income
 
             # Add windfall to the nestegg
             if s1_age == scenario.windfall_age:
@@ -145,6 +145,7 @@ def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, ou
                 s1ss *= cola[year]
                 nestegg += s1ss
 
+            # Add spouse's SS to the nestegg
             if s2_age == s2ssa_sim:
                 s2ss = scenario.s_ss_amount
                 nestegg += s2ss
