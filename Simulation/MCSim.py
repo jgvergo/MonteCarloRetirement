@@ -5,7 +5,6 @@ from Simulation.users.utils import calculate_age
 from Simulation.asset_classes.forms import getAssetClass
 import io
 import base64
-from itertools import chain
 
 mpl.use('Agg')
 plt.style.use('ggplot')
@@ -98,25 +97,19 @@ def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, ou
 
             elif s1_age == scenario.retirement_age:         # Year of retirement
                 s1_income = scenario.ret_income
-                drawdown *= s_inflation[year]
-                drawdown *= (1.0 - s_spend_decay[year])
-                if (nestegg > 0):
-                    nestegg -= drawdown
+                nestegg -= drawdown
                 nestegg += s1_income
-
 
             elif s1_age < scenario.ret_job_ret_age:         # Partially retired
                 drawdown *= s_inflation[year]
-                drawdown *= (1.0 - s_spend_decay[year])
-                if (nestegg > 0 ):
-                    nestegg -= drawdown
+                drawdown *= (1.0 + s_spend_decay[year])
+                nestegg -= drawdown
                 nestegg += s1_income
                 s1_income *= s_inflation[year]
-
             else:                                           # Fully retired
                 s1_income = 0
                 drawdown *= s_inflation[year]
-                drawdown *= (1.0 - s_spend_decay[year])
+                drawdown *= (1.0 + s_spend_decay[year])
                 nestegg -= drawdown
 
             # For spouse, just adjust the income
@@ -143,7 +136,7 @@ def run_simulation(scenario, sim_data, invest_avg, invest_std_dev, n_yrs_sim, ou
             if s1_age == s1ssa_sim:
                 s1ss = scenario.ss_amount
                 nestegg += s1ss
-            if s1_age > s1ssa_sim :
+            if s1_age > s1ssa_sim:
                 s1ss *= (1+cola[year])
                 nestegg += s1ss
 
@@ -170,30 +163,35 @@ def plot_output(output, num_sim_bins):
     for i in range(output.shape[0]):
         output[i].sort()
 
-    year = output.shape[0] - 1  # index of the year to graph
     num_exp = output.shape[1]
 
     n_graphs = 2  # The final year and the percentile graph
+    plt.figure(figsize=(8, 6.5 * n_graphs))
+    plt.subplots(n_graphs, 1, figsize=(8, 12))
 
     # Don't display the top 5% because they are part of a "long tail" and mess up the visuals; Leave min at 0
     min_index = 0
     max_index = int(0.95 * num_exp) - 1
-    plt.figure(figsize=(8, 6.5 * n_graphs))
-    plt.subplots(n_graphs, 1, figsize=(8, 12))
 
+    # Now create figure 1 - the  distribution of all results.
+    # NB: The x axis has the final dollar amount of the simulations and the y axis has the experiment count
     fig_num = 1
+    year = output.shape[0] - 1  # index of the year to graph, i.e. the final year of the simulation
     plt.subplot(n_graphs, 1, fig_num)
 
-    g_min = output[year][min_index]  # This is the min that we will graph
-    g_max = output[year][max_index]  # This is the max that we will graph
+    xmin = output[year][min_index]  # This is the min that we will graph
+    xmax = output[year][max_index]  # This is the max that we will graph
+    xlen = xmax - xmin
 
-    # This is to keep np.arange from crashing if g_max is too small
-    if g_max < num_sim_bins:
-        g_max = num_sim_bins
-    binsize = (g_max - g_min) / num_sim_bins
-    bins = np.arange(g_min, g_max, binsize)
+    # This is to keep np.arange from crashing if xmax is too small. It also causes the mode/mean/median labels to
+    # be positioned correctly relative to their vertical lines
+    if xmax < num_sim_bins:
+        xmax = num_sim_bins
+        xlen = xmax-xmin
+    binsize = (xmax - xmin) / num_sim_bins
+    bins = np.arange(xmin, xmax, binsize)
 
-    plt.xlim(g_min, g_max)
+    plt.xlim(xmin, xmax)
 
     # Format the x axis so it shows normal number format with commas (not scientific notation)
     ax = plt.gca()
@@ -205,20 +203,38 @@ def plot_output(output, num_sim_bins):
     plt.xlabel('Final portfolio value')
     plt.ylabel('Experiment count')
 
-    n, arr, patches = plt.hist(output[year], bins=bins)
+    # Count zeros. We will throw out the zero results when plotting the histogram
+    z_count = 0
+    for i in np.arange(len(output[year])):
+        if output[year][i] == 0:
+            z_count += 1
 
-    ax.set_title('Year {year:.0f}'.format(year=year + 1))
+    # Since we don't plot the top 5% of results, we will consider the
+    # results to be "all zero" if > 95% of the results are zero
+    all_zeros = False
+    if z_count > 0.95*len(output[year]):
+        all_zeros = True
 
-    ypos = n[np.argmax(n)] + 2  # Y position of the bin with the maximum count
+    if not all_zeros:
+        n, arr, patches = plt.hist(output[year], bins=bins)
+    else:
+        # Clean up the few, remaining non-zero results
+        for i in np.arange(len(output[year])):
+            output[year][i] = 0
+        n, arr, patches = plt.hist(output[year], bins=bins)
 
-    # These are the logical coordinates of the graph
-    xmin = output[year][min_index]
-    xmax = output[year][max_index]
-    xlen = xmax - xmin
+    ax.set_title('Year {year:.0f}'.format(year=year))
 
-    yinc = ypos / 31  # Determined empirically, based on font and graph size
+    ypos = n[np.argmax(n)]  # Y position of the bin with the maximum count
 
-    # Put a line for the mode and label it
+    # These are the logical coordinates of the y axis - the count of the number of experiments in a single bin
+    ymin = 0
+    ymax = n[np.argmax(n)]
+    ylen = ymax - ymin
+
+    yinc = ylen / 31  # Determined empirically, based on font and graph size
+
+    # Put a line for the mode and label it. Note that we drop the leading bucket, which is frequently zeros
     mode = arr[np.argmax(n)]
     plt.axvline(mode + binsize / 2, color='k', linestyle='solid', linewidth=1)  # Mode
     plt.text(mode + xlen / 50, ypos, 'Mode: ${0:,.0f}'.format(mode), color='k')
@@ -248,10 +264,10 @@ def plot_output(output, num_sim_bins):
     n5_pct = output[:, int(0.05 * num_exp)]
 
     plt.subplot(n_graphs, 1, fig_num)
-    g_max = max(fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(), nt_pct.max(), n5_pct.max())  # This is the max that we will graph
-    g_min = min(fiv_pct.min(), ten_pct.min(), t5_pct.min(), fif_pct.min(), s5_pct.min(), nt_pct.min(), n5_pct.min())  # This is the min that we will graph
+    ymax = 1.02*max(fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(), nt_pct.max(), n5_pct.max())  # This is the max that we will graph
+    ymin = 0
     plt.xlim(0, year)
-    plt.ylim(g_min, g_max)
+    plt.ylim(ymin, ymax)
 
     # Format the x axis so it shows normal number format with commas (not scientific notation)
     ax = plt.gca()
@@ -270,16 +286,16 @@ def plot_output(output, num_sim_bins):
     line7, = ax.plot(n5_pct, marker='o', markerfacecolor='pink', markersize=2, linewidth=1, label="95%")
     ax.legend((line1, line2, line3, line4, line5, line6, line7), ('2%', '10%', '25%', '50%', '75%', '90%', '98%'))
 
-    vert_range = g_max - g_min  # Y axis range
+    vert_range = ymax - ymin  # Y axis range
     yinc = vert_range / 20      # space between legend entries, determined empirically
 
-    if fiv_pct[0] > (g_max - 0.05*g_max):
+    if fiv_pct[0] > (ymax - 0.25*ymax):
         #  Plotted lines emanate from the upper left, so place the legend in the lower left
         ax.legend(loc='lower left')
-        y_start = (g_min + 7*yinc)*0.956
+        y_start = (ymin + 7*yinc)*0.956
     else:
         ax.legend(loc='upper left')
-        y_start = g_min + 0.944 * vert_range
+        y_start = ymin + 0.944 * vert_range
 
     # Plot the final outputs next to the legend entries
     plt.text((year / 6.9), y_start - 0*yinc, '${0:,.0f}'.format(fiv_pct[year]), color='red')
