@@ -249,11 +249,6 @@ def plot_output(output, num_sim_bins):
     plt.axvline(avg + binsize / 2, color='b', linestyle='solid', linewidth=1)  # Mean
     plt.text(avg + xlen / 50, ypos - 2 * yinc, 'Average: ${0:,.0f}'.format(avg), color='b')
 
-    xpos = xmin + 0.5 * xlen
-
-    plt.text(xpos, ypos - 10 * yinc,
-             'Percentage over 0: {0:,.2f}%'.format(100 * (sum(i > 0.0 for i in output[year]) / num_exp)))
-
     fig_num += 1
     fiv_pct = output[:, int(0.95 * num_exp)]
     ten_pct = output[:, int(0.9 * num_exp)]
@@ -314,7 +309,8 @@ def plot_output(output, num_sim_bins):
     plt.savefig(img, format='png')
     img.seek(0)
     plot_url = base64.b64encode(img.getvalue()).decode()
-    return plot_url
+    p0 = 100 * (sum(i > 0.0 for i in output[year]) / num_exp)
+    return plot_url, p0
 
 
 # Returns a random sequence of numbers of length num that are randomly drawn from the specified normal distribution

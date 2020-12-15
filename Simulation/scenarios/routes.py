@@ -2,8 +2,8 @@ from flask import render_template, url_for, flash, redirect, request, abort, Blu
 from flask_login import current_user, login_required
 from Simulation import db
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm
-from Simulation.asset_classes.forms import populateInvestmentDropdown, getInvestmentDataFromSelectField
-from Simulation.models import Scenario
+from Simulation.asset_classes.forms import populateInvestmentDropdown, getInvestmentDataFromSelectField, getAssetClass
+from Simulation.models import Scenario, SimData
 from Simulation.users.utils import calculate_age
 from Simulation.MCSim import do_sim
 from Simulation.models import SimData
@@ -105,9 +105,45 @@ def run_scenario(scenario_id):
     else:
         # Do the simulation
         sd = SimData()
-        plot_url = do_sim(sd, scenario)
+        plot_url, p0 = do_sim(sd, scenario)
+        form.title.data = scenario.title
+        asset_class = getAssetClass(scenario.asset_class_id)
+        nl = '\n'
+        form.taf.data = 'Percent over zero: {:>.2f}%{}'\
+                        'Primary user age: {}{}'\
+                        "Spouse's age: {}{}"\
+                        'Starting nestegg: {:,}{}'\
+                        'Windfall amount: {:,}{}'\
+                        'Windfall age: {}{}'\
+                        'Social security amount(primary user): {:,}{}'\
+                        'Social security date(primary user): {}{}'\
+                        'Social security amount(spouse): {:,}{}'\
+                        'Social security date(spouse): {}{}'\
+                        'Asset class name: {}{}'\
+                        'Asset class average return: {:.2f}%{}'\
+                        'Asset class risk (std dev):{:.2f}%{}'\
+                        'Number of Monte Carlo experiments: {:,}{}'\
+                        'Inflation mean: {:.2f}%{}'\
+                        'Inflation Standard Deviation:{:.2f}%{}'\
+                        'Spend decay: {:.2f}%'.\
+            format(p0, nl,
+                   scenario.current_age, nl,
+                   scenario.s_current_age, nl,
+                   scenario.nestegg, nl,
+                   scenario.windfall_amount, nl,
+                   scenario.windfall_age, nl,
+                   scenario.ss_amount, nl,
+                   scenario.s_ss_date, nl,
+                   scenario.s_ss_amount, nl,
+                   scenario.s_ss_date, nl,
+                   asset_class.title, nl,
+                   100*asset_class.avg_ret, nl,
+                   100*asset_class.std_dev, nl,
+                   sd.num_exp, nl,
+                   100*(1-sd.inflation[0]), nl,
+                   100*sd.inflation[1], nl,
+                   100*sd.spend_decay[0],50)
 
-        copyScenario2Form(scenario, form)
 
         return render_template('display_sim_result.html', title='Simulated Scenario',
                                form=form, legend='Simulated Scenario', plot_url=plot_url)

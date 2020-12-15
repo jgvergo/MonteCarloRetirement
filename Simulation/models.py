@@ -126,7 +126,7 @@ class Scenario(db.Model):
 
 # These data are kept in an object for convenience. They typically don't change
 class SimData:
-    num_exp = 10000
+    num_exp = 100000
     num_sim_bins = 100
     cola = [0.03632608696, 0.02904712979]
     inflation = [1.027, 0.011]
