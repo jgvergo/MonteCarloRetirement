@@ -4,11 +4,21 @@
     <form action="" method="POST">
         {{ form.hidden_tag() }}
         <form>
-            <row>
-                <div class="media-body">
-                  <h2 class="account-heading">{{ form.title }}</h2>
-                </div>
-            </row>
+            <div class="form-group row">
+                {{ form.title.label(class="col-md-4 col-form-label text-right") }}
+                {% if form.title.errors %}
+                    {{ form.title(class="form-control form-control-md is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.title.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="col-md-8">
+                        {{ form.title(class="form-control") }}
+                    </div>
+                {% endif %}
+            </div>
             <div class="media">
                 <img src="data:image/png;base64, {{ plot_url }}">
             </div>
