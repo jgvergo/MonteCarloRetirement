@@ -3,9 +3,9 @@ from flask_login import current_user, login_required
 from Simulation import db
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm
 from Simulation.asset_classes.forms import populateInvestmentDropdown, getInvestmentDataFromSelectField, getAssetClass
-from Simulation.models import Scenario, SimData
+from Simulation.models import Scenario
 from Simulation.users.utils import calculate_age
-from Simulation.MCSim import do_sim
+from Simulation.MCSim import run_simulation, plot_graphs
 from Simulation.models import SimData
 from datetime import date
 
@@ -105,7 +105,10 @@ def run_scenario(scenario_id):
     else:
         # Do the simulation
         sd = SimData()
-        plot_url, p0 = do_sim(sd, scenario)
+        p0, fd_output, dd_output, ss_output, sss_output = run_simulation(scenario, sd)
+
+        plot_url = plot_graphs(fd_output, dd_output, ss_output, sss_output, sd.num_sim_bins)
+
         form.title.data = scenario.title
         asset_class = getAssetClass(scenario.asset_class_id)
         nl = '\n'
@@ -140,7 +143,7 @@ def run_scenario(scenario_id):
                    100*asset_class.avg_ret, nl,
                    100*asset_class.std_dev, nl,
                    sd.num_exp, nl,
-                   100*(1-sd.inflation[0]), nl,
+                   100*(sd.inflation[0]-1), nl,
                    100*sd.inflation[1], nl,
                    100*sd.spend_decay[0],50)
 
