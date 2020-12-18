@@ -10,6 +10,11 @@ mpl.use('Agg')
 plt.style.use('ggplot')
 
 
+# Returns a random sequence of numbers of length num that are randomly drawn from the specified normal distribution
+def sim(mean, stddev, num):
+    return np.random.normal(mean, stddev, num)
+
+
 def run_simulation(scenario, sim_data) -> plt.figure():
     # Number of years to simulate
     if scenario.has_spouse:
@@ -19,10 +24,10 @@ def run_simulation(scenario, sim_data) -> plt.figure():
 
     # These are numpy.ndarrays which hold the simulation results
     # fd_output[year][experiment]
-    fd_output = np.zeros((n_yrs + 1, sim_data.num_exp))  # Final distribution output
-    dd_output = np.zeros((n_yrs + 1, sim_data.num_exp))  # Drawdown output
-    ss_output = np.zeros((n_yrs + 1, sim_data.num_exp))  # Social security output
-    sss_output = np.zeros((n_yrs + 1, sim_data.num_exp)) # Spouse's social security output
+    fd_output = np.zeros((n_yrs, sim_data.num_exp))  # Final distribution output
+    dd_output = np.zeros((n_yrs, sim_data.num_exp))  # Drawdown output
+    ss_output = np.zeros((n_yrs, sim_data.num_exp))  # Social security output
+    sss_output = np.zeros((n_yrs, sim_data.num_exp)) # Spouse's social security output
 
 
     # Run the simulation with the investment configuration based on the UI
@@ -70,7 +75,11 @@ def run_simulation(scenario, sim_data) -> plt.figure():
         s2ss = 0
 
         nestegg = scenario.nestegg
-        drawdown = scenario.drawdown
+
+        if s1_age >= scenario.retirement_age:
+            drawdown = scenario.drawdown
+        else:
+            drawdown = 0
 
         # Generate a random sequence of investment annual returns based on a normal distribution
         s_invest = sim(invest_avg, invest_std_dev, n_yrs)
@@ -84,15 +93,10 @@ def run_simulation(scenario, sim_data) -> plt.figure():
         # Generate a random sequence of social security cost of living increases
         cola = sim(sim_data.cola[0], sim_data.cola[1], n_yrs)
 
-        # Record the nestegg starting point in the fd_output list
-        fd_output[0][experiment] = nestegg
-
-        # Set these to zero too
-#        dd_output[0][experiment] = 0
-#        ss_output[0][experiment] = 0
-#        sss_output[0][experiment] = 0
-
         for year in range(n_yrs):
+            fd_output[year][experiment] = nestegg  # Record the results
+            dd_output[year][experiment] = drawdown
+
             s1_age += 1
             if scenario.has_spouse:
                 s2_age += 1
@@ -104,6 +108,7 @@ def run_simulation(scenario, sim_data) -> plt.figure():
 
             elif s1_age == scenario.retirement_age:         # Year of retirement
                 s1_income = scenario.ret_income
+                drawdown = scenario.drawdown
                 nestegg -= drawdown
                 nestegg += s1_income
 
@@ -122,7 +127,7 @@ def run_simulation(scenario, sim_data) -> plt.figure():
             # For spouse, just adjust the income
             if scenario.has_spouse:
                 if s2_age < scenario.s_retirement_age:  # Working
-                    nestegg += s1_income * scenario.savings_rate
+                    nestegg += s2_income * scenario.savings_rate
                     s2_income *= s_inflation[year]
 
                 elif s2_age == scenario.s_retirement_age:  # Year of retirement
@@ -133,7 +138,7 @@ def run_simulation(scenario, sim_data) -> plt.figure():
 
                 else:  # Fully retired
                     s2_income = 0
-                nestegg += s2_income
+
 
             # Add windfall to the nestegg
             if s1_age == scenario.windfall_age:
@@ -142,18 +147,23 @@ def run_simulation(scenario, sim_data) -> plt.figure():
             # Add SS to the nestegg
             if s1_age == s1ssa_sim:
                 s1ss = scenario.ss_amount
+                ss_output[year][experiment] = s1ss
                 nestegg += s1ss
             if s1_age > s1ssa_sim:
                 s1ss *= (1+cola[year])
+                ss_output[year][experiment] = s1ss
                 nestegg += s1ss
+
 
             # Add spouse's SS to the nestegg
             if scenario.has_spouse:
                 if s2_age == s2ssa_sim:
                     s2ss = scenario.s_ss_amount
+                    sss_output[year][experiment] = s2ss
                     nestegg += s2ss
                 if s2_age > s2ssa_sim:
                     s2ss *= (1+cola[year])
+                    sss_output[year][experiment] = s2ss
                     nestegg += s2ss
 
             # Grow the nestegg
@@ -161,11 +171,6 @@ def run_simulation(scenario, sim_data) -> plt.figure():
 
             if (s1_age > scenario.ret_job_ret_age) and (nestegg < 0):
                 nestegg = 0.0
-            fd_output[year+1][experiment] = nestegg  # Record the final nestegg in the fd_output list
-            dd_output[year+1][experiment] = drawdown
-            ss_output[year+1][experiment] = s1ss
-            if scenario.has_spouse:
-                sss_output[year+1][experiment] = s2ss
 
     # Calculate the percentage of results over zero
     p0 = 100 * (sum(i > 0.0 for i in fd_output[year]) / sim_data.num_exp)
@@ -249,7 +254,7 @@ def plot_graphs(fd_output, dd_output, ss_output, sss_output, num_sim_bins):
     ymax = n[np.argmax(n)]
     ylen = ymax - ymin
 
-    yinc = ylen / 31  # Determined empirically, based on font and graph size
+    yinc = ylen / 32  # Determined empirically, based on font and graph size
 
     # Put a line for the mode and label it. Note that we drop the leading bucket, which is frequently zeros
     mode = arr[np.argmax(n)]
@@ -267,240 +272,25 @@ def plot_graphs(fd_output, dd_output, ss_output, sss_output, num_sim_bins):
     plt.text(avg + xlen / 50, ypos - 2 * yinc, 'Average: ${0:,.0f}'.format(avg), color='b')
 
     fig_num += 1
-    plt.subplot(n_graphs, 1, fig_num)
-
-    fiv_pct = fd_output[:, int(0.95 * num_exp)]
-    ten_pct = fd_output[:, int(0.9 * num_exp)]
-    t5_pct = fd_output[:, int(0.75 * num_exp)]
-    fif_pct = fd_output[:, int(0.5 * num_exp)]
-    s5_pct = fd_output[:, int(0.25 * num_exp)]
-    nt_pct = fd_output[:, int(0.1 * num_exp)]
-    n5_pct = fd_output[:, int(0.05 * num_exp)]
-
-    ymax = 1.02*max(fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(), nt_pct.max(), n5_pct.max())  # This is the max that we will graph
-    ymin = 0
-    plt.xlim(0, year)
-    plt.ylim(ymin, ymax)
-
-    # Format the x axis so it shows normal number format with commas (not scientific notation)
-    ax = plt.gca()
-    ax.get_xaxis().set_major_formatter(
-        mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-
-    ax.get_yaxis().set_major_formatter(
-        mpl.ticker.FuncFormatter(lambda y, p: format(int(y / 1000), ',')))
-
-    line1 = ax.plot(fiv_pct, marker='o', markerfacecolor='red', markersize=2, linewidth=1, label="5%")
-    line2, = ax.plot(ten_pct, marker='o', markerfacecolor='blue', markersize=2, linewidth=1, label="10%")
-    line3, = ax.plot(t5_pct, marker='o', markerfacecolor='purple', markersize=2, linewidth=1, label="25%")
-    line4, = ax.plot(fif_pct, marker='o', markerfacecolor='black', markersize=2, linewidth=1, label="50%")
-    line5, = ax.plot(s5_pct, marker='o', markerfacecolor='orange', markersize=2, linewidth=1, label="75%")
-    line6, = ax.plot(nt_pct, marker='o', markerfacecolor='green', markersize=2, linewidth=1, label="90%")
-    line7, = ax.plot(n5_pct, marker='o', markerfacecolor='pink', markersize=2, linewidth=1, label="95%")
-    ax.legend((line1, line2, line3, line4, line5, line6, line7), ('2%', '10%', '25%', '50%', '75%', '90%', '98%'))
-
-    vert_range = ymax - ymin  # Y axis range
-    yinc = vert_range / 20      # space between legend entries, determined empirically
-
-    if fiv_pct[0] > (ymax - 0.25*ymax):
-        #  Plotted lines emanate from the upper left, so place the legend in the lower left
-        ax.legend(loc='lower left')
-        y_start = (ymin + 7*yinc)*0.956
-    else:
-        ax.legend(loc='upper left')
-        y_start = ymin + 0.944 * vert_range
-
-    # Plot the final fd_outputs next to the legend entries
-    plt.text((year / 6.9), y_start - 0*yinc, '${0:,.0f}'.format(fiv_pct[year]), color='red')
-    plt.text((year / 6.9), y_start - 1*yinc, '${0:,.0f}'.format(ten_pct[year]), color='blue')
-    plt.text((year / 6.9), y_start - 2*yinc, '${0:,.0f}'.format(t5_pct[year]), color='purple')
-    plt.text((year / 6.9), y_start - 3*yinc, '${0:,.0f}'.format(fif_pct[year]), color='black')
-    plt.text((year / 6.9), y_start - 4*yinc, '${0:,.0f}'.format(s5_pct[year]), color='orange')
-    plt.text((year / 6.9), y_start - 5*yinc, '${0:,.0f}'.format(nt_pct[year]), color='green')
-    plt.text((year / 6.9), y_start - 6*yinc, '${0:,.0f}'.format(n5_pct[year]), color='pink')
-
-    plt.xlabel('Year')
-    plt.ylabel('Portfolio value($1,000)')
-
-    ax.set_title('Outcome percentiles by year')
-
+    plot_confidence_bands(n_graphs, fig_num, num_exp, year, fd_output,
+                          'Year',
+                          'Portfolio value($1,000)',
+                          'Outcome percentiles by year')
     fig_num += 1
-    plt.subplot(n_graphs, 1, fig_num)
-
-    fiv_pct = dd_output[:, int(0.95 * num_exp)]
-    ten_pct = dd_output[:, int(0.9 * num_exp)]
-    t5_pct = dd_output[:, int(0.75 * num_exp)]
-    fif_pct = dd_output[:, int(0.5 * num_exp)]
-    s5_pct = dd_output[:, int(0.25 * num_exp)]
-    nt_pct = dd_output[:, int(0.1 * num_exp)]
-    n5_pct = dd_output[:, int(0.05 * num_exp)]
-
-    ymax = 1.02 * max(fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(), nt_pct.max(),
-                      n5_pct.max())  # This is the max that we will graph
-    ymin = 0
-    plt.ylim(ymin, ymax)
-    plt.xlim(0, year)
-
-    # Format the x axis so it shows normal number format with commas (not scientific notation)
-    ax = plt.gca()
-    ax.get_xaxis().set_major_formatter(
-        mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-
-    ax.get_yaxis().set_major_formatter(
-        mpl.ticker.FuncFormatter(lambda y, p: format(int(y), ',')))
-
-    line1 = ax.plot(fiv_pct, marker='o', markerfacecolor='red', markersize=2, linewidth=1, label="5%")
-    line2, = ax.plot(ten_pct, marker='o', markerfacecolor='blue', markersize=2, linewidth=1, label="10%")
-    line3, = ax.plot(t5_pct, marker='o', markerfacecolor='purple', markersize=2, linewidth=1, label="25%")
-    line4, = ax.plot(fif_pct, marker='o', markerfacecolor='black', markersize=2, linewidth=1, label="50%")
-    line5, = ax.plot(s5_pct, marker='o', markerfacecolor='orange', markersize=2, linewidth=1, label="75%")
-    line6, = ax.plot(nt_pct, marker='o', markerfacecolor='green', markersize=2, linewidth=1, label="90%")
-    line7, = ax.plot(n5_pct, marker='o', markerfacecolor='pink', markersize=2, linewidth=1, label="95%")
-    ax.legend((line1, line2, line3, line4, line5, line6, line7), ('2%', '10%', '25%', '50%', '75%', '90%', '98%'))
-
-    vert_range = ymax - ymin  # Y axis range
-    yinc = vert_range / 20  # space between legend entries, determined empirically
-
-    if fiv_pct[0] > (ymax - 0.25 * ymax):
-        #  Plotted lines emanate from the upper left, so place the legend in the lower left
-        ax.legend(loc='lower left')
-        y_start = (ymin + 7 * yinc) * 0.956
-    else:
-        ax.legend(loc='upper left')
-        y_start = ymin + 0.944 * vert_range
-
-    # Plot the final fd_outputs next to the legend entries
-    plt.text((year / 6.9), y_start - 0 * yinc, '${0:,.0f}'.format(fiv_pct[year]), color='red')
-    plt.text((year / 6.9), y_start - 1 * yinc, '${0:,.0f}'.format(ten_pct[year]), color='blue')
-    plt.text((year / 6.9), y_start - 2 * yinc, '${0:,.0f}'.format(t5_pct[year]), color='purple')
-    plt.text((year / 6.9), y_start - 3 * yinc, '${0:,.0f}'.format(fif_pct[year]), color='black')
-    plt.text((year / 6.9), y_start - 4 * yinc, '${0:,.0f}'.format(s5_pct[year]), color='orange')
-    plt.text((year / 6.9), y_start - 5 * yinc, '${0:,.0f}'.format(nt_pct[year]), color='green')
-    plt.text((year / 6.9), y_start - 6 * yinc, '${0:,.0f}'.format(n5_pct[year]), color='pink')
-
-    plt.xlabel('Year')
-    plt.ylabel('Drawdown')
-
-    ax.set_title('Drawdown percentiles by year')
-
-
+    plot_confidence_bands(n_graphs, fig_num, num_exp, year, dd_output,
+                          'Year',
+                          'Drawdown',
+                          'Drawdown percentiles by year')
     fig_num += 1
-    plt.subplot(n_graphs, 1, fig_num)
-
-    fiv_pct = ss_output[:, int(0.95 * num_exp)]
-    ten_pct = ss_output[:, int(0.9 * num_exp)]
-    t5_pct = ss_output[:, int(0.75 * num_exp)]
-    fif_pct = ss_output[:, int(0.5 * num_exp)]
-    s5_pct = ss_output[:, int(0.25 * num_exp)]
-    nt_pct = ss_output[:, int(0.1 * num_exp)]
-    n5_pct = ss_output[:, int(0.05 * num_exp)]
-
-    ymax = 1.02 * max(fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(), nt_pct.max(),
-                      n5_pct.max())  # This is the max that we will graph
-    ymin = 0
-    plt.ylim(ymin, ymax)
-    plt.xlim(0, year)
-
-    # Format the x axis so it shows normal number format with commas (not scientific notation)
-    ax = plt.gca()
-    ax.get_xaxis().set_major_formatter(
-        mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-
-    ax.get_yaxis().set_major_formatter(
-        mpl.ticker.FuncFormatter(lambda y, p: format(int(y), ',')))
-
-    line1 = ax.plot(fiv_pct, marker='o', markerfacecolor='red', markersize=2, linewidth=1, label="5%")
-    line2, = ax.plot(ten_pct, marker='o', markerfacecolor='blue', markersize=2, linewidth=1, label="10%")
-    line3, = ax.plot(t5_pct, marker='o', markerfacecolor='purple', markersize=2, linewidth=1, label="25%")
-    line4, = ax.plot(fif_pct, marker='o', markerfacecolor='black', markersize=2, linewidth=1, label="50%")
-    line5, = ax.plot(s5_pct, marker='o', markerfacecolor='orange', markersize=2, linewidth=1, label="75%")
-    line6, = ax.plot(nt_pct, marker='o', markerfacecolor='green', markersize=2, linewidth=1, label="90%")
-    line7, = ax.plot(n5_pct, marker='o', markerfacecolor='pink', markersize=2, linewidth=1, label="95%")
-    ax.legend((line1, line2, line3, line4, line5, line6, line7), ('2%', '10%', '25%', '50%', '75%', '90%', '98%'))
-
-    vert_range = ymax - ymin  # Y axis range
-    yinc = vert_range / 20  # space between legend entries, determined empirically
-
-    if fiv_pct[0] > (ymax - 0.25 * ymax):
-        #  Plotted lines emanate from the upper left, so place the legend in the lower left
-        ax.legend(loc='lower left')
-        y_start = (ymin + 7 * yinc) * 0.956
-    else:
-        ax.legend(loc='upper left')
-        y_start = ymin + 0.944 * vert_range
-
-    # Plot the final fd_outputs next to the legend entries
-    plt.text((year / 6.9), y_start - 0 * yinc, '${0:,.0f}'.format(fiv_pct[year]), color='red')
-    plt.text((year / 6.9), y_start - 1 * yinc, '${0:,.0f}'.format(ten_pct[year]), color='blue')
-    plt.text((year / 6.9), y_start - 2 * yinc, '${0:,.0f}'.format(t5_pct[year]), color='purple')
-    plt.text((year / 6.9), y_start - 3 * yinc, '${0:,.0f}'.format(fif_pct[year]), color='black')
-    plt.text((year / 6.9), y_start - 4 * yinc, '${0:,.0f}'.format(s5_pct[year]), color='orange')
-    plt.text((year / 6.9), y_start - 5 * yinc, '${0:,.0f}'.format(nt_pct[year]), color='green')
-    plt.text((year / 6.9), y_start - 6 * yinc, '${0:,.0f}'.format(n5_pct[year]), color='pink')
-
-    plt.xlabel('Year')
-    plt.ylabel('Primary user social security')
-
-    ax.set_title('Social security percentiles by year (primary user)')
-
+    plot_confidence_bands(n_graphs, fig_num, num_exp, year, ss_output,
+                          'Year',
+                          'Primary user social security',
+                          'Social security percentiles by year (primary user)')
     fig_num += 1
-    plt.subplot(n_graphs, 1, fig_num)
-
-    fiv_pct = sss_output[:, int(0.95 * num_exp)]
-    ten_pct = sss_output[:, int(0.9 * num_exp)]
-    t5_pct = sss_output[:, int(0.75 * num_exp)]
-    fif_pct = sss_output[:, int(0.5 * num_exp)]
-    s5_pct = sss_output[:, int(0.25 * num_exp)]
-    nt_pct = sss_output[:, int(0.1 * num_exp)]
-    n5_pct = sss_output[:, int(0.05 * num_exp)]
-
-    ymax = 1.02 * max(fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(), nt_pct.max(),
-                      n5_pct.max())  # This is the max that we will graph
-    ymin = 0
-    plt.ylim(ymin, ymax)
-    plt.xlim(0, year)
-
-    # Format the x axis so it shows normal number format with commas (not scientific notation)
-    ax = plt.gca()
-    ax.get_xaxis().set_major_formatter(
-        mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-
-    ax.get_yaxis().set_major_formatter(
-        mpl.ticker.FuncFormatter(lambda y, p: format(int(y), ',')))
-
-    line1 = ax.plot(fiv_pct, marker='o', markerfacecolor='red', markersize=2, linewidth=1, label="5%")
-    line2, = ax.plot(ten_pct, marker='o', markerfacecolor='blue', markersize=2, linewidth=1, label="10%")
-    line3, = ax.plot(t5_pct, marker='o', markerfacecolor='purple', markersize=2, linewidth=1, label="25%")
-    line4, = ax.plot(fif_pct, marker='o', markerfacecolor='black', markersize=2, linewidth=1, label="50%")
-    line5, = ax.plot(s5_pct, marker='o', markerfacecolor='orange', markersize=2, linewidth=1, label="75%")
-    line6, = ax.plot(nt_pct, marker='o', markerfacecolor='green', markersize=2, linewidth=1, label="90%")
-    line7, = ax.plot(n5_pct, marker='o', markerfacecolor='pink', markersize=2, linewidth=1, label="95%")
-    ax.legend((line1, line2, line3, line4, line5, line6, line7), ('2%', '10%', '25%', '50%', '75%', '90%', '98%'))
-
-    vert_range = ymax - ymin  # Y axis range
-    yinc = vert_range / 20  # space between legend entries, determined empirically
-
-    if fiv_pct[0] > (ymax - 0.25 * ymax):
-        #  Plotted lines emanate from the upper left, so place the legend in the lower left
-        ax.legend(loc='lower left')
-        y_start = (ymin + 7 * yinc) * 0.956
-    else:
-        ax.legend(loc='upper left')
-        y_start = ymin + 0.944 * vert_range
-
-    # Plot the final fd_outputs next to the legend entries
-    plt.text((year / 6.9), y_start - 0 * yinc, '${0:,.0f}'.format(fiv_pct[year]), color='red')
-    plt.text((year / 6.9), y_start - 1 * yinc, '${0:,.0f}'.format(ten_pct[year]), color='blue')
-    plt.text((year / 6.9), y_start - 2 * yinc, '${0:,.0f}'.format(t5_pct[year]), color='purple')
-    plt.text((year / 6.9), y_start - 3 * yinc, '${0:,.0f}'.format(fif_pct[year]), color='black')
-    plt.text((year / 6.9), y_start - 4 * yinc, '${0:,.0f}'.format(s5_pct[year]), color='orange')
-    plt.text((year / 6.9), y_start - 5 * yinc, '${0:,.0f}'.format(nt_pct[year]), color='green')
-    plt.text((year / 6.9), y_start - 6 * yinc, '${0:,.0f}'.format(n5_pct[year]), color='pink')
-
-    plt.xlabel('Year')
-    plt.ylabel('Spouse social security')
-
-    ax.set_title('Social security percentiles by year (spouse)')
+    plot_confidence_bands(n_graphs, fig_num, num_exp, year, sss_output,
+                          'Year',
+                          'Spouse social security',
+                          'Social security percentiles by year (spouse)')
 
     plt.savefig(img, format='png')
     img.seek(0)
@@ -508,10 +298,74 @@ def plot_graphs(fd_output, dd_output, ss_output, sss_output, num_sim_bins):
 
     return plot_url
 
+def plot_confidence_bands(n_graphs, fig_num, num_exp, year, output, x_label, y_label, title):
 
-# Returns a random sequence of numbers of length num that are randomly drawn from the specified normal distribution
-def sim(mean, stddev, num):
-    return np.random.normal(mean, stddev, num)
+    plt.subplot(n_graphs, 1, fig_num)
+
+    two_pct = output[:, int(0.98 * num_exp)]
+    fiv_pct = output[:, int(0.95 * num_exp)]
+    ten_pct = output[:, int(0.9 * num_exp)]
+    t5_pct = output[:, int(0.75 * num_exp)]
+    fif_pct = output[:, int(0.5 * num_exp)]
+    s5_pct = output[:, int(0.25 * num_exp)]
+    nt_pct = output[:, int(0.1 * num_exp)]
+    n5_pct = output[:, int(0.05 * num_exp)]
+    n8_pct = output[:, int(0.02 * num_exp)]
+
+    ymax = 1.02 * max(two_pct.max(), fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(), nt_pct.max(),
+                      n5_pct.max(), n8_pct.max())  # This is the max that we will graph
+    ymin = 0
+    plt.ylim(ymin, ymax)
+    plt.xlim(0, year)
+
+    # Format the x axis so it shows normal number format with commas (not scientific notation)
+    ax = plt.gca()
+    ax.get_xaxis().set_major_formatter(
+        mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+
+    ax.get_yaxis().set_major_formatter(
+        mpl.ticker.FuncFormatter(lambda y, p: format(int(y), ',')))
+
+    line0 = ax.plot(two_pct, marker='o', markerfacecolor='black', color='black', markersize=1, linewidth=1, label="2%")
+    line1 = ax.plot(fiv_pct, marker='o', markerfacecolor='brown', color='brown', markersize=1, linewidth=1, label="5%")
+    line2, = ax.plot(ten_pct, marker='o', markerfacecolor='purple', color='purple', markersize=1, linewidth=1, label="10%")
+    line3, = ax.plot(t5_pct, marker='o', markerfacecolor='blue', color='blue', markersize=1, linewidth=1, label="25%")
+    line4, = ax.plot(fif_pct, marker='o', markerfacecolor='green', color='green', markersize=1, linewidth=1, label="50%")
+    line5, = ax.plot(s5_pct, marker='o', markerfacecolor='olive', color='olive', markersize=1, linewidth=1, label="25%")
+    line6, = ax.plot(nt_pct, marker='o', markerfacecolor='pink', color='pink', markersize=1, linewidth=1, label="10%")
+    line7, = ax.plot(n5_pct, marker='o', markerfacecolor='orange', color='orange', markersize=1, linewidth=1, label="5%")
+    line8, = ax.plot(n8_pct, marker='o', markerfacecolor='red', color='red', markersize=1, linewidth=1, label="2%")
+
+    ax.legend((line0, line1, line2, line3, line4, line5, line6, line7, line8), ('2%', '5%', '10%', '25%', '50%', '75%', '90%', '95%', '98%'))
+
+    vert_range = ymax - ymin  # Y axis range
+    yinc = vert_range / 20.5  # space between legend entries, determined empirically
+
+    if fiv_pct[3] > (ymax - 0.5 * ymax):
+        #  Plotted lines emanate from the upper left, so place the legend in the lower left
+        ax.legend(loc='lower left')
+        y_start = (ymin + 9 * yinc) * 0.965
+    else:
+        ax.legend(loc='upper left')
+        y_start = ymin + 0.947 * vert_range
+
+    # Plot the final fd_outputs next to the legend entries
+    plt.text((year / 6.9), y_start - 0 * yinc, '${0:,.0f}'.format(two_pct[year]), color='black')
+    plt.text((year / 6.9), y_start - 1 * yinc, '${0:,.0f}'.format(fiv_pct[year]), color='brown')
+    plt.text((year / 6.9), y_start - 2 * yinc, '${0:,.0f}'.format(ten_pct[year]), color='purple')
+    plt.text((year / 6.9), y_start - 3 * yinc, '${0:,.0f}'.format(t5_pct[year]), color='blue')
+    plt.text((year / 6.9), y_start - 4 * yinc, '${0:,.0f}'.format(fif_pct[year]), color='green')
+    plt.text((year / 6.9), y_start - 5 * yinc, '${0:,.0f}'.format(s5_pct[year]), color='olive')
+    plt.text((year / 6.9), y_start - 6 * yinc, '${0:,.0f}'.format(nt_pct[year]), color='pink')
+    plt.text((year / 6.9), y_start - 7 * yinc, '${0:,.0f}'.format(n5_pct[year]), color='orange')
+    plt.text((year / 6.9), y_start - 8 * yinc, '${0:,.0f}'.format(n8_pct[year]), color='red')
+
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+
+    ax.set_title(title)
+    return
+
 
 # Some one time, large ticket items
 # wedding_cost = -40000  # x4
