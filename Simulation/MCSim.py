@@ -127,15 +127,14 @@ def run_simulation(scenario, sim_data) -> plt.figure():
             # For spouse, just adjust the income
             if scenario.has_spouse:
                 if s2_age < scenario.s_retirement_age:  # Working
-                    nestegg += s2_income * scenario.savings_rate
+                    nestegg += s2_income * scenario.s_savings_rate
                     s2_income *= s_inflation[year]
-
                 elif s2_age == scenario.s_retirement_age:  # Year of retirement
+                    nestegg += s2_income
                     s2_income = scenario.s_ret_income
-
                 elif s2_age < scenario.s_ret_job_ret_age:  # Partially retired
+                    nestegg += s2_income
                     s2_income *= s_inflation[year]
-
                 else:  # Fully retired
                     s2_income = 0
 
