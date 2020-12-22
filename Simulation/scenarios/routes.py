@@ -5,7 +5,8 @@ from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm
 from Simulation.asset_classes.forms import populateInvestmentDropdown, getInvestmentDataFromSelectField, getAssetClass
 from Simulation.models import Scenario
 from Simulation.users.utils import calculate_age
-from Simulation.MCSim import run_simulation, plot_graphs
+from Simulation.MCSim import run_simulation
+from Simulation.MCGraphs import plot_graphs
 from Simulation.models import SimData
 from datetime import date
 
@@ -105,9 +106,11 @@ def run_scenario(scenario_id):
     else:
         # Do the simulation
         sd = SimData()
-        p0, fd_output, dd_output, ss_output, sss_output = run_simulation(scenario, sd)
+        p0, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = run_simulation(scenario, sd)
 
-        plot_url = plot_graphs(fd_output, dd_output, ss_output, sss_output, sd.num_sim_bins)
+        plot_urls = plot_graphs(fd_output, dd_output, ss_output, sss_output,
+                               inv_output, inf_output, sd_output, cola_output,
+                               sd)
 
         form.title.data = scenario.title
         asset_class = getAssetClass(scenario.asset_class_id)
@@ -149,7 +152,7 @@ def run_scenario(scenario_id):
 
 
         return render_template('display_sim_result.html', title='Simulated Scenario',
-                               form=form, legend='Simulated Scenario', plot_url=plot_url)
+                               form=form, legend='Simulated Scenario', plot_urls=plot_urls)
 
 def copyScenario2Form(scenario, form):
     form.title.data = scenario.title
