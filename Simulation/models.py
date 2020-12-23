@@ -132,6 +132,8 @@ class SimData:
     inflation = [1.027, 0.011]
     asset_classes = []
     spend_decay = [0.02, 0.001]
+    two_percent = False
+    debug = False
 
 
 def init_db(app):

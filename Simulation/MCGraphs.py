@@ -21,38 +21,39 @@ def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_out
         cola_output[year].sort()
     plot_url = []
     plot_url.append(plot_final_value_histogram(fd_output, sd))
-    plot_url.append(plot_confidence_bands(sd.num_exp, year, fd_output,
+    plot_url.append(plot_confidence_bands(sd, year, fd_output,
                           'Year',
                           'Portfolio value($1,000)',
                           'Outcome percentiles by year'))
-    plot_url.append(plot_confidence_bands(sd.num_exp, year, dd_output,
+    plot_url.append(plot_confidence_bands(sd, year, dd_output,
                           'Year',
                           'Drawdown',
                           'Drawdown percentiles by year'))
-    plot_url.append(plot_confidence_bands(sd.num_exp, year, ss_output,
+    plot_url.append(plot_confidence_bands(sd, year, ss_output,
                           'Year',
                           'Primary user social security',
                           'Social security percentiles by year (primary user)'))
-    plot_url.append(plot_confidence_bands(sd.num_exp, year, sss_output,
+    plot_url.append(plot_confidence_bands(sd, year, sss_output,
                           'Year',
                           'Spouse social security',
                           'Social security percentiles by year (spouse)'))
-    plot_url.append(plot_confidence_bands(sd.num_exp, year, inv_output,
+    if sd.debug:
+        plot_url.append(plot_confidence_bands(sd, year, inv_output,
                           'Year',
                           'Investment returns',
                           'Investment returns percentiles by year'))
-    plot_url.append(plot_confidence_bands(sd.num_exp, year, inf_output,
-                          'Year',
-                          'Inflation',
-                          'Inflation percentiles by year'))
-    plot_url.append(plot_confidence_bands(sd.num_exp, year, sd_output,
-                          'Year',
-                          'Spend decay',
-                          'Spend decay percentiles by year'))
-    plot_url.append(plot_confidence_bands(sd.num_exp, year, cola_output,
-                          'Year',
-                          'Cola',
-                          'Cola percentiles by year'))
+        plot_url.append(plot_confidence_bands(sd, year, inf_output,
+                              'Year',
+                              'Inflation',
+                              'Inflation percentiles by year'))
+        plot_url.append(plot_confidence_bands(sd, year, sd_output,
+                              'Year',
+                              'Spend decay',
+                              'Spend decay percentiles by year'))
+        plot_url.append(plot_confidence_bands(sd, year, cola_output,
+                              'Year',
+                              'Cola',
+                              'Cola percentiles by year'))
     return plot_url
 
 
@@ -146,28 +147,38 @@ def plot_final_value_histogram(fd_output, sd):
     return plot_url
 
 
-def plot_confidence_bands(num_exp, year, output, x_label, y_label, title):
+def plot_confidence_bands(sd, year, output, x_label, y_label, title):
     img = io.BytesIO()
     plt.figure(figsize=(8, 6.5))
     plt.gcf().subplots_adjust(left=0.15)  # Prevents the cut off of the y axis label (mfm)
 
-    two_pct = output[:, int(0.98 * num_exp)]
-    fiv_pct = output[:, int(0.95 * num_exp)]
-    ten_pct = output[:, int(0.9 * num_exp)]
-    t5_pct = output[:, int(0.75 * num_exp)]
-    fif_pct = output[:, int(0.5 * num_exp)]
-    s5_pct = output[:, int(0.25 * num_exp)]
-    nt_pct = output[:, int(0.1 * num_exp)]
-    n5_pct = output[:, int(0.05 * num_exp)]
-    n8_pct = output[:, int(0.02 * num_exp)]
+    if sd.two_percent:
+        two_pct = output[:, int(0.98 * sd.num_exp)]
+    fiv_pct = output[:, int(0.95 * sd.num_exp)]
+    ten_pct = output[:, int(0.9 * sd.num_exp)]
+    t5_pct = output[:, int(0.75 * sd.num_exp)]
+    fif_pct = output[:, int(0.5 * sd.num_exp)]
+    s5_pct = output[:, int(0.25 * sd.num_exp)]
+    nt_pct = output[:, int(0.1 * sd.num_exp)]
+    n5_pct = output[:, int(0.05 * sd.num_exp)]
+    if sd.two_percent:
+        n8_pct = output[:, int(0.02 * sd.num_exp)]
 
-    ymax = 1.02 * max(two_pct.max(), fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(),
+    if sd.two_percent:
+        ymax = 1.02 * max(two_pct.max(), fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(),
                       nt_pct.max(), n5_pct.max(), n8_pct.max())
+    else:
+        ymax = 1.02 * max(fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(),
+                          nt_pct.max(), n5_pct.max())
     if ymax > 10:
         ymin = 0
     else:
-        ymin = min(two_pct.min(), fiv_pct.min(), ten_pct.min(), t5_pct.min(), fif_pct.min(), s5_pct.min(),
+        if sd.two_percent:
+            ymin = min(two_pct.min(), fiv_pct.min(), ten_pct.min(), t5_pct.min(), fif_pct.min(), s5_pct.min(),
                           nt_pct.min(), n5_pct.min(), n8_pct.min())
+        else:
+            ymin = min(fiv_pct.min(), ten_pct.min(), t5_pct.min(), fif_pct.min(), s5_pct.min(),
+                       nt_pct.min(), n5_pct.min())
     plt.ylim(ymin, ymax)
     plt.xlim(0, year)
 
@@ -180,7 +191,8 @@ def plot_confidence_bands(num_exp, year, output, x_label, y_label, title):
         ax.get_yaxis().set_major_formatter(
             mpl.ticker.FuncFormatter(lambda y, p: format(int(y), ',')))
 
-    line0 = ax.plot(two_pct, marker='o', markerfacecolor='black', color='black', markersize=1, linewidth=1, label="2%")
+    if sd.two_percent:
+        line0 = ax.plot(two_pct, marker='o', markerfacecolor='black', color='black', markersize=1, linewidth=1, label="2%")
     line1 = ax.plot(fiv_pct, marker='o', markerfacecolor='brown', color='brown', markersize=1, linewidth=1, label="5%")
     line2, = ax.plot(ten_pct, marker='o', markerfacecolor='purple', color='purple', markersize=1, linewidth=1, label="10%")
     line3, = ax.plot(t5_pct, marker='o', markerfacecolor='blue', color='blue', markersize=1, linewidth=1, label="25%")
@@ -188,37 +200,53 @@ def plot_confidence_bands(num_exp, year, output, x_label, y_label, title):
     line5, = ax.plot(s5_pct, marker='o', markerfacecolor='olive', color='olive', markersize=1, linewidth=1, label="25%")
     line6, = ax.plot(nt_pct, marker='o', markerfacecolor='pink', color='pink', markersize=1, linewidth=1, label="10%")
     line7, = ax.plot(n5_pct, marker='o', markerfacecolor='orange', color='orange', markersize=1, linewidth=1, label="5%")
-    line8, = ax.plot(n8_pct, marker='o', markerfacecolor='red', color='red', markersize=1, linewidth=1, label="2%")
+    if sd.two_percent:
+        line8, = ax.plot(n8_pct, marker='o', markerfacecolor='red', color='red', markersize=1, linewidth=1, label="2%")
 
-    ax.legend((line0, line1, line2, line3, line4, line5, line6, line7, line8), ('2%', '5%', '10%', '25%', '50%', '75%', '90%', '95%', '98%'))
-
+    if sd.two_percent:
+        ax.legend((line0, line1, line2, line3, line4, line5, line6, line7, line8), ('2%', '5%', '10%', '25%', '50%', '75%', '90%', '95%', '98%'))
+    else:
+        ax.legend((line1, line2, line3, line4, line5, line6, line7),
+                  ('5%', '10%', '25%', '50%', '75%', '90%', '95%'))
     vert_range = ymax - ymin  # Y axis range
     yinc = vert_range / 24  # space between legend entries, determined empirically
     fudge_factor = .003*vert_range
     if fiv_pct[3] > (ymax - 0.5 * ymax):
         #  Plotted lines emanate from the upper left, so place the legend in the lower left
-        leg = ax.legend(loc='lower left')
-        y_start = (ymin + 9 * yinc) - 3*fudge_factor
+        ax.legend(loc='lower left')
+        if sd.two_percent:
+            y_start = (ymin + 9 * yinc) - 3*fudge_factor
+        else:
+            y_start = (ymin + 7 * yinc) - 3 * fudge_factor
     else:
-        leg = ax.legend(loc='upper left')
+        ax.legend(loc='upper left')
         y_start = ymin + vert_range - yinc - 2*fudge_factor
     if ymax < 10:
         funcstr = '${0:,.3f}'
     else:
         funcstr = '${0:,.0f}'
-#    plt.gcf().canvas.draw()
-#    p = leg.get_window_extent()
-#    y_start = p.max[0]
+
     # Plot the final fd_outputs next to the legend entries
-    plt.text((year / 6.9), y_start - 0 * yinc, funcstr.format(two_pct[year]), color='black')
-    plt.text((year / 6.9), y_start - 1 * yinc, funcstr.format(fiv_pct[year]), color='brown')
-    plt.text((year / 6.9), y_start - 2 * yinc, funcstr.format(ten_pct[year]), color='purple')
-    plt.text((year / 6.9), y_start - 3 * yinc, funcstr.format(t5_pct[year]), color='blue')
-    plt.text((year / 6.9), y_start - 4 * yinc, funcstr.format(fif_pct[year]), color='green')
-    plt.text((year / 6.9), y_start - 5 * yinc, funcstr.format(s5_pct[year]), color='olive')
-    plt.text((year / 6.9), y_start - 6 * yinc, funcstr.format(nt_pct[year]), color='pink')
-    plt.text((year / 6.9), y_start - 7 * yinc, funcstr.format(n5_pct[year]), color='orange')
-    plt.text((year / 6.9), y_start - 8 * yinc, funcstr.format(n8_pct[year]), color='red')
+    n = 0
+    if sd.two_percent:
+        plt.text((year / 6.9), y_start - n * yinc, funcstr.format(two_pct[year]), color='black')
+        n += 1
+    plt.text((year / 6.9), y_start - n * yinc, funcstr.format(fiv_pct[year]), color='brown')
+    n += 1
+    plt.text((year / 6.9), y_start - n * yinc, funcstr.format(ten_pct[year]), color='purple')
+    n += 1
+    plt.text((year / 6.9), y_start - n * yinc, funcstr.format(t5_pct[year]), color='blue')
+    n += 1
+    plt.text((year / 6.9), y_start - n * yinc, funcstr.format(fif_pct[year]), color='green')
+    n += 1
+    plt.text((year / 6.9), y_start - n * yinc, funcstr.format(s5_pct[year]), color='olive')
+    n += 1
+    plt.text((year / 6.9), y_start - n * yinc, funcstr.format(nt_pct[year]), color='pink')
+    n += 1
+    plt.text((year / 6.9), y_start - n * yinc, funcstr.format(n5_pct[year]), color='orange')
+    n += 1
+    if sd.two_percent:
+        plt.text((year / 6.9), y_start - n * yinc, funcstr.format(n8_pct[year]), color='red')
 
     plt.xlabel(x_label)
     plt.ylabel(y_label)
