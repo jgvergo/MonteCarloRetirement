@@ -106,16 +106,16 @@ def run_scenario(scenario_id):
     else:
         # Do the simulation
         sd = SimData()
-        p0, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = run_simulation(scenario, sd)
+        p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = run_simulation(scenario, sd)
 
         plot_urls = plot_graphs(fd_output, dd_output, ss_output, sss_output,
-                               inv_output, inf_output, sd_output, cola_output,
+                               inv_output, inf_output, sd_output, cola_output,p0_output,
                                sd)
 
         form.title.data = scenario.title
         asset_class = getAssetClass(scenario.asset_class_id)
         nl = '\n'
-        form.taf.data = 'Percent over zero: {:>.2f}%{}'\
+        form.taf.data = 'Percent over zero after {} years: {:>.2f}%{}'\
                         'Primary user age: {}{}'\
                         "Spouse's age: {}{}"\
                         'Starting nestegg: {:,}{}'\
@@ -132,7 +132,7 @@ def run_scenario(scenario_id):
                         'Inflation mean: {:.2f}%{}'\
                         'Inflation Standard Deviation:{:.2f}%{}'\
                         'Spend decay: {:.2f}%'.\
-            format(p0, nl,
+            format(p0_output.shape[0], p0_output[p0_output.shape[0]-1], nl,
                    scenario.current_age, nl,
                    scenario.s_current_age, nl,
                    scenario.nestegg, nl,

@@ -25,6 +25,7 @@ def run_simulation(scenario, sim_data):
     inf_output = np.zeros((n_yrs, sim_data.num_exp))  # Spouse's social security output
     sd_output = np.zeros((n_yrs, sim_data.num_exp))  # Spouse's social security output
     cola_output = np.zeros((n_yrs, sim_data.num_exp))  # Spouse's social security output
+    p0_output = np.zeros((n_yrs))  # Percent over zero
 
 
     # Run the simulation with the investment configuration based on the UI
@@ -172,9 +173,10 @@ def run_simulation(scenario, sim_data):
             if (s1_age > scenario.ret_job_ret_age) and (nestegg < 0):
                 nestegg = 0.0
 
-    # Calculate the percentage of results over zero
-    p0 = 100 * (sum(i > 0.0 for i in fd_output[year]) / sim_data.num_exp)
-    return p0, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output
+    for year in range(n_yrs):
+        # Calculate the percentage of results over zero
+        p0_output[year] = 100 * (sum(i > 0.0 for i in fd_output[year]) / sim_data.num_exp)
+    return p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output
 
 
 # Some one time, large ticket items

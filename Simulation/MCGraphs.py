@@ -9,7 +9,7 @@ mpl.use('Agg')
 plt.style.use('ggplot')
 
 
-def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output, sd):
+def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output, p0_output, sd):
     for year in range(fd_output.shape[0]):
         fd_output[year].sort()
         dd_output[year].sort()
@@ -21,6 +21,7 @@ def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_out
         cola_output[year].sort()
     plot_url = []
     plot_url.append(plot_final_value_histogram(fd_output, sd))
+    plot_url.append(plot_p0(p0_output))
     plot_url.append(plot_confidence_bands(sd, year, fd_output,
                           'Year',
                           'Portfolio value($1,000)',
@@ -37,6 +38,7 @@ def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_out
                           'Year',
                           'Spouse social security',
                           'Social security percentiles by year (spouse)'))
+
     if sd.debug:
         plot_url.append(plot_confidence_bands(sd, year, inv_output,
                           'Year',
@@ -56,6 +58,36 @@ def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_out
                               'Cola percentiles by year'))
     return plot_url
 
+def plot_p0(p0_output):
+    img = io.BytesIO()
+
+    plt.figure(figsize=(8, 6.5))
+    plt.tight_layout()
+
+    n_yrs = p0_output.shape[0]
+
+    ax = plt.gca()
+
+    ax.get_xaxis().set_major_formatter(
+        mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+    ax.get_xaxis().set_major_locator(plt.MaxNLocator(5))
+    ax.plot(p0_output, marker='o', markerfacecolor='black', color='black', markersize=1, linewidth=1, markevery=5)
+    x = np.arange(0, n_yrs, 1)
+#    ax.fill_between(x, 0, p0_output, color='blue')
+    xy = tuple(zip(x, p0_output))
+    i = 0
+    while i < len(p0_output):
+        ax.annotate('%.2f' % xy[i][1], xy=xy[i], xytext=(0, 5), textcoords='offset pixels')
+        i += int(n_yrs/6)  # Label 6 points, equally spaced horizontally
+    plt.xlabel("Year")
+    plt.ylabel('Percent over 0')
+
+    ax.set_title('Probability of NOT running out of money, by year')
+
+    plt.savefig(img, format='png')
+    img.seek(0)
+    plot_url = base64.b64encode(img.getvalue()).decode()
+    return plot_url
 
 def plot_final_value_histogram(fd_output, sd):
     img = io.BytesIO()
