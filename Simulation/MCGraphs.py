@@ -72,10 +72,12 @@ def plot_p0(p0_output):
         mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
     ax.get_xaxis().set_major_locator(plt.MaxNLocator(5))
 
+    plt.ylim(0, 105)
+
     markevery = int(n_yrs/6)  # Label 6 points, equally spaced horizontally
     ax.plot(p0_output, marker='o', markerfacecolor='black', color='black', markersize=1, linewidth=1, markevery=markevery)
     x = np.arange(0, n_yrs, 1)
-#    ax.fill_between(x, 0, p0_output, color='blue')
+    ax.fill_between(x, 0, p0_output, color='blue')
     xy = tuple(zip(x, p0_output))
     i = 0
     while i < len(p0_output):
@@ -87,7 +89,7 @@ def plot_p0(p0_output):
 
     plt.xlabel("Year")
     plt.ylabel('Percent over 0')
-    ax.set_title('Probability of NOT running out of money, by year')
+    ax.set_title('Probability of outliving your money, by year')
 
     plt.savefig(img, format='png')
     img.seek(0)
