@@ -71,17 +71,22 @@ def plot_p0(p0_output):
     ax.get_xaxis().set_major_formatter(
         mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
     ax.get_xaxis().set_major_locator(plt.MaxNLocator(5))
-    ax.plot(p0_output, marker='o', markerfacecolor='black', color='black', markersize=1, linewidth=1, markevery=5)
+
+    markevery = int(n_yrs/6)  # Label 6 points, equally spaced horizontally
+    ax.plot(p0_output, marker='o', markerfacecolor='black', color='black', markersize=1, linewidth=1, markevery=markevery)
     x = np.arange(0, n_yrs, 1)
 #    ax.fill_between(x, 0, p0_output, color='blue')
     xy = tuple(zip(x, p0_output))
     i = 0
     while i < len(p0_output):
-        ax.annotate('%.2f' % xy[i][1], xy=xy[i], xytext=(0, 5), textcoords='offset pixels')
-        i += int(n_yrs/6)  # Label 6 points, equally spaced horizontally
+        ax.annotate('%.2f' % xy[i][1], xy=xy[i], xytext=(0, 7), textcoords='offset pixels')
+        i += markevery
+    if i != len(p0_output) - 1 + markevery:
+        i = len(p0_output) - 1
+        ax.annotate('%.2f' % xy[i][1], xy=xy[i], xytext=(5, -4), textcoords='offset pixels')
+
     plt.xlabel("Year")
     plt.ylabel('Percent over 0')
-
     ax.set_title('Probability of NOT running out of money, by year')
 
     plt.savefig(img, format='png')
@@ -184,33 +189,33 @@ def plot_confidence_bands(sd, year, output, x_label, y_label, title):
     plt.figure(figsize=(8, 6.5))
     plt.gcf().subplots_adjust(left=0.15)  # Prevents the cut off of the y axis label (mfm)
 
-    if sd.two_percent:
-        two_pct = output[:, int(0.98 * sd.num_exp)]
+    if sd.debug:
+        tsdlow_pct = output[:, int(0.977 * sd.num_exp)]
     fiv_pct = output[:, int(0.95 * sd.num_exp)]
     ten_pct = output[:, int(0.9 * sd.num_exp)]
     t5_pct = output[:, int(0.75 * sd.num_exp)]
     fif_pct = output[:, int(0.5 * sd.num_exp)]
     s5_pct = output[:, int(0.25 * sd.num_exp)]
     nt_pct = output[:, int(0.1 * sd.num_exp)]
-    n5_pct = output[:, int(0.05 * sd.num_exp)]
-    if sd.two_percent:
-        n8_pct = output[:, int(0.02 * sd.num_exp)]
+    n77_pct = output[:, int(0.05 * sd.num_exp)]
+    if sd.debug:
+        tsdhigh = output[:, int(0.023 * sd.num_exp)]
 
-    if sd.two_percent:
-        ymax = 1.02 * max(two_pct.max(), fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(),
-                      nt_pct.max(), n5_pct.max(), n8_pct.max())
+    if sd.debug:
+        ymax = 1.02 * max(tsdlow_pct.max(), fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(),
+                      nt_pct.max(), n77_pct.max(), tsdhigh.max())
     else:
         ymax = 1.02 * max(fiv_pct.max(), ten_pct.max(), t5_pct.max(), fif_pct.max(), s5_pct.max(),
-                          nt_pct.max(), n5_pct.max())
+                          nt_pct.max(), n77_pct.max())
     if ymax > 10:
         ymin = 0
     else:
-        if sd.two_percent:
-            ymin = min(two_pct.min(), fiv_pct.min(), ten_pct.min(), t5_pct.min(), fif_pct.min(), s5_pct.min(),
-                          nt_pct.min(), n5_pct.min(), n8_pct.min())
+        if sd.debug:
+            ymin = min(tsdlow_pct.min(), fiv_pct.min(), ten_pct.min(), t5_pct.min(), fif_pct.min(), s5_pct.min(),
+                          nt_pct.min(), n77_pct.min(), tsdhigh.min())
         else:
             ymin = min(fiv_pct.min(), ten_pct.min(), t5_pct.min(), fif_pct.min(), s5_pct.min(),
-                       nt_pct.min(), n5_pct.min())
+                       nt_pct.min(), n77_pct.min())
     plt.ylim(ymin, ymax)
     plt.xlim(0, year)
 
@@ -223,20 +228,20 @@ def plot_confidence_bands(sd, year, output, x_label, y_label, title):
         ax.get_yaxis().set_major_formatter(
             mpl.ticker.FuncFormatter(lambda y, p: format(int(y), ',')))
 
-    if sd.two_percent:
-        line0 = ax.plot(two_pct, marker='o', markerfacecolor='black', color='black', markersize=1, linewidth=1, label="2%")
+    if sd.debug:
+        line0 = ax.plot(tsdlow_pct, marker='o', markerfacecolor='black', color='black', markersize=1, linewidth=1, label="2sd")
     line1 = ax.plot(fiv_pct, marker='o', markerfacecolor='brown', color='brown', markersize=1, linewidth=1, label="5%")
-    line2, = ax.plot(ten_pct, marker='o', markerfacecolor='purple', color='purple', markersize=1, linewidth=1, label="10%")
-    line3, = ax.plot(t5_pct, marker='o', markerfacecolor='blue', color='blue', markersize=1, linewidth=1, label="25%")
-    line4, = ax.plot(fif_pct, marker='o', markerfacecolor='green', color='green', markersize=1, linewidth=1, label="50%")
-    line5, = ax.plot(s5_pct, marker='o', markerfacecolor='olive', color='olive', markersize=1, linewidth=1, label="25%")
-    line6, = ax.plot(nt_pct, marker='o', markerfacecolor='pink', color='pink', markersize=1, linewidth=1, label="10%")
-    line7, = ax.plot(n5_pct, marker='o', markerfacecolor='orange', color='orange', markersize=1, linewidth=1, label="5%")
-    if sd.two_percent:
-        line8, = ax.plot(n8_pct, marker='o', markerfacecolor='red', color='red', markersize=1, linewidth=1, label="2%")
+    line2 = ax.plot(ten_pct, marker='o', markerfacecolor='purple', color='purple', markersize=1, linewidth=1, label="10%")
+    line3 = ax.plot(t5_pct, marker='o', markerfacecolor='blue', color='blue', markersize=1, linewidth=1, label="25%")
+    line4 = ax.plot(fif_pct, marker='o', markerfacecolor='green', color='green', markersize=1, linewidth=1, label="50%")
+    line5 = ax.plot(s5_pct, marker='o', markerfacecolor='olive', color='olive', markersize=1, linewidth=1, label="25%")
+    line6 = ax.plot(nt_pct, marker='o', markerfacecolor='pink', color='pink', markersize=1, linewidth=1, label="10%")
+    line7 = ax.plot(n77_pct, marker='o', markerfacecolor='orange', color='orange', markersize=1, linewidth=1, label="5%")
+    if sd.debug:
+        line8 = ax.plot(tsdhigh, marker='o', markerfacecolor='red', color='red', markersize=1, linewidth=1, label="2sd")
 
-    if sd.two_percent:
-        ax.legend((line0, line1, line2, line3, line4, line5, line6, line7, line8), ('2%', '5%', '10%', '25%', '50%', '75%', '90%', '95%', '98%'))
+    if sd.debug:
+        ax.legend((line0, line1, line2, line3, line4, line5, line6, line7, line8), ('2sd', '5%', '10%', '25%', '50%', '75%', '90%', '95%', '2sd'))
     else:
         ax.legend((line1, line2, line3, line4, line5, line6, line7),
                   ('5%', '10%', '25%', '50%', '75%', '90%', '95%'))
@@ -246,7 +251,7 @@ def plot_confidence_bands(sd, year, output, x_label, y_label, title):
     if fiv_pct[3] > (ymax - 0.5 * ymax):
         #  Plotted lines emanate from the upper left, so place the legend in the lower left
         ax.legend(loc='lower left')
-        if sd.two_percent:
+        if sd.debug:
             y_start = (ymin + 9 * yinc) - 3*fudge_factor
         else:
             y_start = (ymin + 7 * yinc) - 3 * fudge_factor
@@ -260,8 +265,8 @@ def plot_confidence_bands(sd, year, output, x_label, y_label, title):
 
     # Plot the final fd_outputs next to the legend entries
     n = 0
-    if sd.two_percent:
-        plt.text((year / 6.9), y_start - n * yinc, funcstr.format(two_pct[year]), color='black')
+    if sd.debug:
+        plt.text((year / 6.9), y_start - n * yinc, funcstr.format(tsdlow_pct[year]), color='black')
         n += 1
     plt.text((year / 6.9), y_start - n * yinc, funcstr.format(fiv_pct[year]), color='brown')
     n += 1
@@ -275,10 +280,10 @@ def plot_confidence_bands(sd, year, output, x_label, y_label, title):
     n += 1
     plt.text((year / 6.9), y_start - n * yinc, funcstr.format(nt_pct[year]), color='pink')
     n += 1
-    plt.text((year / 6.9), y_start - n * yinc, funcstr.format(n5_pct[year]), color='orange')
+    plt.text((year / 6.9), y_start - n * yinc, funcstr.format(n77_pct[year]), color='orange')
     n += 1
-    if sd.two_percent:
-        plt.text((year / 6.9), y_start - n * yinc, funcstr.format(n8_pct[year]), color='red')
+    if sd.debug:
+        plt.text((year / 6.9), y_start - n * yinc, funcstr.format(tsdhigh[year]), color='red')
 
     plt.xlabel(x_label)
     plt.ylabel(y_label)
