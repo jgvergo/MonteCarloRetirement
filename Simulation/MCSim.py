@@ -27,12 +27,10 @@ def run_simulation(scenario, sim_data):
     cola_output = np.zeros((n_yrs, sim_data.num_exp))  # Spouse's social security output
     p0_output = np.zeros((n_yrs))  # Percent over zero
 
-
     # Run the simulation with the investment configuration based on the UI
     asset_class = getAssetClass(scenario.asset_class_id)
     invest_avg = asset_class.avg_ret
     invest_std_dev = asset_class.std_dev
-
 
     # Calculate the age at which each spouse will take social security
     s1ssa_sim = calculate_age(scenario.ss_date, scenario.birthdate)
