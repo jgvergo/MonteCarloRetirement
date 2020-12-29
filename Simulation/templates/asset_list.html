@@ -23,6 +23,8 @@
                         {% else %}
                             <a class="btn btn-outline-info mb-4" href="{{ url_for('asset_classes.list_asset_classes', page=page_num) }}">{{page_num}}</a>
                         {% endif %}
+                    {% else %}
+                        ...
                     {% endif %}
                 {% endfor %}
             </fieldset>
