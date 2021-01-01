@@ -44,6 +44,32 @@ class AssetClass(db.Model):
         return f"AssetClass('{self.title}', '{self.avg_ret}', '{self.std_dev})"
 
 
+# AssetMixes are investment vehicles comprised of 4 asset classes
+class AssetMix(db.Model):
+    # Housekeeping information
+    id = db.Column(db.Integer, primary_key=True)
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(1000), nullable=False)
+
+    def __repr__(self):
+        return f"AssetMix('{self.title}')"
+
+class AssetMixAssetClass(db.Model):
+    # Housekeeping information
+    id = db.Column(db.Integer, primary_key=True)
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    asset_mix_id = db.Column(db.Integer, db.ForeignKey('asset_mix.id'), nullable=False)
+    asset_class_id = db.Column(db.Integer, db.ForeignKey('asset_class.id'), nullable=False)
+    percentage = db.Column(db.Float, nullable=False)
+
+
+    def __repr__(self):
+        return f"AssetMix('{self.title}')"
+
+
 @staticmethod
 def verify_reset_token(token):
     s = Serializer(current_app.config['SECRET_KEY'])
@@ -132,7 +158,7 @@ class SimData:
     inflation = [1.027, 0.011]
     asset_classes = []
     spend_decay = [0.01, 0.001]
-    debug = False
+    debug = True
 
 
 def init_db(app):
