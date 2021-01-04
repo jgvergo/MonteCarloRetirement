@@ -2,7 +2,7 @@ from Simulation.config import Config
 from flask import Flask
 from Simulation.extensions import db, bcrypt, login_manager, mail
 from Simulation.models import init_db, AssetClass, Scenario, User, AssetMix, AssetMixAssetClass
-from Simulation.users.utils import calculate_age
+from Simulation.utils import calculate_age
 from datetime import date
 
 def create_app(config_class=Config):

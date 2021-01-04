@@ -3,10 +3,10 @@ from Simulation import db
 from Simulation.asset_mixes.forms import AssetMixForm, AssetMixListForm
 from Simulation.models import AssetMix, AssetMixAssetClass
 from flask_login import login_required
-from Simulation.asset_classes.forms import populateInvestmentDropdown
+from Simulation.utils import populate_investment_dropdown
 from wtforms import SelectField, DecimalField, SubmitField
 from wtforms.validators import InputRequired
-from Simulation.users.utils import get_key, does_key_exist
+from Simulation.utils import get_key, does_key_exist
 
 asset_mixes = Blueprint('asset_mixes', __name__)
 
@@ -171,7 +171,7 @@ def BuildACAM(asset_mix_asset_classes, form):
 
         bletch = SelectField(label='Asset Class', coerce=int, validate_choice=False)
         sf = bletch.bind(form=form, name='Asset Class')
-        populateInvestmentDropdown(sf, row.asset_class_id)
+        populate_investment_dropdown(sf, row.asset_class_id)
 
         bletch = DecimalField(places=3, number_format="{:.2%}", validators=[InputRequired(message='Required')])
         pct = bletch.bind(form=form, name='percentage')

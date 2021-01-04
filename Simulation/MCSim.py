@@ -1,6 +1,6 @@
 import numpy as np
-from Simulation.users.utils import calculate_age
-from Simulation.asset_classes.forms import getAssetClass
+from Simulation.utils import calculate_age
+from Simulation.utils import get_asset_class
 
 
 # Returns a random sequence of numbers of length num that are randomly drawn from the specified normal distribution
@@ -28,7 +28,7 @@ def run_simulation(scenario, sim_data):
     p0_output = np.zeros((n_yrs))  # Percent over zero
 
     # Run the simulation with the investment configuration based on the UI
-    asset_class = getAssetClass(scenario.asset_class_id)
+    asset_class = get_asset_class(scenario.asset_class_id)
     invest_avg = asset_class.avg_ret
     invest_std_dev = asset_class.std_dev
 

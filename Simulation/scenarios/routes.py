@@ -2,9 +2,9 @@ from flask import render_template, url_for, flash, redirect, request, abort, Blu
 from flask_login import current_user, login_required
 from Simulation import db
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm
-from Simulation.asset_classes.forms import populateInvestmentDropdown, getInvestmentDataFromSelectField, getAssetClass
+from Simulation.utils import populate_investment_dropdown, get_investment_from_select_field, get_asset_class
 from Simulation.models import Scenario
-from Simulation.users.utils import calculate_age
+from Simulation.utils import calculate_age
 from Simulation.MCSim import run_simulation
 from Simulation.MCGraphs import plot_graphs
 from Simulation.models import SimData
@@ -20,7 +20,7 @@ def new_scenario(titles=None):
     # User has clicked on "New Scenario" or has clicked "Save" after filling out a blank form or has clicked "Save and
     # Run" after filling out a blank form
     form = ScenarioForm()
-    populateInvestmentDropdown(form.investment)
+    populate_investment_dropdown(form.investment)
 
     if form.validate_on_submit():
         scenario = Scenario()
@@ -71,7 +71,7 @@ def update_scenario(scenario_id):
     elif request.method == 'GET':
         copyScenario2Form(scenario, form)
 
-        populateInvestmentDropdown(form.investment, scenario.asset_class_id)
+        populate_investment_dropdown(form.investment, scenario.asset_class_id)
 
     return render_template('create_scenario.html', title='Update Scenario',
                            form=form, legend='Update Scenario')
@@ -113,7 +113,7 @@ def run_scenario(scenario_id):
                                sd)
 
         form.title.data = scenario.title
-        asset_class = getAssetClass(scenario.asset_class_id)
+        asset_class = get_asset_class(scenario.asset_class_id)
         nl = '\n'
         form.taf.data = 'Percent over zero after {} years: {:>.2f}%{}'\
                         'Primary user age: {}{}'\
@@ -233,6 +233,6 @@ def copyForm2Scenario(form, scenario):
     if (scenario.has_spouse):
         scenario.s_current_age = calculate_age(date.today(), form.s_birthdate.data)
 
-    asset_class_id, asset_class = getInvestmentDataFromSelectField(form.investment)
+    asset_class_id, asset_class = get_investment_from_select_field(form.investment)
     scenario.asset_class_id = asset_class_id
     return
