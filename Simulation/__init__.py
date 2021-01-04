@@ -43,7 +43,8 @@ def create_app(config_class=Config):
 def initDatabase():
     ac_list = AssetClass.query.count()
     if ac_list == 0:
-        ac_data=[['1-5yr High Yield Bonds', 0.0671, 0.01],
+        ac_data=[['', 0, 0],  # This is the "default" asset class shown to users when they add one to an Asset Mix
+                 ['1-5yr High Yield Bonds', 0.0671, 0.01],
                  ['3% Fixed', 0.03, 0.0],
                  ['4% Fixed', 0.04, 0.0],
                  ['5% Fixed', 0.05, 0.0],
@@ -57,6 +58,7 @@ def initDatabase():
                  ['Global Listed Private Equity', 0.0559, 0.1863],
                  ['Hedge Funds', 0.0405, 0.057],
                  ['Investment Grade Bonds', 0.0317, 0.0292],
+                 ['Jeff Wenzel (estimated)', 0.07, 0.04],
                  ['Nasdaq', 0.1308, 0.2541],
                  ['Real Estate Investment Trusts', 0.0844, 0.1103],
                  ['S&P500', 0.1153, 0.1962],
@@ -124,7 +126,7 @@ def initDatabase():
         if (scenario.has_spouse):
             scenario.s_current_age = calculate_age(date.today(), scenario.s_birthdate)
 
-        scenario.asset_class_id = 1
+        scenario.asset_class_id = 16
         db.session.add(scenario)
         db.session.commit()
 
@@ -135,15 +137,15 @@ def initDatabase():
         # AssetClass 10 = Global Equity
         # AssetClass 14 = Investment Grade Bonds
         # AssetClass 20 = 30-Day Treasuries
-        am_data = [['Lowest risk', '',        [[20, 100]]],
-                   ['Conservative', '',       [[17, 14], [10, 6],  [14, 50], [20, 30]]],
-                   ['Moderate w/ income', '', [[17, 21], [10, 9],  [14, 50], [20, 20]]],
-                   ['Moderate', '',           [[17, 28], [10, 12], [14, 45], [20, 15]]],
-                   ['Balanced', '',           [[17, 35], [10, 15], [14, 40], [20, 10]]],
-                   ['Growth w/ income', '',   [[17, 42], [10, 18], [14, 35], [20, 5]]],
-                   ['Growth', '',             [[17, 49], [10, 21], [14, 25], [20, 5]]],
-                   ['Aggressive growth', '',  [[17, 60], [10, 25], [14, 15]]],
-                   ['Most aggressive', '',    [[17, 70], [10, 30]]]]
+        am_data = [['Lowest risk', '',        [[21, 100]]],
+                   ['Conservative', '',       [[18, 14], [11, 6],  [15, 50], [21, 30]]],
+                   ['Moderate w/ income', '', [[18, 21], [11, 9],  [15, 50], [21, 20]]],
+                   ['Moderate', '',           [[18, 28], [11, 12], [15, 45], [21, 15]]],
+                   ['Balanced', '',           [[18, 35], [11, 15], [15, 40], [21, 10]]],
+                   ['Growth w/ income', '',   [[18, 42], [11, 18], [15, 35], [21, 5]]],
+                   ['Growth', '',             [[18, 49], [11, 21], [15, 25], [21, 5]]],
+                   ['Aggressive growth', '',  [[18, 60], [11, 25], [15, 15]]],
+                   ['Most aggressive', '',    [[18, 70], [11, 30]]]]
         for i in range(len(am_data)):
             asset_mix = AssetMix()
             asset_mix.title = am_data[i][0]
