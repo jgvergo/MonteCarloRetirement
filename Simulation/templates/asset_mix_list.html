@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section">
+        <form method="POST" action="" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <h3>
+                    <legend class="border-bottom mb-4">Asset Mixes</legend>
+                </h3>
+                {% for asset_mix in asset_mixes.items %}
+                    <article class="media content-section">
+                        <div class="media-body">
+                            <h6>
+                                <a class="article-title" href="{{ url_for('asset_mixes.update_asset_mix', asset_mix_id=asset_mix.id) }}">{{ asset_mix.title }}</a>
+                            </h6>
+                      </div>
+                    </article>
+                {% endfor %}
+                {% for page_num in asset_mixes.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        {% if asset_mixes.page == page_num %}
+                            <a class="btn btn-info mb-4" href="{{ url_for('asset_mixes.list_asset_mixes', page=page_num) }}">{{page_num}}</a>
+                        {% else %}
+                            <a class="btn btn-outline-info mb-4" href="{{ url_for('asset_mixes.list_asset_mixes', page=page_num) }}">{{page_num}}</a>
+                        {% endif %}
+                    {% else %}
+                        ...
+                    {% endif %}
+                {% endfor %}
+            </fieldset>
+            <div class="form-group">
+                {{ form.nam(class="btn btn-outline-info") }}
+                {{ form.home(class="btn btn-outline-info") }}
+            </div>
+        </form>
+    </div>
+{% endblock content %}
