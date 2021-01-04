@@ -79,3 +79,18 @@ def calculate_full_ss_date(birthday):
         month = 00
     full_ss_date = birthday + relativedelta(years=year, months=month)
     return full_ss_date
+
+
+
+
+def get_key(dict, val):
+    for key, value in dict.items():
+        if val == value:
+            return key
+    return "NoKey"
+
+def does_key_exist(dict, chk_key):
+    for key, value in dict.items():
+        if key == chk_key:
+            return True
+    return False
