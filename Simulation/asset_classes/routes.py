@@ -69,4 +69,4 @@ def list_asset_classes():
             return redirect(url_for('asset_classes.new_asset_class'))
         elif form.home.data:
             return redirect(url_for('main.home'))
-    return render_template('asset_list.html', form=form, asset_classes=asset_class_list)
+    return render_template('asset_class_list.html', form=form, asset_classes=asset_class_list)
