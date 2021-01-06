@@ -2,7 +2,7 @@ from flask import render_template, url_for, flash, redirect, request, abort, Blu
 from flask_login import current_user, login_required
 from Simulation import db
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm
-from Simulation.utils import populate_investment_dropdown, get_investment_from_select_field, get_asset_class
+from Simulation.utils import populate_investment_dropdown, get_investment_from_select_field, get_asset_mix
 from Simulation.models import Scenario
 from Simulation.utils import calculate_age
 from Simulation.MCSim import run_simulation
@@ -20,7 +20,7 @@ def new_scenario(titles=None):
     # User has clicked on "New Scenario" or has clicked "Save" after filling out a blank form or has clicked "Save and
     # Run" after filling out a blank form
     form = ScenarioForm()
-    populate_investment_dropdown(form.investment)
+    populate_investment_dropdown(form.investment, kind='AssetMix')
 
     if form.validate_on_submit():
         scenario = Scenario()
@@ -71,7 +71,7 @@ def update_scenario(scenario_id):
     elif request.method == 'GET':
         copyScenario2Form(scenario, form)
 
-        populate_investment_dropdown(form.investment, scenario.asset_class_id)
+        populate_investment_dropdown(form.investment, scenario.asset_mix_id, kind='AssetMix')
 
     return render_template('create_scenario.html', title='Update Scenario',
                            form=form, legend='Update Scenario')
@@ -113,7 +113,7 @@ def run_scenario(scenario_id):
                                sd)
 
         form.title.data = scenario.title
-        asset_class = get_asset_class(scenario.asset_class_id)
+        asset_mix = get_asset_mix(scenario.asset_mix_id)
         nl = '\n'
         form.taf.data = 'Percent over zero after {} years: {:>.2f}%{}'\
                         'Primary user age: {}{}'\
@@ -125,9 +125,7 @@ def run_scenario(scenario_id):
                         'Social security date(primary user): {}{}'\
                         'Social security amount(spouse): {:,}{}'\
                         'Social security date(spouse): {}{}'\
-                        'Asset class name: {}{}'\
-                        'Asset class average return: {:.2f}%{}'\
-                        'Asset class risk (std dev):{:.2f}%{}'\
+                        'Asset mix name: {}{}'\
                         'Number of Monte Carlo experiments: {:,}{}'\
                         'Inflation mean: {:.2f}%{}'\
                         'Inflation Standard Deviation:{:.2f}%{}'\
@@ -142,9 +140,7 @@ def run_scenario(scenario_id):
                    scenario.s_ss_date, nl,
                    scenario.s_ss_amount, nl,
                    scenario.s_ss_date, nl,
-                   asset_class.title, nl,
-                   100*asset_class.avg_ret, nl,
-                   100*asset_class.std_dev, nl,
+                   asset_mix.title, nl,
                    sd.num_exp, nl,
                    100*(sd.inflation[0]-1), nl,
                    100*sd.inflation[1], nl,
@@ -233,6 +229,6 @@ def copyForm2Scenario(form, scenario):
     if (scenario.has_spouse):
         scenario.s_current_age = calculate_age(date.today(), form.s_birthdate.data)
 
-    asset_class_id, asset_class = get_investment_from_select_field(form.investment)
-    scenario.asset_class_id = asset_class_id
+    asset_mix_id, asset_mix = get_investment_from_select_field(form.investment)
+    scenario.asset_mix_id = asset_mix_id
     return

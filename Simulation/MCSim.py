@@ -1,7 +1,6 @@
 import numpy as np
 from Simulation.utils import calculate_age
-from Simulation.utils import get_asset_class
-
+from Simulation.utils import get_invest_data
 
 # Returns a random sequence of numbers of length num that are randomly drawn from the specified normal distribution
 def sim(mean, stddev, num):
@@ -21,16 +20,14 @@ def run_simulation(scenario, sim_data):
     dd_output = np.zeros((n_yrs, sim_data.num_exp))  # Drawdown output
     ss_output = np.zeros((n_yrs, sim_data.num_exp))  # Social security output
     sss_output = np.zeros((n_yrs, sim_data.num_exp)) # Spouse's social security output
-    inv_output = np.zeros((n_yrs, sim_data.num_exp))  # Spouse's social security output
-    inf_output = np.zeros((n_yrs, sim_data.num_exp))  # Spouse's social security output
-    sd_output = np.zeros((n_yrs, sim_data.num_exp))  # Spouse's social security output
-    cola_output = np.zeros((n_yrs, sim_data.num_exp))  # Spouse's social security output
-    p0_output = np.zeros((n_yrs))  # Percent over zero
+    inv_output = np.zeros((n_yrs, sim_data.num_exp))  # Investments output
+    inf_output = np.zeros((n_yrs, sim_data.num_exp))  # Inflation output
+    sd_output = np.zeros((n_yrs, sim_data.num_exp))  # Spend decay output
+    cola_output = np.zeros((n_yrs, sim_data.num_exp))  # Cost of living output
+    p0_output = np.zeros((n_yrs))  # Percent over zero output
 
-    # Run the simulation with the investment configuration based on the UI
-    asset_class = get_asset_class(scenario.asset_class_id)
-    invest_avg = asset_class.avg_ret
-    invest_std_dev = asset_class.std_dev
+    # Run the simulation with the asset mix specified by the user
+    investments = get_invest_data(scenario.asset_mix_id)
 
     # Calculate the age at which each spouse will take social security
     s1ssa_sim = calculate_age(scenario.ss_date, scenario.birthdate)
@@ -77,9 +74,12 @@ def run_simulation(scenario, sim_data):
         else:
             drawdown = 0
 
-        # Generate a random sequence of investment annual returns based on a normal distribution
-        s_invest = sim(invest_avg, invest_std_dev, n_yrs)
-
+        # Generate a random sequences of investment annual returns based on a normal distribution and
+        # also save the percentage for convenience
+        s_invest = []
+        for inv in investments:
+            foo = sim(inv[0], inv[1], n_yrs)
+            s_invest.append([inv[2], foo])
         # Generate a random sequence of annual inflation rates using a normal distribution
         s_inflation = sim(sim_data.inflation[0], sim_data.inflation[1], n_yrs)
 
@@ -92,11 +92,10 @@ def run_simulation(scenario, sim_data):
         for year in range(n_yrs):
             fd_output[year][experiment] = nestegg  # Record the results
             dd_output[year][experiment] = drawdown
-            inv_output[year][experiment] = s_invest[year]
+            # inv_output is calculated and recorded when nestegg is calculated, below
             inf_output[year][experiment] = s_inflation[year]
             sd_output[year][experiment] = s_spend_decay[year]
             cola_output[year][experiment] = cola[year]
-
             s1_age += 1
             if scenario.has_spouse:
                 s2_age += 1
@@ -165,8 +164,14 @@ def run_simulation(scenario, sim_data):
                     sss_output[year][experiment] = s2ss
                     nestegg += s2ss
 
-            # Grow the nestegg
-            nestegg *= (1+s_invest[year])
+            # Grow the nestegg, but first save the value so the same value can be used for all investments
+            tmp_ne = nestegg
+            for inv in s_invest:
+                growth = (tmp_ne * inv[0]/100) * (inv[1][year])
+                nestegg += growth
+                # The investment return for this year/experiment is the weighted sum of the asset class returns
+                # times the percentage of the portfolio invested in the asset class
+                inv_output[year][experiment] += (inv[0]/100) * (inv[1][year])
 
             if (s1_age > scenario.ret_job_ret_age) and (nestegg < 0):
                 nestegg = 0.0

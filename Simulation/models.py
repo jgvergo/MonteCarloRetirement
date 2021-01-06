@@ -138,7 +138,7 @@ class Scenario(db.Model):
     drawdown = db.Column(db.Integer, nullable=False)
     has_spouse = db.Column(db.Boolean, nullable=False)
 
-    asset_class_id = db.Column(db.Integer, nullable=False)  #  This is the database id of the asset class
+    asset_mix_id = db.Column(db.Integer, nullable=False)  #  This is the database id of the asset class
 
     current_age = db.Column(db.Integer, nullable=False)  # Calculated every time we need it
     s_current_age = db.Column(db.Integer, nullable=True)  # Calculated every time we need it

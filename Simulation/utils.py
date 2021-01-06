@@ -1,38 +1,61 @@
 from dateutil.relativedelta import relativedelta
-from Simulation.models import AssetClass
+from Simulation.models import AssetClass, AssetMix, AssetMixAssetClass
 from wtforms import SelectField
 
+def get_invest_data(asset_mix_id):
+    invest = []
+    amac_list = AssetMixAssetClass.query.filter_by(asset_mix_id=asset_mix_id).all()
+    for amac in amac_list:
+        ac = AssetClass.query.filter_by(id=amac.asset_class_id).first()
+        invest.append([ac.avg_ret, ac.std_dev, amac.percentage])
+    return invest
 
 # Given an index, get the AssetClass
 def get_asset_class(asset_class_id: int):
 
-    # Populate the investment asset classes dropdown
-    asset_class_list = AssetClass.query.order_by(AssetClass.title.asc())
+    # Get the full set and search for the one that matches the id
+    asset_class_list = AssetClass.query.all()
     item = next(ac for ac in asset_class_list if ac.id == asset_class_id)
     return item
 
 
-def populate_investment_dropdown(investment, asset_class_id=0):
+# Given an index, get the AssetMix
+def get_asset_mix(asset_mix_id: int):
 
-    # Populate the investment asset classes dropdown
-    asset_class_list = AssetClass.query.order_by(AssetClass.title.asc())
+    # Get the full set and search for the one that matches the id
+    asset_mix_list = AssetMix.query.all()
+    item = next(am for am in asset_mix_list if am.id == asset_mix_id)
+    return item
+
+
+def populate_investment_dropdown(sf, id=0, kind='AssetMix'):
     titles = []
-    for asset_class in asset_class_list:
-        titles.append((asset_class.id, asset_class.title))
+    # Populate the investment asset mixes dropdown
+    if kind == 'AssetMix':
+        asset_mix_list = AssetMix.query.order_by(AssetMix.title.asc())
+        for asset_mix in asset_mix_list:
+            titles.append((asset_mix.id, asset_mix.title))
+    elif kind == 'AssetClass':
+        asset_class_list = AssetClass.query.order_by(AssetClass.title.asc())
+        for asset_class in asset_class_list:
+            titles.append((asset_class.id, asset_class.title))
+    else:
+        # Force an error
+        titles[-1] = ''
 
     # Set up the SelectField dropdown
-    investment.choices = titles
-    investment.data = asset_class_id
+    sf.choices = titles
+    sf.data = id
     return
 
 
-# Get the currently selected asset class data from the SelectField dropdown
-def get_investment_from_select_field(investment : SelectField):
+# Get the currently selected asset mix data from the SelectField dropdown
+def get_investment_from_select_field(investment: SelectField):
 
-    # Populate the investment asset classes from the database
-    asset_class_list = AssetClass.query.order_by(AssetClass.title.asc())
-    asset_class_id = int(investment.raw_data[0])
-    item = next(ac for ac in asset_class_list if ac.id == asset_class_id)
+    # Populate the investment asset mixes from the database
+    asset_mix_list = AssetMix.query.order_by(AssetMix.title.asc())
+    asset_mix_id = int(investment.raw_data[0])
+    item = next(am for am in asset_mix_list if am.id == asset_mix_id)
     return item.id, item
 
 

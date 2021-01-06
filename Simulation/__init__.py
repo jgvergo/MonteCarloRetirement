@@ -126,7 +126,7 @@ def initDatabase():
         if (scenario.has_spouse):
             scenario.s_current_age = calculate_age(date.today(), scenario.s_birthdate)
 
-        scenario.asset_class_id = 16
+        scenario.asset_mix_id = 6
         db.session.add(scenario)
         db.session.commit()
 

@@ -171,7 +171,7 @@ def BuildACAM(asset_mix_asset_classes, form):
 
         bletch = SelectField(label='Asset Class', coerce=int, validate_choice=False)
         sf = bletch.bind(form=form, name='Asset Class')
-        populate_investment_dropdown(sf, row.asset_class_id)
+        populate_investment_dropdown(sf, row.asset_class_id, kind='AssetClass')
 
         bletch = DecimalField(places=3, number_format="{:.2%}", validators=[InputRequired(message='Required')])
         pct = bletch.bind(form=form, name='percentage')
