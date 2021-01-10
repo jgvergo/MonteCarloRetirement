@@ -151,13 +151,16 @@ class Scenario(db.Model):
 
 
 # These data are kept in an object for convenience. They typically don't change
+# Amex reports that a typical retiree spends 2% less every year they are in retirement. Model this as a probability
+# distribution with a lot of variability (1 standard deviation is 10%)
+# spend_decay = [[0.02, 0.001]]
 class SimData:
     num_exp = 10000
     num_sim_bins = 100
     cola = [0.03632608696, 0.02904712979]
-    inflation = [1.027, 0.011]
+    inflation = [1.04, 0.03]
     asset_classes = []
-    spend_decay = [0.01, 0.001]
+    spend_decay = [0.02, 0.01]
     debug = True
 
 
