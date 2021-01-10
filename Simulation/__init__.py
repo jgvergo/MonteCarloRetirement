@@ -1,9 +1,14 @@
 from Simulation.config import Config
 from flask import Flask
 from Simulation.extensions import db, bcrypt, login_manager, mail
-from Simulation.models import init_db, AssetClass, Scenario, User, AssetMix, AssetMixAssetClass
+from Simulation.models import init_db, AssetClass, Scenario, User, AssetMix, AssetMixAssetClass, SimData
 from Simulation.utils import calculate_age
 from datetime import date
+import pandas as pd
+
+
+sd = SimData()
+
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -43,46 +48,57 @@ def create_app(config_class=Config):
 def initDatabase():
     ac_list = AssetClass.query.count()
     if ac_list == 0:
-        ac_data=[['', 0, 0],  # This is the "default" asset class shown to users when they add one to an Asset Mix
-                 ['1-5yr High Yield Bonds', 0.0671, 0.01],
-                 ['3% Fixed', 0.03, 0.0],
-                 ['4% Fixed', 0.04, 0.0],
-                 ['5% Fixed', 0.05, 0.0],
-                 ['Corporate Bonds', 0.055, 0.0526],
-                 ['Dividend-Paying Equity', 0.1181, 0.1024],
-                 ['Dow Jones Industrial Average', 0.0818, 0.2059],
-                 ['Emerging Markets Equity', 0.0089, 0.1695],
-                 ['Global Commodities', -0.0538, 0.166],
-                 ['Global Equity', 0.0675, 0.125],
-                 ['Global Equity - ESG Leaders', 0.0687, 0.1203],
-                 ['Global Listed Private Equity', 0.0559, 0.1863],
-                 ['Hedge Funds', 0.0405, 0.057],
-                 ['Investment Grade Bonds', 0.0317, 0.0292],
-                 ['Jeff Wenzel (estimated)', 0.07, 0.04],
-                 ['Nasdaq', 0.1308, 0.2541],
-                 ['Real Estate Investment Trusts', 0.0844, 0.1103],
-                 ['S&P500', 0.1153, 0.1962],
-                 ['Taxable Municipal Bonds', 0.072, 0.0733],
-                 ['Treasury Coupons (1 Year)', 0.0073, 0.0081],
-                 ['Treasury Coupons (30 Day)', 0.0012, 0.00144],
-                 ['U.S. Large Cap Equity', 0.1122, 0.1139],
-                 ['U.S. Mid Cap Equity', 0.11, 0.136],
-                 ['U.S. Small Cap Equity', 0.1187, 0.1446]
-                ]
-        for i in range(len(ac_data)):
-            asset_class = AssetClass()
-            asset_class.title = ac_data[i][0]
-            asset_class.avg_ret = ac_data[i][1]
-            asset_class.std_dev = ac_data[i][2]
-            db.session.add(asset_class)
+        ac_df = pd.read_excel('AssetClassesMixes.xls', sheet_name='AssetClasses')
+        m_index = ac_df.index[ac_df['Year'] == 'Mean'].tolist()
+        sd_index = ac_df.index[ac_df['Year'] == 'Standard Deviation'].tolist()
+        for column in ac_df:
+            if ac_df[column].name == 'Year':
+                pass
+            elif ac_df[column].name == 'Inflation':
+                sd.inflation[0] = ac_df[column][m_index[0]]
+                sd.inflation[1] = ac_df[column][sd_index[0]]
+
+            elif ac_df[column].name != 'Year':
+
+                asset_class = AssetClass()
+                asset_class.title = ac_df[column].name
+                asset_class.avg_ret = ac_df[column][m_index[0]]
+                asset_class.std_dev = ac_df[column][sd_index[0]]
+                db.session.add(asset_class)
+            else:
+                exit()
+
+        # Now that all the AssetClasses have been created, read and save the AssetMixes for the AssetMixes sheet
+        # Note that the spreadsheet is constructed so that the asset names in this sheet reference the names in the
+        # AssetClasses sheet and should therefore always match exactly
+        am_df = pd.read_excel('AssetClassesMixes.xls', sheet_name='AssetMixes')
+        for rindex, row in am_df.iterrows():
+            am = AssetMix()
+            for idx, item in enumerate(row):
+                if isinstance(item, str):
+                    am.title = item
+                    am.description = ''
+                    db.session.add(am)
+                    db.session.commit()
+                elif isinstance(item, float):
+                    if not pd.isnull(item):
+                        amac = AssetMixAssetClass()
+                        amac.asset_mix_id = am.id
+
+                        # Find the AssetClass by matching the title
+                        ac = AssetClass.query.filter_by(title=row.index[idx]).first()
+                        amac.asset_class_id = ac.id
+                        amac.percentage = item
+                        db.session.add(amac)
+                        db.session.commit()
         # Create user
         hashed_password = bcrypt.generate_password_hash('foobar2020').decode('utf-8')
         user = User(username='jgvergo', email='jgvergo@gmail.com', password=hashed_password)
         user.id = 1
         db.session.add(user)
+        db.session.commit()
 
-
-        # Create a single, current scenario
+        # Create a single, "current scenario"
         scenario = Scenario()
         scenario.user_id = user.id
         scenario.title = 'Current scenario 12-12-2020'
@@ -105,8 +121,8 @@ def initDatabase():
         scenario.retirement_age = 62
         scenario.s_retirement_age = 59
 
-        scenario.ret_income = 15000
-        scenario.s_ret_income = 5000
+        scenario.ret_income = 0
+        scenario.s_ret_income = 0
 
         scenario.ret_job_ret_age = 68
         scenario.s_ret_job_ret_age = 65
@@ -125,38 +141,9 @@ def initDatabase():
         scenario.current_age = calculate_age(date.today(), scenario.birthdate)
         if (scenario.has_spouse):
             scenario.s_current_age = calculate_age(date.today(), scenario.s_birthdate)
-
-        scenario.asset_mix_id = 6
+        am = AssetMix.query.filter_by(title='JeffW').first()
+        scenario.asset_mix_id = am.id
         db.session.add(scenario)
         db.session.commit()
 
-    # If the asset_mix table is empty, add the canonical mixes from Fidelity
-    am_list = AssetMix.query.count()
-    if am_list == 0:
-        # AssetClass 17 = S&P 500
-        # AssetClass 10 = Global Equity
-        # AssetClass 14 = Investment Grade Bonds
-        # AssetClass 20 = 30-Day Treasuries
-        am_data = [['Lowest risk', '',        [[21, 100]]],
-                   ['Conservative', '',       [[18, 14], [11, 6],  [15, 50], [21, 30]]],
-                   ['Moderate w/ income', '', [[18, 21], [11, 9],  [15, 50], [21, 20]]],
-                   ['Moderate', '',           [[18, 28], [11, 12], [15, 45], [21, 15]]],
-                   ['Balanced', '',           [[18, 35], [11, 15], [15, 40], [21, 10]]],
-                   ['Growth w/ income', '',   [[18, 42], [11, 18], [15, 35], [21, 5]]],
-                   ['Growth', '',             [[18, 49], [11, 21], [15, 25], [21, 5]]],
-                   ['Aggressive growth', '',  [[18, 60], [11, 25], [15, 15]]],
-                   ['Most aggressive', '',    [[18, 70], [11, 30]]]]
-        for i in range(len(am_data)):
-            asset_mix = AssetMix()
-            asset_mix.title = am_data[i][0]
-            asset_mix.description = am_data[i][1]
-            db.session.add(asset_mix)
-
-            for amac in am_data[i][2]:
-                asset_mix_asset_class = AssetMixAssetClass()
-                asset_mix_asset_class.asset_mix_id = i+1  # Should be asset_mix.id
-                asset_mix_asset_class.asset_class_id = amac[0]
-                asset_mix_asset_class.percentage = amac[1]
-                db.session.add(asset_mix_asset_class)
-        db.session.commit()
     return
