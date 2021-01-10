@@ -15,7 +15,6 @@ asset_mixes = Blueprint('asset_mixes', __name__)
 @login_required
 def new_asset_mix():
     form = AssetMixForm(request.form)
-    req_dict = request.form.to_dict()
     # The method is "GET" if the user clicks the "New Asset Mix" button
     if request.method == 'GET':
         # Create a blank AssetMix
@@ -36,33 +35,54 @@ def new_asset_mix():
 
         # redirect to the update URL (seemed easiest way to handle it)
         return redirect('{:,.0f}/update'.format(asset_mix.id))
+    print('HELP - asset_mixes/routes.py')  # We should never get here
+    return
 
-    # If the method is "POST", the user has clicked the add, remove or save button
-'''
-    if request.method == 'POST':
-        if does_key_exist(req_dict, 'add'):
-            # Build a new record and add it to the database
-            asset_mix_asset_class = AssetMixAssetClass()
-            asset_mix_asset_class.asset_mix_id = asset_mix_id
-            asset_mix_asset_class.asset_class_id = -1
-            asset_mix_asset_class.percentage = 0
-            db.session.add(asset_mix_asset_class)
-            db.session.commit()
 
-            # Rebuild the form and re-render it
-            asset_mix_asset_classes = AssetMixAssetClass.query.filter_by(asset_mix_id=asset_mix_id).all()
-            BuildACAM(asset_mix_asset_classes, form)
-            return render_template('asset_mix.html', form=form, legend='Update Asset Mix', asset_mix_id=asset_mix_id)
-    return render_template('asset_mix.html', form=form, legend='New Asset Mix', asset_mix_id=asset_mix.id)
-'''
+# Wipes the existing AssetClassAssetMixes from the database, scrapes the UI for the current state
+# and saves it back to the database. If the user is attempting to Save the ACAM, then check to make
+# sure the percentages add up to 100. Otherwise, allow them to add up to something other than 100
+def save_ui_state(request, form, asset_mix_id, check_pcts):
+    acs = request.form.getlist('Asset Class')
+    pcts = request.form.getlist('percentage')
 
+    # If indicated, check to make sure the percentages add up to 100
+    if check_pcts:
+        total = 0
+        for item in pcts:
+            total += float(item)
+        if total != 100:
+            return "Not100"
+
+    # Delete the old AssetMixAssetClasses from the database
+    AssetMixAssetClass.query.filter_by(asset_mix_id=int(asset_mix_id)).delete()
+
+    # Save the new information
+    for idx, ac in enumerate(acs):
+        acam = AssetMixAssetClass()
+        acam.asset_class_id = int(acs[idx])
+        acam.asset_mix_id = int(asset_mix_id)
+        acam.percentage = float(pcts[idx])
+        db.session.add(acam)
+    asset_mix = AssetMix.query.get_or_404(asset_mix_id)
+    asset_mix.title = form.title.data
+    db.session.commit()
+
+    return
 
 @asset_mixes.route("/asset_mixes/<int:asset_mix_id>/update", methods=['GET', 'POST'])
 @login_required
 def update_asset_mix(asset_mix_id):
+    # There are 5 circumstances that get us here: 1) The user has clicked on "New Asset Mix", 2) User is
+    # removing an asset class, 3) User is adding an asset class and 4) User is saving the AssetMix 5) The User
+    # is deleting the AssetMix
+
+    # Get info from form and request
     form = AssetMixForm(request.form)
     req_dict = request.form.to_dict()
 
+    acs = request.form.getlist('Asset Class')
+    pcts = request.form.getlist('percentage')
     # If it is a POST request, check to see if the user wants to 1) remove an Asset Class, 2) add an Asset Class
     if request.method == "POST":
 
@@ -80,10 +100,13 @@ def update_asset_mix(asset_mix_id):
 
         # If a key by the name of 'add' exists, the user is trying to add a new Asset Class
         if does_key_exist(req_dict, 'add'):
+            # First, save the current information from the form in case the user has made changes
+            save_ui_state(request, form=form, asset_mix_id=asset_mix_id, check_pcts=False)
+
             # Build a new record and add it to the database
             asset_mix_asset_class = AssetMixAssetClass()
             asset_mix_asset_class.asset_mix_id = asset_mix_id
-            asset_mix_asset_class.asset_class_id = -1
+            asset_mix_asset_class.asset_class_id = 1
             asset_mix_asset_class.percentage = 0
             db.session.add(asset_mix_asset_class)
             db.session.commit()
@@ -99,37 +122,19 @@ def update_asset_mix(asset_mix_id):
     if form.validate_on_submit():
         if form.submit.data:
             # Save was clicked, make sure the Asset Classes have been selected and the percentages add up to zero
-            acs = request.form.getlist('Asset Class')
-            pcts = request.form.getlist('percentage')
-
-            # Check to make sure the percentages add up tp 100
-            total = 0
-            for item in pcts:
-                total += float(item)
-            if total != 100:
+            if save_ui_state(request, form=form, asset_mix_id=asset_mix_id, check_pcts=True) == 'Not100':
+                # Rebuild the form so the user can continue editing it
+                asset_mix_asset_classes = AssetMixAssetClass.query.filter_by(asset_mix_id=asset_mix_id).all()
+                for idx, acam in enumerate(asset_mix_asset_classes):
+                    acam.percentage = float(pcts[idx])
+                    acam.asset_class_id = int(acs[idx])
+                BuildACAM(asset_mix_asset_classes, form)
                 flash('Percentages must add up to 100', 'danger')
-
-                # Rebuild the form so the user can continue editing it
-                asset_mix_asset_classes = AssetMixAssetClass.query.filter_by(asset_mix_id=asset_mix_id).all()
-                for idx, acam in enumerate(asset_mix_asset_classes):
-                    acam.percentage = float(pcts[idx])
-                    acam.asset_class_id = int(acs[idx])
-                BuildACAM(asset_mix_asset_classes, form)
                 return render_template('asset_mix.html', form=form, legend='Update Asset Mix',
                                        asset_mix_id=asset_mix_id)
+            else:
+                return redirect(url_for('asset_mixes.list_asset_mixes'))
 
-            # Check to see that all the Asset Classes have been set. A "1" is a blank entry in the SelectField
-            if '1' in acs:
-                flash('You must set each Asset Class', 'danger')
-
-                # Rebuild the form so the user can continue editing it
-                asset_mix_asset_classes = AssetMixAssetClass.query.filter_by(asset_mix_id=asset_mix_id).all()
-                for idx, acam in enumerate(asset_mix_asset_classes):
-                    acam.percentage = float(pcts[idx])
-                    acam.asset_class_id = int(acs[idx])
-                BuildACAM(asset_mix_asset_classes, form)
-                return render_template('asset_mix.html', form=form, legend='Update Asset Mix',
-                                       asset_mix_id=asset_mix_id)
             # Delete the old AssetMixAssetClasses from the database
             AssetMixAssetClass.query.filter_by(asset_mix_id=int(asset_mix_id)).delete()
 
