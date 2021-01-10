@@ -195,11 +195,3 @@ def run_simulation(scenario, sim_data):
 # s2_ss_at_62 = 18348  # at 62
 # s2_ss_at_66 = 28872  # at 66 years and 6 months
 # s2_ss_at_70 = 37476  # at 70
-
-# The following S&P 500 and inflation data are based on info I found on the net
-# Initialize Inflation data#inflation_mean = 1.027
-# inflation = [[1.027, 0.011]]
-
-# Amex reports that a typical retiree spends 2% less every year they are in retirement. Model this as a probability
-# distribution with a lot of variability (1 standard deviation is 10%)
-# spend_decay = [[0.02, 0.001]]
