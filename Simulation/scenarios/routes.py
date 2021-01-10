@@ -7,9 +7,8 @@ from Simulation.models import Scenario
 from Simulation.utils import calculate_age
 from Simulation.MCSim import run_simulation
 from Simulation.MCGraphs import plot_graphs
-from Simulation.models import SimData
 from datetime import date
-
+from Simulation.__init__ import sd
 
 scenarios = Blueprint('scenarios', __name__)
 
@@ -105,12 +104,10 @@ def run_scenario(scenario_id):
         return redirect(url_for('scenarios.update_scenario', scenario_id=scenario.id))
     else:
         # Do the simulation
-        sd = SimData()
         p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = run_simulation(scenario, sd)
 
         plot_urls = plot_graphs(fd_output, dd_output, ss_output, sss_output,
-                               inv_output, inf_output, sd_output, cola_output,p0_output,
-                               sd)
+                               inv_output, inf_output, sd_output, cola_output,p0_output)
 
         form.title.data = scenario.title
         asset_mix = get_asset_mix(scenario.asset_mix_id)
@@ -137,7 +134,7 @@ def run_scenario(scenario_id):
                    scenario.windfall_amount, nl,
                    scenario.windfall_age, nl,
                    scenario.ss_amount, nl,
-                   scenario.s_ss_date, nl,
+                   scenario.ss_date, nl,
                    scenario.s_ss_amount, nl,
                    scenario.s_ss_date, nl,
                    asset_mix.title, nl,
