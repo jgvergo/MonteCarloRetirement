@@ -3,13 +3,14 @@ import matplotlib as mpl
 import numpy as np
 import io
 import base64
+from Simulation.__init__ import sd
 
 
 mpl.use('Agg')
 plt.style.use('ggplot')
 
 
-def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output, p0_output, sd):
+def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output, p0_output):
     for year in range(fd_output.shape[0]):
         fd_output[year].sort()
         dd_output[year].sort()
@@ -20,46 +21,46 @@ def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_out
         sd_output[year].sort()
         cola_output[year].sort()
     plot_url = []
-    plot_url.append(plot_final_value_histogram(fd_output, sd))
+    plot_url.append(plot_final_value_histogram(fd_output))
     plot_url.append(plot_p0(p0_output))
-    plot_url.append(plot_confidence_bands(sd, year, fd_output,
+    plot_url.append(plot_confidence_bands(year, fd_output,
                           'Year',
                           'Portfolio value($1,000)',
                           'Outcome percentiles by year',
                           '$'))
-    plot_url.append(plot_confidence_bands(sd, year, dd_output,
+    plot_url.append(plot_confidence_bands(year, dd_output,
                           'Year',
                           'Drawdown',
                           'Drawdown percentiles by year',
                           '$'))
-    plot_url.append(plot_confidence_bands(sd, year, ss_output,
+    plot_url.append(plot_confidence_bands(year, ss_output,
                           'Year',
                           'Primary user social security',
                           'Social security percentiles by year (primary user)',
                           '$'))
-    plot_url.append(plot_confidence_bands(sd, year, sss_output,
+    plot_url.append(plot_confidence_bands(year, sss_output,
                           'Year',
                           'Spouse social security',
                           'Social security percentiles by year (spouse)',
                           '$'))
 
     if sd.debug:
-        plot_url.append(plot_confidence_bands(sd, year, inv_output*100,
+        plot_url.append(plot_confidence_bands(year, inv_output*100,
                           'Year',
                           'Investment returns(%)',
                           'Investment returns percentiles by year',
                           '%'))
-        plot_url.append(plot_confidence_bands(sd, year, (inf_output-1)*100,
+        plot_url.append(plot_confidence_bands(year, (inf_output-1)*100,
                               'Year',
                               'Inflation (%)',
                               'Inflation percentiles by year',
                               '%'))
-        plot_url.append(plot_confidence_bands(sd, year, sd_output*100,
+        plot_url.append(plot_confidence_bands(year, sd_output*100,
                               'Year',
                               'Spend decay (%)',
                               'Spend decay percentiles by year',
                               '%'))
-        plot_url.append(plot_confidence_bands(sd, year, cola_output*100,
+        plot_url.append(plot_confidence_bands(year, cola_output*100,
                               'Year',
                               'Cola (%)',
                               'Cola percentiles by year',
@@ -108,7 +109,7 @@ def plot_p0(p0_output):
     plot_url = base64.b64encode(img.getvalue()).decode()
     return plot_url
 
-def plot_final_value_histogram(fd_output, sd):
+def plot_final_value_histogram(fd_output):
     img = io.BytesIO()
 
     plt.figure(figsize=(8, 6.5))
@@ -198,7 +199,7 @@ def plot_final_value_histogram(fd_output, sd):
     return plot_url
 
 
-def plot_confidence_bands(sd, year, output, x_label, y_label, title, unit):
+def plot_confidence_bands(year, output, x_label, y_label, title, unit):
     img = io.BytesIO()
     plt.figure(figsize=(8, 6.5))
     plt.gcf().subplots_adjust(left=0.15)  # Prevents the cut off of the y axis label (mfm)
