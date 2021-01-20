@@ -36,7 +36,6 @@ def update_asset_class(asset_class_id):
     asset_class = AssetClass.query.get_or_404(asset_class_id)
 
     form = AssetClassForm()
-    print("{:.2%}".format(asset_class.avg_ret))
     if form.validate_on_submit():
         if form.submit.data:
             # Pull the data from the form and save to database
@@ -61,7 +60,7 @@ def update_asset_class(asset_class_id):
 @login_required
 def list_asset_classes():
     page = request.args.get('page', 1, type=int)
-    asset_class_list = AssetClass.query.order_by(AssetClass.title.asc()).paginate(page=page, per_page=7)
+    asset_class_list = AssetClass.query.order_by(AssetClass.title.asc()).paginate(page=page, per_page=10)
     form = AssetClassListForm()
 
     if form.validate_on_submit():
