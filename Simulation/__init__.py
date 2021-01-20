@@ -141,7 +141,7 @@ def initDatabase():
         scenario.current_age = calculate_age(date.today(), scenario.birthdate)
         if (scenario.has_spouse):
             scenario.s_current_age = calculate_age(date.today(), scenario.s_birthdate)
-        am = AssetMix.query.filter_by(title='JeffW').first()
+        am = AssetMix.query.filter_by(title='Stocks/Bonds 60/40').first()
         scenario.asset_mix_id = am.id
         db.session.add(scenario)
         db.session.commit()
