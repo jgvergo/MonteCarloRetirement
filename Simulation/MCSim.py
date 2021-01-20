@@ -7,7 +7,7 @@ def sim(mean, stddev, num):
     return np.random.normal(mean, stddev, num)
 
 
-def run_simulation(scenario, sim_data):
+def run_simulation(scenario, sim_data, assetmix):
     # Number of years to simulate
     if scenario.has_spouse:
         n_yrs = max(scenario.lifespan_age - scenario.current_age, scenario.s_lifespan_age - scenario.s_current_age)
@@ -15,7 +15,6 @@ def run_simulation(scenario, sim_data):
         n_yrs = scenario.lifespan_age - scenario.current_age
 
     # These are numpy.ndarrays which hold the simulation results
-    # fd_output[year][experiment]
     fd_output = np.zeros((n_yrs, sim_data.num_exp))  # Final distribution output
     dd_output = np.zeros((n_yrs, sim_data.num_exp))  # Drawdown output
     ss_output = np.zeros((n_yrs, sim_data.num_exp))  # Social security output
@@ -27,7 +26,7 @@ def run_simulation(scenario, sim_data):
     p0_output = np.zeros((n_yrs))  # Percent over zero output
 
     # Run the simulation with the asset mix specified by the user
-    investments = get_invest_data(scenario.asset_mix_id)
+    investments = get_invest_data(scenario.asset_mix_id, assetmix)
 
     # Calculate the age at which each spouse will take social security
     s1ssa_sim = calculate_age(scenario.ss_date, scenario.birthdate)
