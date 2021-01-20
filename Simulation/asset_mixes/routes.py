@@ -190,7 +190,7 @@ def BuildACAM(asset_mix_asset_classes, form):
 @login_required
 def list_asset_mixes():
     page = request.args.get('page', 1, type=int)
-    asset_mix_list = AssetMix.query.order_by(AssetMix.title.asc()).paginate(page=page, per_page=5)
+    asset_mix_list = AssetMix.query.order_by(AssetMix.title.asc()).paginate(page=page, per_page=10)
     form = AssetMixListForm()
 
     if form.validate_on_submit():
