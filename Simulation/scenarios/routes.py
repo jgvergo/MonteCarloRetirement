@@ -3,12 +3,13 @@ from flask_login import current_user, login_required
 from Simulation import db
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm
 from Simulation.utils import populate_investment_dropdown, get_investment_from_select_field, get_asset_mix
-from Simulation.models import Scenario
+from Simulation.models import Scenario, AssetMix, AssetClass
 from Simulation.utils import calculate_age
 from Simulation.MCSim import run_simulation
 from Simulation.MCGraphs import plot_graphs
 from datetime import date
 from Simulation.__init__ import sd
+import pandas as pd
 
 scenarios = Blueprint('scenarios', __name__)
 
@@ -104,10 +105,10 @@ def run_scenario(scenario_id):
         return redirect(url_for('scenarios.update_scenario', scenario_id=scenario.id))
     else:
         # Do the simulation
-        p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = run_simulation(scenario, sd)
+        p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = run_simulation(scenario, sd, True)
 
         plot_urls = plot_graphs(fd_output, dd_output, ss_output, sss_output,
-                               inv_output, inf_output, sd_output, cola_output,p0_output)
+                                inv_output, inf_output, sd_output, cola_output, p0_output)
 
         form.title.data = scenario.title
         asset_mix = get_asset_mix(scenario.asset_mix_id)
@@ -146,6 +147,45 @@ def run_scenario(scenario_id):
 
         return render_template('display_sim_result.html', title='Simulated Scenario',
                                form=form, legend='Simulated Scenario', plot_urls=plot_urls)
+
+@scenarios.route("/scenario/<int:scenario_id>/run_all", methods=['GET', 'POST'])
+@login_required
+def run_all(scenario_id):
+    scenario = Scenario.query.get_or_404(scenario_id)
+    if scenario.author != current_user:
+        abort(403)
+
+    column_names = ['AssetMix Title', 'Type', 'P0', '50th % Final Nestegg']
+    df = pd.DataFrame(columns=column_names)
+
+    # First do the AssetMixes
+    asset_mix_list = AssetMix.query.order_by(AssetMix.title.asc()).all()
+    for i, asset_mix in enumerate(asset_mix_list):
+        print(i, '/', len(asset_mix_list))  # Do the simulations
+        scenario.asset_mix_id = asset_mix.id
+        p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
+            run_simulation(scenario, sd, assetmix=True)
+
+        year = p0_output.shape[0]-1
+        fd_output[year].sort()
+        df.loc[i] = [asset_mix.title, 'Asset Mix', p0_output[year], fd_output[year][int(sd.num_exp / 2)]]
+
+    # ...then do the AssetClasses
+    asset_class_list = AssetClass.query.order_by(AssetClass.title.asc()).all()
+    for j, asset_class in enumerate(asset_class_list):
+        print(j, '/', len(asset_class_list))
+        scenario.asset_mix_id = asset_class.id
+        p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
+            run_simulation(scenario, sd, assetmix=False)
+
+        year = p0_output.shape[0] - 1
+        fd_output[year].sort()
+        df.loc[i+j+1] = [asset_class.title, 'Asset Class', p0_output[year], fd_output[year][int(sd.num_exp / 2)]]
+
+    # Save it
+    df.to_csv('output.csv')
+    return redirect(url_for('main.home'))
+
 
 def copyScenario2Form(scenario, form):
     form.title.data = scenario.title
