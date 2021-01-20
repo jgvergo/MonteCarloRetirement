@@ -73,7 +73,7 @@ def user_scenarios(username):
     user = User.query.filter_by(username=username).first_or_404()
     scenarios = Scenario.query.filter_by(author=user)\
         .order_by(Scenario.date_posted.desc())\
-        .paginate(page=page, per_page=5)
+        .paginate(page=page, per_page=10)
     return render_template('user_scenarios.html', user=user, scenarios=scenarios)
 
 @users.route("/reset_password", methods=['GET', 'POST'])
