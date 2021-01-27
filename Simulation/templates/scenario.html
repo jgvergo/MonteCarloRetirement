@@ -8,6 +8,7 @@
         {% if scenario.author == current_user %}
           <div>
             <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('scenarios.run_scenario', scenario_id=scenario.id) }}">Run Simulation</a>
+            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('scenarios.run_all', scenario_id=scenario.id) }}">Run All</a>
             <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('scenarios.update_scenario', scenario_id=scenario.id) }}">Update scenario</a>
             <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete scenario</button>
           </div>
