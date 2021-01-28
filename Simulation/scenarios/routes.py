@@ -3,12 +3,11 @@ from flask_login import current_user, login_required
 from Simulation import db
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm
 from Simulation.utils import populate_investment_dropdown, get_investment_from_select_field, get_asset_mix
-from Simulation.models import Scenario, AssetMix, AssetClass
+from Simulation.models import Scenario, AssetMix, AssetClass, SimData
 from Simulation.utils import calculate_age
 from Simulation.MCSim import run_simulation
 from Simulation.MCGraphs import plot_graphs
 from datetime import date
-from Simulation.__init__ import sd
 import pandas as pd
 
 scenarios = Blueprint('scenarios', __name__)
@@ -93,6 +92,7 @@ def delete_scenario(scenario_id):
 @login_required
 def run_scenario(scenario_id):
     scenario = Scenario.query.get_or_404(scenario_id)
+    sd = SimData.query.first()
     if scenario.author != current_user:
         abort(403)
 
@@ -105,7 +105,7 @@ def run_scenario(scenario_id):
         return redirect(url_for('scenarios.update_scenario', scenario_id=scenario.id))
     else:
         # Do the simulation
-        p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = run_simulation(scenario, sd, True)
+        p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = run_simulation(scenario, True)
 
         plot_urls = plot_graphs(fd_output, dd_output, ss_output, sss_output,
                                 inv_output, inf_output, sd_output, cola_output, p0_output)
@@ -152,6 +152,7 @@ def run_scenario(scenario_id):
 @login_required
 def run_all(scenario_id):
     scenario = Scenario.query.get_or_404(scenario_id)
+    sd = SimData.query.first()
     if scenario.author != current_user:
         abort(403)
 
@@ -164,7 +165,7 @@ def run_all(scenario_id):
         print(i, '/', len(asset_mix_list))  # Do the simulations
         scenario.asset_mix_id = asset_mix.id
         p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
-            run_simulation(scenario, sd, assetmix=True)
+            run_simulation(scenario, assetmix=True)
 
         year = p0_output.shape[0]-1
         fd_output[year].sort()
@@ -176,7 +177,7 @@ def run_all(scenario_id):
         print(j, '/', len(asset_class_list))
         scenario.asset_mix_id = asset_class.id
         p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
-            run_simulation(scenario, sd, assetmix=False)
+            run_simulation(scenario, assetmix=False)
 
         year = p0_output.shape[0] - 1
         fd_output[year].sort()
