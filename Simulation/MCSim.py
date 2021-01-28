@@ -1,28 +1,33 @@
 import numpy as np
+import pandas as pd
 from Simulation.utils import calculate_age
 from Simulation.utils import get_invest_data
+from Simulation.models import SimData
+
 
 # Returns a random sequence of numbers of length num that are randomly drawn from the specified normal distribution
 def sim(mean, stddev, num):
     return np.random.normal(mean, stddev, num)
 
 
-def run_simulation(scenario, sim_data, assetmix):
+def run_simulation(scenario, assetmix):
     # Number of years to simulate
     if scenario.has_spouse:
         n_yrs = max(scenario.lifespan_age - scenario.current_age, scenario.s_lifespan_age - scenario.s_current_age)
     else:
         n_yrs = scenario.lifespan_age - scenario.current_age
 
+    sd = SimData.query.first()
+
     # These are numpy.ndarrays which hold the simulation results
-    fd_output = np.zeros((n_yrs, sim_data.num_exp))  # Final distribution output
-    dd_output = np.zeros((n_yrs, sim_data.num_exp))  # Drawdown output
-    ss_output = np.zeros((n_yrs, sim_data.num_exp))  # Social security output
-    sss_output = np.zeros((n_yrs, sim_data.num_exp)) # Spouse's social security output
-    inv_output = np.zeros((n_yrs, sim_data.num_exp))  # Investments output
-    inf_output = np.zeros((n_yrs, sim_data.num_exp))  # Inflation output
-    sd_output = np.zeros((n_yrs, sim_data.num_exp))  # Spend decay output
-    cola_output = np.zeros((n_yrs, sim_data.num_exp))  # Cost of living output
+    fd_output = np.zeros((n_yrs, sd.num_exp))  # Final distribution output
+    dd_output = np.zeros((n_yrs, sd.num_exp))  # Drawdown output
+    ss_output = np.zeros((n_yrs, sd.num_exp))  # Social security output
+    sss_output = np.zeros((n_yrs, sd.num_exp)) # Spouse's social security output
+    inv_output = np.zeros((n_yrs, sd.num_exp))  # Investments output
+    inf_output = np.zeros((n_yrs, sd.num_exp))  # Inflation output
+    sd_output = np.zeros((n_yrs, sd.num_exp))  # Spend decay output
+    cola_output = np.zeros((n_yrs, sd.num_exp))  # Cost of living output
     p0_output = np.zeros((n_yrs))  # Percent over zero output
 
     # Run the simulation with the asset mix specified by the user
@@ -34,7 +39,7 @@ def run_simulation(scenario, sim_data, assetmix):
         s2ssa_sim = calculate_age(scenario.s_ss_date, scenario.s_birthdate)
 
     # Run the experiments
-    for experiment in range(sim_data.num_exp):
+    for experiment in range(sd.num_exp):
 
         # These variables need to be re-initialized before every experiment
         s1_age = scenario.current_age
@@ -75,18 +80,21 @@ def run_simulation(scenario, sim_data, assetmix):
 
         # Generate a random sequences of investment annual returns based on a normal distribution and
         # also save the percentage for convenience
+        ndf = pd.DataFrame(np.random.default_rng().multivariate_normal(sd.mean.values, sd.cov, size=n_yrs, check_valid='warn'))
+        ndf.columns = sd.ac_df.columns
         s_invest = []
         for inv in investments:
-            foo = sim(inv[0], inv[1], n_yrs)
-            s_invest.append([inv[2], foo])
+            foo = ndf[inv[0]]
+            s_invest.append([inv[1], foo])
+
         # Generate a random sequence of annual inflation rates using a normal distribution
-        s_inflation = sim(sim_data.inflation[0], sim_data.inflation[1], n_yrs)
+        s_inflation = ndf['Inflation']
 
         # Generate a random sequence of annual spend decay
-        s_spend_decay = sim(sim_data.spend_decay[0], sim_data.spend_decay[1], n_yrs)
+        s_spend_decay = sim(sd.spend_decay[0], sd.spend_decay[1], n_yrs)
 
         # Generate a random sequence of social security cost of living increases
-        cola = sim(sim_data.cola[0], sim_data.cola[1], n_yrs)
+        cola = sim(sd.cola[0], sd.cola[1], n_yrs)
 
         for year in range(n_yrs):
             fd_output[year][experiment] = nestegg  # Record the results
@@ -177,7 +185,7 @@ def run_simulation(scenario, sim_data, assetmix):
 
     for year in range(n_yrs):
         # Calculate the percentage of results over zero
-        p0_output[year] = 100 * (sum(i > 0.0 for i in fd_output[year]) / sim_data.num_exp)
+        p0_output[year] = 100 * (sum(i > 0.0 for i in fd_output[year]) / sd.num_exp)
     return p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output
 
 
