@@ -7,9 +7,6 @@ from datetime import date
 import pandas as pd
 
 
-sd = SimData()
-
-
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -47,26 +44,20 @@ def create_app(config_class=Config):
 # It is only here as a convenience for development and debugging
 def initDatabase():
     ac_list = AssetClass.query.count()
+
+    sd = initSimData()
+
     if ac_list == 0:
-        ac_df = pd.read_excel('AssetClassesMixes.xls', sheet_name='AssetClasses')
-        m_index = ac_df.index[ac_df['Year'] == 'Mean'].tolist()
-        sd_index = ac_df.index[ac_df['Year'] == 'Standard Deviation'].tolist()
-        for column in ac_df:
-            if ac_df[column].name == 'Year':
+        # Save the AssetClass data in the database. The inflation data will be used in the simulation engine
+        for column in sd.ac_df:
+            if sd.ac_df[column].name == 'Inflation':
                 pass
-            elif ac_df[column].name == 'Inflation':
-                sd.inflation[0] = ac_df[column][m_index[0]]
-                sd.inflation[1] = ac_df[column][sd_index[0]]
-
-            elif ac_df[column].name != 'Year':
-
-                asset_class = AssetClass()
-                asset_class.title = ac_df[column].name
-                asset_class.avg_ret = ac_df[column][m_index[0]]
-                asset_class.std_dev = ac_df[column][sd_index[0]]
-                db.session.add(asset_class)
             else:
-                exit()
+                asset_class = AssetClass()
+                asset_class.title = sd.ac_df[column].name
+                asset_class.avg_ret = 0  #sd.ac_df[column][m_index[0]]
+                asset_class.std_dev = 0  #sd.ac_df[column][sd_index[0]]
+                db.session.add(asset_class)
 
         # Now that all the AssetClasses have been created, read and save the AssetMixes for the AssetMixes sheet
         # Note that the spreadsheet is constructed so that the asset names in this sheet reference the names in the
@@ -146,4 +137,36 @@ def initDatabase():
         db.session.add(scenario)
         db.session.commit()
 
-    return
+def initSimData():
+    # See if theSimData has already been created
+    sd_count = AssetClass.query.count()
+    if sd_count > 0:
+        # If it has been created, use it
+        sd = SimData.query.first()
+    else:
+        # otherwise, create a new db entry
+        sd = SimData()
+
+    sd.num_exp = 10000
+    sd.num_sim_bins = 100
+    sd.cola = [0.03632608696, 0.02904712979]
+    sd.inflation = [1.04, 0.03]
+    sd.asset_classes = []
+    sd.spend_decay = [0.00, 0.00]
+    sd.debug = True
+
+    sd.ac_df = pd.read_excel('AssetClassesMixes.xls', sheet_name='AssetClasses')
+    # Drop the Mean and Standard Deviation rows and the Year Column
+    sd.ac_df = sd.ac_df[sd.ac_df.Year != 'Mean']
+    sd.ac_df = sd.ac_df[sd.ac_df.Year != 'Standard Deviation']
+    sd.ac_df.drop('Year', axis=1, inplace=True)
+
+    # Calculate the means and covariance matrix once and save it
+    sd.cov = sd.ac_df.cov()
+    sd.mean = sd.ac_df.mean()
+
+    if sd_count == 0:
+        db.session.add(sd)
+    db.session.commit()
+
+    return sd
