@@ -2,17 +2,17 @@ from dateutil.relativedelta import relativedelta
 from Simulation.models import AssetClass, AssetMix, AssetMixAssetClass
 from wtforms import SelectField
 
-def get_invest_data(asset_mix_id, assetmix):
+def get_invest_data(id, assetmix):
     invest = []
     # The variable assetmix indicates if we are getting AssetMix data. If not, we are getting a single AssetClass
     if assetmix:
-        amac_list = AssetMixAssetClass.query.filter_by(asset_mix_id=asset_mix_id).all()
+        amac_list = AssetMixAssetClass.query.filter_by(asset_mix_id=id).all()
         for amac in amac_list:
             ac = AssetClass.query.filter_by(id=amac.asset_class_id).first()
-            invest.append([ac.avg_ret, ac.std_dev, amac.percentage])
+            invest.append([ac.title, amac.percentage])
     else:
-        ac = AssetClass.query.filter_by(id=asset_mix_id).first()
-        invest.append([ac.avg_ret, ac.std_dev, 100.0])
+        ac = AssetClass.query.filter_by(id=id).first()
+        invest.append([ac.title, 100.0])
     return invest
 
 # Given an index, get the AssetClass
