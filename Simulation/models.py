@@ -152,17 +152,23 @@ class Scenario(db.Model):
 
 # These data are kept in an object for convenience. They typically don't change
 # Amex reports that a typical retiree spends 2% less every year they are in retirement. Model this as a probability
-# distribution with a lot of variability (1 standard deviation is 10%)
-# spend_decay = [[0.02, 0.001]]
-class SimData:
-    num_exp = 10000
-    num_sim_bins = 100
-    cola = [0.03632608696, 0.02904712979]
-    inflation = [1.04, 0.03]
-    asset_classes = []
-    spend_decay = [0.02, 0.01]
-    debug = True
+# distribution with variability
 
+class SimData(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    num_exp = db.Column(db.Integer, nullable=True)
+    num_sim_bins = db.Column(db.Integer, nullable=True)
+
+    debug = db.Column(db.Boolean, nullable=True)
+
+    cola = db.Column(db.PickleType, nullable=True)
+    inflation = db.Column(db.PickleType, nullable=True)
+    asset_classes = db.Column(db.PickleType, nullable=True)
+    spend_decay = db.Column(db.PickleType, nullable=True)
+    mean = db.Column(db.PickleType, nullable=True)
+    cov = db.Column(db.PickleType, nullable=True)
+    ac_df = db.Column(db.PickleType, nullable=True)
 
 def init_db(app):
     db.create_all()
