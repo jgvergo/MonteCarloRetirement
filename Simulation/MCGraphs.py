@@ -3,7 +3,7 @@ import matplotlib as mpl
 import numpy as np
 import io
 import base64
-from Simulation.__init__ import sd
+from Simulation.models import SimData
 
 
 mpl.use('Agg')
@@ -11,6 +11,8 @@ plt.style.use('ggplot')
 
 
 def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output, p0_output):
+
+    sd = SimData.query.first()
     for year in range(fd_output.shape[0]):
         fd_output[year].sort()
         dd_output[year].sort()
@@ -112,6 +114,8 @@ def plot_p0(p0_output):
 def plot_final_value_histogram(fd_output):
     img = io.BytesIO()
 
+    sd = SimData.query.first()
+
     plt.figure(figsize=(8, 6.5))
     plt.tight_layout()
 
@@ -201,6 +205,7 @@ def plot_final_value_histogram(fd_output):
 
 def plot_confidence_bands(year, output, x_label, y_label, title, unit):
     img = io.BytesIO()
+    sd = SimData.query.first()
     plt.figure(figsize=(8, 6.5))
     plt.gcf().subplots_adjust(left=0.15)  # Prevents the cut off of the y axis label (mfm)
 
