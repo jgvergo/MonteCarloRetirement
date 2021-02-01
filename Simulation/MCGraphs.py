@@ -32,8 +32,8 @@ def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_out
                           '$'))
     plot_url.append(plot_confidence_bands(year, dd_output,
                           'Year',
-                          'Drawdown',
-                          'Drawdown percentiles by year',
+                          'Retirement spend',
+                          'Retirement spend percentiles by year',
                           '$'))
     plot_url.append(plot_confidence_bands(year, ss_output,
                           'Year',
