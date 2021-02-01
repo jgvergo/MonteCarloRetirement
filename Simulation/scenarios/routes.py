@@ -113,36 +113,9 @@ def run_scenario(scenario_id):
         form.title.data = scenario.title
         asset_mix = get_asset_mix(scenario.asset_mix_id)
         nl = '\n'
-        form.taf.data = 'Percent over zero after {} years: {:>.2f}%{}'\
-                        'Primary user age: {}{}'\
-                        "Spouse's age: {}{}"\
-                        'Starting nestegg: {:,}{}'\
-                        'Windfall amount: {:,}{}'\
-                        'Windfall age: {}{}'\
-                        'Social security amount(primary user): {:,}{}'\
-                        'Social security date(primary user): {}{}'\
-                        'Social security amount(spouse): {:,}{}'\
-                        'Social security date(spouse): {}{}'\
-                        'Asset mix name: {}{}'\
-                        'Number of Monte Carlo experiments: {:,}{}'\
-                        'Inflation mean: {:.2f}%{}'\
-                        'Inflation Standard Deviation:{:.2f}%{}'\
-                        'Spend decay: {:.2f}%'.\
-            format(p0_output.shape[0], p0_output[p0_output.shape[0]-1], nl,
-                   scenario.current_age, nl,
-                   scenario.s_current_age, nl,
-                   scenario.nestegg, nl,
-                   scenario.windfall_amount, nl,
-                   scenario.windfall_age, nl,
-                   scenario.ss_amount, nl,
-                   scenario.ss_date, nl,
-                   scenario.s_ss_amount, nl,
-                   scenario.s_ss_date, nl,
-                   asset_mix.title, nl,
-                   sd.num_exp, nl,
-                   100*(sd.inflation[0]-1), nl,
-                   100*sd.inflation[1], nl,
-                   100*sd.spend_decay[0],50)
+        form.taf.data = 'Asset mix name: {}{}'\
+                        'Number of Monte Carlo experiments: {:,}'.\
+                        format(asset_mix.title, nl, sd.num_exp)
 
 
         return render_template('display_sim_result.html', title='Simulated Scenario',
@@ -221,7 +194,7 @@ def copyScenario2Form(scenario, form):
     form.windfall_age.data = scenario.windfall_age
 
     form.nestegg.data = scenario.nestegg
-    form.drawdown.data = scenario.drawdown
+    form.ret_spend.data = scenario.ret_spend
     form.has_spouse.data = scenario.has_spouse
     return
 
@@ -260,7 +233,7 @@ def copyForm2Scenario(form, scenario):
 
     scenario.has_spouse = form.has_spouse.data
     scenario.nestegg = form.nestegg.data
-    scenario.drawdown = form.drawdown.data
+    scenario.ret_spend = form.ret_spend.data
 
     # Calculate ages from birthdates and save the,
     scenario.current_age = calculate_age(date.today(), form.birthdate.data)
