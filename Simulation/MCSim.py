@@ -21,7 +21,7 @@ def run_simulation(scenario, assetmix):
 
     # These are numpy.ndarrays which hold the simulation results
     fd_output = np.zeros((n_yrs, sd.num_exp))  # Final distribution output
-    dd_output = np.zeros((n_yrs, sd.num_exp))  # Drawdown output
+    rs_output = np.zeros((n_yrs, sd.num_exp))  # Retirement spend output
     ss_output = np.zeros((n_yrs, sd.num_exp))  # Social security output
     sss_output = np.zeros((n_yrs, sd.num_exp)) # Spouse's social security output
     inv_output = np.zeros((n_yrs, sd.num_exp))  # Investments output
@@ -74,9 +74,9 @@ def run_simulation(scenario, assetmix):
         nestegg = scenario.nestegg
 
         if s1_age >= scenario.retirement_age:
-            drawdown = scenario.drawdown
+            ret_spend = scenario.ret_spend
         else:
-            drawdown = 0
+            ret_spend = 0
 
         # Generate a random sequences of investment annual returns based on a normal distribution and
         # also save the percentage for convenience
@@ -98,7 +98,7 @@ def run_simulation(scenario, assetmix):
 
         for year in range(n_yrs):
             fd_output[year][experiment] = nestegg  # Record the results
-            dd_output[year][experiment] = drawdown
+            rs_output[year][experiment] = ret_spend
             # inv_output is calculated and recorded when nestegg is calculated, below
             inf_output[year][experiment] = s_inflation[year]
             sd_output[year][experiment] = s_spend_decay[year]
@@ -107,28 +107,28 @@ def run_simulation(scenario, assetmix):
             if scenario.has_spouse:
                 s2_age += 1
 
-            # Calculate the primary user's new salary, nestegg and drawdown amount
+            # Calculate the primary user's new salary, nestegg and ret_spend amount
             if s1_age < scenario.retirement_age:            # Working
                 nestegg += s1_income * scenario.savings_rate
                 s1_income *= s_inflation[year]
 
             elif s1_age == scenario.retirement_age:         # Year of retirement
                 s1_income = scenario.ret_income
-                drawdown = scenario.drawdown
-                nestegg -= drawdown
+                ret_spend = scenario.ret_spend
+                nestegg -= ret_spend
                 nestegg += s1_income
 
             elif s1_age < scenario.ret_job_ret_age:         # Partially retired
-                drawdown *= s_inflation[year]
-                drawdown *= (1.0 - s_spend_decay[year])
-                nestegg -= drawdown
+                ret_spend *= s_inflation[year]
+                ret_spend *= (1.0 - s_spend_decay[year])
+                nestegg -= ret_spend
                 nestegg += s1_income
                 s1_income *= s_inflation[year]
             else:                                           # Fully retired
                 s1_income = 0
-                drawdown *= s_inflation[year]
-                drawdown *= (1.0 - s_spend_decay[year])
-                nestegg -= drawdown
+                ret_spend *= s_inflation[year]
+                ret_spend *= (1.0 - s_spend_decay[year])
+                nestegg -= ret_spend
 
             # For spouse, just adjust the income
             if scenario.has_spouse:
@@ -186,7 +186,7 @@ def run_simulation(scenario, assetmix):
     for year in range(n_yrs):
         # Calculate the percentage of results over zero
         p0_output[year] = 100 * (sum(i > 0.0 for i in fd_output[year]) / sd.num_exp)
-    return p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output
+    return p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output
 
 
 # Some one time, large ticket items
