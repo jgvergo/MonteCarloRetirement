@@ -126,7 +126,7 @@ def initDatabase():
 
         scenario.has_spouse = True
         scenario.nestegg = 2500000
-        scenario.drawdown = 150000
+        scenario.ret_spend = 150000
 
         # Calculate ages from birthdates and save the,
         scenario.current_age = calculate_age(date.today(), scenario.birthdate)
@@ -150,7 +150,6 @@ def initSimData():
     sd.num_exp = 10000
     sd.num_sim_bins = 100
     sd.cola = [0.03632608696, 0.02904712979]
-    sd.inflation = [1.04, 0.03]
     sd.asset_classes = []
     sd.spend_decay = [0.00, 0.00]
     sd.debug = True
