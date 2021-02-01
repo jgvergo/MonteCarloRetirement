@@ -135,7 +135,7 @@ class Scenario(db.Model):
     windfall_amount = db.Column(db.Integer, nullable=False)
     windfall_age = db.Column(db.Integer, nullable=False)
     nestegg = db.Column(db.Integer, nullable=False)
-    drawdown = db.Column(db.Integer, nullable=False)
+    ret_spend = db.Column(db.Integer, nullable=False)
     has_spouse = db.Column(db.Boolean, nullable=False)
 
     asset_mix_id = db.Column(db.Integer, nullable=False)  #  This is the database id of the asset class
@@ -163,7 +163,6 @@ class SimData(db.Model):
     debug = db.Column(db.Boolean, nullable=True)
 
     cola = db.Column(db.PickleType, nullable=True)
-    inflation = db.Column(db.PickleType, nullable=True)
     asset_classes = db.Column(db.PickleType, nullable=True)
     spend_decay = db.Column(db.PickleType, nullable=True)
     mean = db.Column(db.PickleType, nullable=True)
