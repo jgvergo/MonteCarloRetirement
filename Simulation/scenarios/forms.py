@@ -57,8 +57,8 @@ class ScenarioForm(FlaskForm):
 
     nestegg = IntegerField(label="Your investable savings",
                            validators=[InputRequired(message='Required(can be 0)')])
-    drawdown = IntegerField(label="Expected annual spending in retirement",
-                            validators=[InputRequired(message='Required')])
+    ret_spend = IntegerField(label="Expected annual spending in retirement",
+                             validators=[InputRequired(message='Required')])
     has_spouse = BooleanField(label='Married', default=True)
 
     investment = SelectField(label='Investment', coerce=int, validate_choice=False)
