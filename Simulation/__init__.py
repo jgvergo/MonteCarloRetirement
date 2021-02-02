@@ -89,10 +89,10 @@ def initDatabase():
         db.session.add(user)
         db.session.commit()
 
-        # Create a single, "current scenario"
+        # Create a single, "sample scenario"
         scenario = Scenario()
         scenario.user_id = user.id
-        scenario.title = 'Current scenario 12-12-2020'
+        scenario.title = 'Sample scenario'
 
         scenario.birthdate = date(month=10, day=18, year=1957)
         scenario.s_birthdate = date(month=2, day=12, year=1960)
@@ -106,8 +106,8 @@ def initDatabase():
         scenario.ss_date = date(month=10, day=18, year=2027)
         scenario.s_ss_date = date(month=2, day=12, year=2030)
 
-        scenario.ss_amount = 45612
-        scenario.s_ss_amount = 37476
+        scenario.ss_amount = 46000
+        scenario.s_ss_amount = 37000
 
         scenario.retirement_age = 62
         scenario.s_retirement_age = 59
@@ -121,11 +121,11 @@ def initDatabase():
         scenario.lifespan_age = 95
         scenario.s_lifespan_age = 95
 
-        scenario.windfall_amount = 4000000
+        scenario.windfall_amount = 1000000
         scenario.windfall_age = 70
 
         scenario.has_spouse = True
-        scenario.nestegg = 2500000
+        scenario.nestegg = 1000000
         scenario.ret_spend = 150000
 
         # Calculate ages from birthdates and save the,
