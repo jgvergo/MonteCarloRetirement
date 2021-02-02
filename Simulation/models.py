@@ -111,7 +111,7 @@ class Scenario(db.Model):
     s_current_income = db.Column(db.Integer, nullable=True)
 
     savings_rate = db.Column(db.Float, nullable=False)
-    s_savings_rate = db.Column(db.Float, nullable=False)
+    s_savings_rate = db.Column(db.Float, nullable=True)
 
     ss_date = db.Column(db.Date, nullable=False)
     s_ss_date = db.Column(db.Date, nullable=True)
