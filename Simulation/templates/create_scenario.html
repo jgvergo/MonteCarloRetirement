@@ -394,27 +394,27 @@
         var sla = document.getElementById('s_lifespan_age');
         if (document.getElementById('has_spouse').checked == true)
         {
-          sb.style.display = 'block';
-          sci.style.display = 'block';
-          ssr.style.display = 'block';
-          sssd.style.display = 'block';
-          sfsa.style.display = 'block';
-          sra.style.display = 'block';
-          sri.style.display = 'block';
-          srjrd.style.display = 'block';
-          sla.style.display = 'block';
+          sb.disabled=false;
+          sci.disabled=false;
+          ssr.disabled=false;
+          sssd.disabled=false;
+          sfsa.disabled=false;
+          sra.disabled=false;
+          sri.disabled=false;
+          srjrd.disabled=false;
+          sla.disabled=false;
         }
         else
         {
-          sb.style.display = 'none';
-          sci.style.display = 'none';
-          ssr.style.display = 'none';
-          sssd.style.display = 'none';
-          sfsa.style.display = 'none';
-          sra.style.display = 'none';
-          sri.style.display = 'none';
-          srjrd.style.display = 'none';
-          sla.style.display = 'none';
+          sb.disabled=true;
+          sci.disabled=true;
+          ssr.disabled=true;
+          sssd.disabled=true;
+          sfsa.disabled=true;
+          sra.disabled=true;
+          sri.disabled=true;
+          srjrd.disabled=true;
+          sla.disabled=true;
         }
       }
     </script>
