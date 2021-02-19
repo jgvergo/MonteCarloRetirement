@@ -1,1 +1,1 @@
-web: wsgi run:monte-carlo-retirement
+web: wsgi:monte-carlo-retirement
