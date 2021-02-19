@@ -1,1 +1,1 @@
-web: gunicorn run:MonteCarloRetirement
+web: gunicorn run:monte-carlo-retirement
