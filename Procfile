@@ -1,1 +1,1 @@
-web: wsgi:monte-carlo-retirement
+web: gunicorn wsgi:monte-carlo-retirement
