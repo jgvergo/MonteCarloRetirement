@@ -1,1 +1,1 @@
-web: python --app monte-carlo-retirement run.py
+web: -a python run.py
