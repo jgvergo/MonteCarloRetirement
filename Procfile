@@ -1,1 +1,1 @@
-web: gunicorn wsgi:monte-carlo-retirement
+web: python run.py
