@@ -1,1 +1,1 @@
-web: python run.py -a monte-carlo-retirement
+web: python run.py
