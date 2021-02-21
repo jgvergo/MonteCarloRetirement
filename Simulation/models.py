@@ -168,7 +168,3 @@ class SimData(db.Model):
     mean = db.Column(db.PickleType, nullable=True)
     cov = db.Column(db.PickleType, nullable=True)
     ac_df = db.Column(db.PickleType, nullable=True)
-
-def init_db(app):
-    db.create_all()
-    db.app = app
