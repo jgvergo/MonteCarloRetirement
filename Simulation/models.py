@@ -170,5 +170,5 @@ class SimData(db.Model):
     ac_df = db.Column(db.PickleType, nullable=True)
 
 def init_db(app):
-#    db.create_all()
+    db.create_all()
     db.app = app
