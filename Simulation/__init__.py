@@ -1,7 +1,7 @@
 from Simulation.config import Config
 from flask import Flask
 from Simulation.extensions import db, bcrypt, login_manager, mail
-from Simulation.models import init_db, AssetClass, Scenario, User, AssetMix, AssetMixAssetClass, SimData
+from Simulation.models import AssetClass, Scenario, User, AssetMix, AssetMixAssetClass, SimData
 from Simulation.utils import calculate_age
 from datetime import date
 import pandas as pd
@@ -13,7 +13,7 @@ def create_app(config_class=Config):
     app.app_context().push()
 
     db.init_app(app)
-    init_db(app)
+    db.create_all()
 
     bcrypt.init_app(app)
     login_manager.init_app(app)
