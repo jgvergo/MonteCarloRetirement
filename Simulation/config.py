@@ -1,9 +1,17 @@
 import os
+from pathlib import Path
 
 
 class Config:
     SECRET_KEY = os.environ['SECRET_KEY']
-    SQLALCHEMY_DATABASE_URI = os.environ['SQLALCHEMY_DATABASE_URI']
+
+    _project_root = Path(__file__).resolve().parent.parent
+    _default_sqlite_db = _project_root / "site.db"
+
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        "DATABASE_URL", f"sqlite:///{_default_sqlite_db}"
+    )
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     MAIL_SERVER = 'smtp.gmail.com'
