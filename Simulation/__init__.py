@@ -147,7 +147,7 @@ def initSimData():
         # otherwise, create a new db entry
         sd = SimData()
 
-    sd.num_exp = 5000
+    sd.num_exp = 100
     sd.num_sim_bins = 100
     sd.cola = [0.03632608696, 0.02904712979]
     sd.asset_classes = []

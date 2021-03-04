@@ -131,7 +131,7 @@
     path = l.pathname
     fields = path.split('/')
 
-    fetch(`/scenario/` + fields[2] + `/run`, {
+    fetch(`/scenario/` + fields[2] + `/run_all`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

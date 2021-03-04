@@ -3,7 +3,12 @@
 <div class="content-section">
     <form action="" method="POST">
         {{ form.hidden_tag() }}
-        <p>Placeholder for display all results</p>
+        {% for table in tables %}
+                    {{titles[loop.index]}}
+                    {{ table|safe }}
+        {% endfor %}
     </form>
 </div>
 {% endblock content %}
+
+

@@ -102,23 +102,14 @@ def run_scenario(scenario_id):
 
 @scenarios.route("/scenario/<int:scenario_id>/run_all", methods=['GET', 'POST'])
 @login_required
-def run_all(scenario_id):
+def run_all_scenario(scenario_id):
     scenario = Scenario.query.get_or_404(scenario_id)
     if scenario.author != current_user:
         abort(403)
 
-    job = q.enqueue(run_all_sim_background(scenario, True))
+    job_id = run_all_sim_background(scenario, True)
 
-    if SimData().debug:
-        registry = FailedJobRegistry(queue=q)
-
-        # Show all failed job IDs and the exceptions they caused during runtime
-        for job_id in registry.get_job_ids():
-            job = Job.fetch(job_id, connection=redis_conn)
-            print(job_id, job.exc_info)
-
-
-    return redirect(url_for('main.home'))
+    return {'job_id': job_id}
 
 
 @scenarios.route('/progress/<string:job_id>')
@@ -179,9 +170,9 @@ def display_all_result(job_id):
     scenario = Scenario.query.get_or_404(srd.scenario_id)
     if scenario.author != current_user:
         abort(403)
+    df = pd.read_csv('output.csv')
     form = DisplayAllSimResultForm()
-    return render_template('display_all_sim_result.html', title='Simulated Scenario',
-                           form=form, legend='Simulated Scenario')
+    return render_template('display_all_sim_result.html', form=form, tables=[df.to_html(classes='data')], titles=df.columns.values)
 
 
 def copy_scenario_2_form(s, form):

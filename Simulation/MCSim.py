@@ -1,9 +1,7 @@
 from os import abort
-
 import numpy as np
 import pandas as pd
 from flask_login import current_user
-from rq import get_current_job
 
 from Simulation.utils import calculate_age
 from Simulation.utils import get_invest_data
@@ -27,36 +25,65 @@ def run_sim_background(scenario, assetmix):
 
 
 def run_all_sim_background(scenario, assetmix):
-    sd = SimData.query.first()
     if scenario.author != current_user:
         abort(403)
+    job = q.enqueue(_run_all_sim_background, scenario, assetmix)
+
+    if SimData().debug:
+        registry = FailedJobRegistry(queue=q)
+
+        # Show all failed job IDs and the exceptions they caused during runtime
+        for job_id in registry.get_job_ids():
+            job = Job.fetch(job_id, connection=redis_conn)
+            print(job_id, job.exc_info)
+
+    return job.id
+
+
+def _run_all_sim_background(scenario, assetmix):
+    from Simulation.config import Config
+    from Simulation import create_app
+    from rq import get_current_job
+
+    flask_app = create_app(Config)
+    flask_app.app_context().push()
+
+    job = get_current_job()
+    sd = SimData.query.first()
 
     column_names = ['AssetMix Title', 'Type', 'P0', '50th % Final Nestegg']
     df = pd.DataFrame(columns=column_names)
 
+    # These are used by run_simulation to determine progress
+    num_sims = len(AssetMix.query.all()) + len(AssetClass.query.all())
+    sim_num = 0
+
     # First do the AssetMixes
     asset_mix_list = AssetMix.query.order_by(AssetMix.title.asc()).all()
     for i, asset_mix in enumerate(asset_mix_list):
-        print(i, '/', len(asset_mix_list))  # Do the simulations
         scenario.asset_mix_id = asset_mix.id
-        p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
-            run_sim_background(scenario, assetmix=True)
+        run_simulation(scenario, assetmix=True, num_sims=num_sims, sim_num=sim_num)
 
-        year = p0_output.shape[0] - 1
-        fd_output[year].sort()
-        df.loc[i] = [asset_mix.title, 'Asset Mix', p0_output[year], fd_output[year][int(sd.num_exp / 2)]]
+        srd = SimReturnData.query.filter_by(job_id=job.id).first()
+        sim_num += 1
+
+        year = srd.p0_output.shape[0] - 1
+        srd.fd_output[year].sort()
+        df.loc[i] = [asset_mix.title, 'Asset Mix', srd.p0_output[year], srd.fd_output[year][int(sd.num_exp / 2)]]
+        SimReturnData.query.filter_by(job_id=job.id).delete()
 
     # ...then do the AssetClasses
     asset_class_list = AssetClass.query.order_by(AssetClass.title.asc()).all()
     for j, asset_class in enumerate(asset_class_list):
-        print(j, '/', len(asset_class_list))
         scenario.asset_mix_id = asset_class.id
-        p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
-            run_sim_background(scenario, assetmix=False)
+        run_simulation(scenario, assetmix=False, num_sims=num_sims, sim_num=sim_num)
 
-        year = p0_output.shape[0] - 1
-        fd_output[year].sort()
-        df.loc[i + j + 1] = [asset_class.title, 'Asset Class', p0_output[year], fd_output[year][int(sd.num_exp / 2)]]
+        srd = SimReturnData.query.filter_by(job_id=job.id).first()
+        sim_num += 1
+        year = srd.p0_output.shape[0] - 1
+        srd.fd_output[year].sort()
+        df.loc[i + j + 1] = [asset_class.title, 'Asset Class', srd.p0_output[year], srd.fd_output[year][int(sd.num_exp / 2)]]
+        SimReturnData.query.filter_by(job_id=job.id).delete()
 
     # Save it
     df.to_csv('output.csv')
@@ -69,7 +96,7 @@ def sim(mean, stddev, num):
     return np.random.normal(mean, stddev, num)
 
 
-def run_simulation(scenario, assetmix):
+def run_simulation(scenario, assetmix, num_sims, sim_num):
     from Simulation.config import Config
     from Simulation import create_app
     from Simulation.extensions import db
@@ -109,7 +136,8 @@ def run_simulation(scenario, assetmix):
 
     # Run the experiments
     for experiment in range(sd.num_exp):
-        job.meta['progress'] = 100.0 * experiment / sd.num_exp
+
+        job.meta['progress'] = round(100.0 * ((sim_num/num_sims) + (experiment / sd.num_exp)/num_sims), 1)
         job.save_meta()
         s1_age = scenario.current_age
         if scenario.has_spouse:
