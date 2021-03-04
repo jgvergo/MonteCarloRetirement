@@ -7,10 +7,17 @@
         <small class="text-muted">Created on {{ scenario.date_posted.strftime('%Y-%m-%d') }}</small>
         {% if scenario.author == current_user %}
           <div>
-            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('scenarios.run_scenario', scenario_id=scenario.id) }}">Run Simulation</a>
-            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('scenarios.run_all', scenario_id=scenario.id) }}">Run All</a>
-            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('scenarios.update_scenario', scenario_id=scenario.id) }}">Update scenario</a>
+            <a id='runButton' class="btn btn-primary text-light btn-sm mt-1 mb-1">Run Simulation</a>
+            <a id='runAllButton' class="btn btn-primary text-light btn-sm mt-1 mb-1">Run All</a>
+            <a class="btn btn-primary btn-sm mt-1 mb-1" href="{{ url_for('scenarios.update_scenario', scenario_id=scenario.id) }}">Update scenario</a>
             <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete scenario</button>
+            <p></p>
+            <div class="progress" id="progress">
+              <div id="runProgressBar" class="progress-bar progress-bar-striped progress-bar-active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+                0%
+              </div>
+            </div>
+          <p></p>
           </div>
         {% endif %}
       </div>
@@ -35,4 +42,137 @@
       </div>
     </div>
   </div>
+
+  <script type="text/javascript">
+
+  const runButton = document.getElementById('runButton')
+  const runAllButton = document.getElementById('runAllButton')
+  const runProgressBar = document.getElementById('runProgressBar')
+  var getLocation = function(href) {
+      var l = document.createElement("a");
+      l.href = href;
+      return l;
+  };
+
+  function hideProgressBar() {
+    progress.style.display = 'none';
+  }
+
+  function update_bar(value) {
+    runProgressBar.setAttribute("aria-valuenow", value);
+    runProgressBar.style.width = value + '%';
+
+    // progress bar should have label
+    runProgressBar.innerHTML = value + '%';
+  }
+
+  runButton.addEventListener('click', function(e) {
+
+    progress.style.display = 'block';
+    // Reset progress bar in case of re-click.
+    update_bar(0);
+
+    // Construct the /scenario/<scenario_id>/run url and fetch it
+    url=window.location.href
+    l = getLocation(url);
+    path = l.pathname
+    fields = path.split('/')
+
+    fetch(`/scenario/` + fields[2] + `/run`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((r) => {
+      r.json().then((data) => {
+
+        // The job.id returned from the server once enqueued:
+        job_id = data['job_id'];
+
+        const source = new EventSource("/progress/" + job_id);
+
+        source.onmessage = function(event) {
+          const data = JSON.parse(event.data);
+          console.log(data);
+
+          update_bar(data['value']);
+
+          if (data['status'] == 'finished') {
+
+            // Manually set progress to 100 when job is finished, as
+            // actual progress value may be less from last read.
+
+            update_bar(100);
+            source.close();
+
+            // Trigger the display of the simulation results
+            fetch(`/scenario/` + job_id + `/display_result`, {
+              method: "GET",
+            }).then((response) => {
+                return response.text();
+              })
+              .then((html) => {
+                document.body.innerHTML = html
+              });
+          }
+        }
+      })
+    });
+  });
+  runAllButton.addEventListener('click', function(e) {
+
+    progress.style.display = 'block';
+    // Reset progress bar in case of re-click.
+    update_bar(0);
+
+    // Construct the /scenario/<scenario_id>/run_all url and fetch it
+    url=window.location.href
+    l = getLocation(url);
+    path = l.pathname
+    fields = path.split('/')
+
+    fetch(`/scenario/` + fields[2] + `/run`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((r) => {
+      r.json().then((data) => {
+
+        // The job.id returned from the server once enqueued:
+        job_id = data['job_id'];
+
+        const source = new EventSource("/progress/" + job_id);
+
+        source.onmessage = function(event) {
+          const data = JSON.parse(event.data);
+          console.log(data);
+
+          update_bar(data['value']);
+
+          if (data['status'] == 'finished') {
+
+            // Manually set progress to 100 when job is finished, as
+            // actual progress value may be less from last read.
+
+            update_bar(100);
+            source.close();
+
+            // Trigger the display of the simulation results
+            fetch(`/scenario/` + job_id + `/display_all_result`, {
+              method: "GET",
+            }).then((response) => {
+                return response.text();
+              })
+              .then((html) => {
+                document.body.innerHTML = html
+              });
+          }
+        }
+      })
+    });
+  });
+  </script>
+<body onload="hideProgressBar()">
 {% endblock content %}
+
