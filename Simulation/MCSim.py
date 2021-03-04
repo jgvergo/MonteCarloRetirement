@@ -1,8 +1,67 @@
+from os import abort
+
 import numpy as np
 import pandas as pd
+from flask_login import current_user
+from rq import get_current_job
+
 from Simulation.utils import calculate_age
 from Simulation.utils import get_invest_data
-from Simulation.models import SimData
+from Simulation.models import SimData, SimReturnData, AssetMix, AssetClass
+from Simulation.extensions import q, redis_conn
+from rq.registry import FailedJobRegistry, Job
+
+
+def run_sim_background(scenario, assetmix):
+    job = q.enqueue(run_simulation, scenario, assetmix)
+
+    if SimData().debug:
+        registry = FailedJobRegistry(queue=q)
+
+        # Show all failed job IDs and the exceptions they caused during runtime
+        for job_id in registry.get_job_ids():
+            job = Job.fetch(job_id, connection=redis_conn)
+            print(job_id, job.exc_info)
+
+    return job.id
+
+
+def run_all_sim_background(scenario, assetmix):
+    sd = SimData.query.first()
+    if scenario.author != current_user:
+        abort(403)
+
+    column_names = ['AssetMix Title', 'Type', 'P0', '50th % Final Nestegg']
+    df = pd.DataFrame(columns=column_names)
+
+    # First do the AssetMixes
+    asset_mix_list = AssetMix.query.order_by(AssetMix.title.asc()).all()
+    for i, asset_mix in enumerate(asset_mix_list):
+        print(i, '/', len(asset_mix_list))  # Do the simulations
+        scenario.asset_mix_id = asset_mix.id
+        p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
+            run_sim_background(scenario, assetmix=True)
+
+        year = p0_output.shape[0] - 1
+        fd_output[year].sort()
+        df.loc[i] = [asset_mix.title, 'Asset Mix', p0_output[year], fd_output[year][int(sd.num_exp / 2)]]
+
+    # ...then do the AssetClasses
+    asset_class_list = AssetClass.query.order_by(AssetClass.title.asc()).all()
+    for j, asset_class in enumerate(asset_class_list):
+        print(j, '/', len(asset_class_list))
+        scenario.asset_mix_id = asset_class.id
+        p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
+            run_sim_background(scenario, assetmix=False)
+
+        year = p0_output.shape[0] - 1
+        fd_output[year].sort()
+        df.loc[i + j + 1] = [asset_class.title, 'Asset Class', p0_output[year], fd_output[year][int(sd.num_exp / 2)]]
+
+    # Save it
+    df.to_csv('output.csv')
+    job = get_current_job()
+    return job.id
 
 
 # Returns a random sequence of numbers of length num that are randomly drawn from the specified normal distribution
@@ -11,6 +70,16 @@ def sim(mean, stddev, num):
 
 
 def run_simulation(scenario, assetmix):
+    from Simulation.config import Config
+    from Simulation import create_app
+    from Simulation.extensions import db
+    from rq import get_current_job
+
+    flask_app = create_app(Config)
+    flask_app.app_context().push()
+
+    job = get_current_job()
+
     # Number of years to simulate
     if scenario.has_spouse:
         n_yrs = max(scenario.lifespan_age - scenario.current_age, scenario.s_lifespan_age - scenario.s_current_age)
@@ -23,12 +92,12 @@ def run_simulation(scenario, assetmix):
     fd_output = np.zeros((n_yrs, sd.num_exp))  # Final distribution output
     rs_output = np.zeros((n_yrs, sd.num_exp))  # Retirement spend output
     ss_output = np.zeros((n_yrs, sd.num_exp))  # Social security output
-    sss_output = np.zeros((n_yrs, sd.num_exp)) # Spouse's social security output
+    sss_output = np.zeros((n_yrs, sd.num_exp))  # Spouse's social security output
     inv_output = np.zeros((n_yrs, sd.num_exp))  # Investments output
     inf_output = np.zeros((n_yrs, sd.num_exp))  # Inflation output
     sd_output = np.zeros((n_yrs, sd.num_exp))  # Spend decay output
     cola_output = np.zeros((n_yrs, sd.num_exp))  # Cost of living output
-    p0_output = np.zeros((n_yrs))  # Percent over zero output
+    p0_output = np.zeros(n_yrs)  # Percent over zero output
 
     # Run the simulation with the asset mix specified by the user
     investments = get_invest_data(scenario.asset_mix_id, assetmix)
@@ -40,8 +109,8 @@ def run_simulation(scenario, assetmix):
 
     # Run the experiments
     for experiment in range(sd.num_exp):
-
-        # These variables need to be re-initialized before every experiment
+        job.meta['progress'] = 100.0 * experiment / sd.num_exp
+        job.save_meta()
         s1_age = scenario.current_age
         if scenario.has_spouse:
             s2_age = scenario.s_current_age
@@ -144,7 +213,6 @@ def run_simulation(scenario, assetmix):
                 else:  # Fully retired
                     s2_income = 0
 
-
             # Add windfall to the nestegg
             if s1_age == scenario.windfall_age:
                 nestegg += scenario.windfall_amount
@@ -158,7 +226,6 @@ def run_simulation(scenario, assetmix):
                 s1ss *= (1+cola[year])
                 ss_output[year][experiment] = s1ss
                 nestegg += s1ss
-
 
             # Add spouse's SS to the nestegg
             if scenario.has_spouse:
@@ -186,13 +253,25 @@ def run_simulation(scenario, assetmix):
     for year in range(n_yrs):
         # Calculate the percentage of results over zero
         p0_output[year] = 100 * (sum(i > 0.0 for i in fd_output[year]) / sd.num_exp)
-    return p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output
 
+    # Since we are running in an asynch worker process, write the results to SQLAlchemy
+    # for the calling process to retrieve it
+    srd = SimReturnData()
+    srd.p0_output = p0_output
+    srd.fd_output = fd_output
+    srd.rs_output = rs_output
+    srd.ss_output = ss_output
+    srd.sss_output = sss_output
+    srd.inv_output = inv_output
+    srd.inf_output = inf_output
+    srd.sd_output = sd_output
+    srd.cola_output = cola_output
 
-# Some one time, large ticket items
-# wedding_cost = -40000  # x4
-# bathroom_cost = -15000  # x3
-# kitchen_cost = -15000  # x1
+    srd.scenario_id = scenario.id
+    srd.job_id = job.id
+    db.session.add(srd)
+    db.session.commit()
+    return
 
 # Social security data per year if we wait until 62/66.5/70
 # s1_ss_at_62 = 25464  # at 62 years
