@@ -1,14 +1,19 @@
-from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
+from flask import render_template, url_for, flash, redirect, request, abort, Blueprint, Response
 from flask_login import current_user, login_required
 from Simulation import db
-from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm
+from Simulation.extensions import redis_conn
+from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm, DisplayAllSimResultForm
 from Simulation.utils import populate_investment_dropdown, get_investment_from_select_field, get_asset_mix
-from Simulation.models import Scenario, AssetMix, AssetClass, SimData
+from Simulation.models import Scenario, SimData, SimReturnData
 from Simulation.utils import calculate_age
-from Simulation.MCSim import run_simulation
+from Simulation.MCSim import run_sim_background, run_all_sim_background
 from Simulation.MCGraphs import plot_graphs
 from datetime import date
 import pandas as pd
+import time
+import json
+from rq.job import Job
+
 
 scenarios = Blueprint('scenarios', __name__)
 
@@ -25,7 +30,7 @@ def new_scenario(titles=None):
         scenario = Scenario()
         scenario.user_id = current_user.id
 
-        copyForm2Scenario(form, scenario)
+        copy_form_2_scenario(form, scenario)
 
         db.session.add(scenario)
         db.session.commit()
@@ -34,15 +39,13 @@ def new_scenario(titles=None):
         if form.submit.data:
             flash('Your scenario has been updated!', 'success')
             return redirect(url_for('main.home'))
-        elif form.submitrun.data:
-            return redirect(url_for('scenarios.run_scenario', scenario_id=scenario.id))
 
-    # If we get here, the user has selected "New Scenario" and we are rendering a from with no data
+    # If we get here, the user has selected "New Scenario" and we are rendering a form with no data
     return render_template('create_scenario.html', title='New Scenario',
                            form=form, legend='New Scenario')
 
 
-@scenarios.route("/scenario/<int:scenario_id>")
+@scenarios.route("/scenario/<int:scenario_id>", methods=['GET', 'POST'])
 def scenario(scenario_id):
     scenario = Scenario.query.get_or_404(scenario_id)
     return render_template('scenario.html', title=scenario.title, scenario=scenario)
@@ -56,19 +59,17 @@ def update_scenario(scenario_id):
         abort(403)
     form = ScenarioForm()
     if form.validate_on_submit():
-        # Copy the info from the form to a Scenario object and save it to the DB
-        copyForm2Scenario(form, scenario)
-
-        db.session.commit()
-
         if form.submit.data:
-            flash('Your scenario has been updated!', 'success')
+            # Copy the info from the form to a Scenario object and save it to the DB
+            copy_form_2_scenario(form, scenario)
+            db.session.commit()
+            flash('Your scenario has been updated', 'success')
             return redirect(url_for('scenarios.scenario', scenario_id=scenario.id))
-        elif form.submitrun.data:
-            return redirect(url_for('scenarios.run_scenario', scenario_id=scenario.id))
-
+        elif form.cancel.data:
+            flash('Changes to your scenario have been discarded', 'success')
+            return redirect(url_for('scenarios.scenario', scenario_id=scenario.id))
     elif request.method == 'GET':
-        copyScenario2Form(scenario, form)
+        copy_scenario_2_form(scenario, form)
 
         populate_investment_dropdown(form.investment, scenario.asset_mix_id, kind='AssetMix')
 
@@ -92,154 +93,177 @@ def delete_scenario(scenario_id):
 @login_required
 def run_scenario(scenario_id):
     scenario = Scenario.query.get_or_404(scenario_id)
-    sd = SimData.query.first()
     if scenario.author != current_user:
         abort(403)
 
-    form = DisplaySimResultForm()
+    job_id = run_sim_background(scenario, True)
+    return {'job_id': job_id}
 
-    if form.validate_on_submit():
-        form = ScenarioForm()
-        form.id = scenario_id
-        copyScenario2Form(scenario, form)
-        return redirect(url_for('scenarios.update_scenario', scenario_id=scenario.id))
-    else:
-        # Do the simulation
-        p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = run_simulation(scenario, True)
-
-        plot_urls = plot_graphs(fd_output, dd_output, ss_output, sss_output,
-                                inv_output, inf_output, sd_output, cola_output, p0_output)
-
-        form.title.data = scenario.title
-        asset_mix = get_asset_mix(scenario.asset_mix_id)
-        nl = '\n'
-        form.taf.data = 'Asset mix name: {}{}'\
-                        'Number of Monte Carlo experiments: {:,}'.\
-                        format(asset_mix.title, nl, sd.num_exp)
-
-
-        return render_template('display_sim_result.html', title='Simulated Scenario',
-                               form=form, legend='Simulated Scenario', plot_urls=plot_urls)
 
 @scenarios.route("/scenario/<int:scenario_id>/run_all", methods=['GET', 'POST'])
 @login_required
 def run_all(scenario_id):
     scenario = Scenario.query.get_or_404(scenario_id)
-    sd = SimData.query.first()
     if scenario.author != current_user:
         abort(403)
 
-    column_names = ['AssetMix Title', 'Type', 'P0', '50th % Final Nestegg']
-    df = pd.DataFrame(columns=column_names)
+    job = q.enqueue(run_all_sim_background(scenario, True))
 
-    # First do the AssetMixes
-    asset_mix_list = AssetMix.query.order_by(AssetMix.title.asc()).all()
-    for i, asset_mix in enumerate(asset_mix_list):
-        print(i, '/', len(asset_mix_list))  # Do the simulations
-        scenario.asset_mix_id = asset_mix.id
-        p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
-            run_simulation(scenario, assetmix=True)
+    if SimData().debug:
+        registry = FailedJobRegistry(queue=q)
 
-        year = p0_output.shape[0]-1
-        fd_output[year].sort()
-        df.loc[i] = [asset_mix.title, 'Asset Mix', p0_output[year], fd_output[year][int(sd.num_exp / 2)]]
+        # Show all failed job IDs and the exceptions they caused during runtime
+        for job_id in registry.get_job_ids():
+            job = Job.fetch(job_id, connection=redis_conn)
+            print(job_id, job.exc_info)
 
-    # ...then do the AssetClasses
-    asset_class_list = AssetClass.query.order_by(AssetClass.title.asc()).all()
-    for j, asset_class in enumerate(asset_class_list):
-        print(j, '/', len(asset_class_list))
-        scenario.asset_mix_id = asset_class.id
-        p0_output, fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
-            run_simulation(scenario, assetmix=False)
 
-        year = p0_output.shape[0] - 1
-        fd_output[year].sort()
-        df.loc[i+j+1] = [asset_class.title, 'Asset Class', p0_output[year], fd_output[year][int(sd.num_exp / 2)]]
-
-    # Save it
-    df.to_csv('output.csv')
     return redirect(url_for('main.home'))
 
 
-def copyScenario2Form(scenario, form):
+@scenarios.route('/progress/<string:job_id>')
+def progress(job_id):
+    def get_status():
+
+        job = Job.fetch(job_id, connection=redis_conn)
+        status = job.get_status()
+
+        while status != 'finished':
+
+            status = job.get_status()
+            job.refresh()
+
+            d = {'status': status}
+
+            if 'progress' in job.meta:
+                d['value'] = job.meta['progress']
+            else:
+                d['value'] = 0
+
+            # IF there's a result, add this to the stream
+            if job.result:
+                d['result'] = job.result
+
+            json_data = json.dumps(d)
+            yield f"data:{json_data}\n\n"
+            time.sleep(0.2)
+    return Response(get_status(), mimetype='text/event-stream')
+
+
+@scenarios.route("/scenario/<string:job_id>/display_result", methods=['GET', 'POST'])
+@login_required
+def display_result(job_id):
+    sd = SimData.query.first()
+    srd = SimReturnData.query.filter_by(job_id=job_id).first()
+    scenario = Scenario.query.get_or_404(srd.scenario_id)
+    if scenario.author != current_user:
+        abort(403)
+
+    plot_urls = plot_graphs(srd.fd_output, srd.rs_output, srd.ss_output, srd.sss_output,
+                            srd.inv_output, srd.inf_output, srd.sd_output, srd.cola_output, srd.p0_output)
+
+    form = DisplaySimResultForm()
     form.title.data = scenario.title
-    form.birthdate.data = scenario.birthdate
-    form.s_birthdate.data = scenario.s_birthdate
+    asset_mix = get_asset_mix(scenario.asset_mix_id)
+    nl = '\n'
+    form.taf.data = 'Asset mix name: {}{}' \
+                    'Number of Monte Carlo experiments: {:,}'. \
+        format(asset_mix.title, nl, sd.num_exp)
 
-    form.current_income.data = scenario.current_income
-    form.s_current_income.data = scenario.s_current_income
+    return render_template('display_sim_result.html', title='Simulated Scenario',
+                           form=form, legend='Simulated Scenario', plot_urls=plot_urls)
+@scenarios.route("/scenario/<string:job_id>/display_all_result", methods=['GET', 'POST'])
+@login_required
+def display_all_result(job_id):
+    srd = SimReturnData.query.filter_by(job_id=job_id).first()
+    scenario = Scenario.query.get_or_404(srd.scenario_id)
+    if scenario.author != current_user:
+        abort(403)
+    form = DisplayAllSimResultForm()
+    return render_template('display_all_sim_result.html', title='Simulated Scenario',
+                           form=form, legend='Simulated Scenario')
 
-    form.savings_rate.data = scenario.savings_rate
-    form.s_savings_rate.data = scenario.s_savings_rate
 
-    form.ss_date.data = scenario.ss_date
-    form.s_ss_date.data = scenario.s_ss_date
+def copy_scenario_2_form(s, form):
+    form.title.data = s.title
+    form.birthdate.data = s.birthdate
+    form.s_birthdate.data = s.s_birthdate
 
-    form.ss_amount.data = scenario.ss_amount
-    form.s_ss_amount.data = scenario.s_ss_amount
+    form.current_income.data = s.current_income
+    form.s_current_income.data = s.s_current_income
 
-    form.retirement_age.data = scenario.retirement_age
-    form.s_retirement_age.data = scenario.s_retirement_age
+    form.savings_rate.data = s.savings_rate
+    form.s_savings_rate.data = s.s_savings_rate
 
-    form.ret_income.data = scenario.ret_income
-    form.s_ret_income.data = scenario.s_ret_income
+    form.ss_date.data = s.ss_date
+    form.s_ss_date.data = s.s_ss_date
 
-    form.ret_job_ret_age.data = scenario.ret_job_ret_age
-    form.s_ret_job_ret_age.data = scenario.s_ret_job_ret_age
+    form.ss_amount.data = s.ss_amount
+    form.s_ss_amount.data = s.s_ss_amount
 
-    form.lifespan_age.data = scenario.lifespan_age
-    form.s_lifespan_age.data = scenario.s_lifespan_age
+    form.retirement_age.data = s.retirement_age
+    form.s_retirement_age.data = s.s_retirement_age
 
-    form.windfall_amount.data = scenario.windfall_amount
-    form.windfall_age.data = scenario.windfall_age
+    form.ret_income.data = s.ret_income
+    form.s_ret_income.data = s.s_ret_income
 
-    form.nestegg.data = scenario.nestegg
-    form.ret_spend.data = scenario.ret_spend
-    form.has_spouse.data = scenario.has_spouse
+    form.ret_job_ret_age.data = s.ret_job_ret_age
+    form.s_ret_job_ret_age.data = s.s_ret_job_ret_age
+
+    form.lifespan_age.data = s.lifespan_age
+    form.s_lifespan_age.data = s.s_lifespan_age
+
+    form.windfall_amount.data = s.windfall_amount
+    form.windfall_age.data = s.windfall_age
+
+    form.nestegg.data = s.nestegg
+    form.ret_spend.data = s.ret_spend
+    form.has_spouse.data = s.has_spouse
     return
 
-def copyForm2Scenario(form, scenario):
-    scenario.title = form.title.data
 
-    scenario.birthdate = form.birthdate.data
-    scenario.s_birthdate = form.s_birthdate.data
+def copy_form_2_scenario(form, s):
+    s.title = form.title.data
 
-    scenario.current_income = form.current_income.data
-    scenario.s_current_income = form.s_current_income.data
+    s.birthdate = form.birthdate.data
+    s.s_birthdate = form.s_birthdate.data
 
-    scenario.savings_rate = form.savings_rate.data
-    scenario.s_savings_rate = form.s_savings_rate.data
+    s.current_income = form.current_income.data
+    s.s_current_income = form.s_current_income.data
 
-    scenario.ss_date = form.ss_date.data
-    scenario.s_ss_date = form.s_ss_date.data
+    s.savings_rate = form.savings_rate.data
+    s.s_savings_rate = form.s_savings_rate.data
 
-    scenario.ss_amount = form.ss_amount.data
-    scenario.s_ss_amount = form.s_ss_amount.data
+    s.ss_date = form.ss_date.data
+    s.s_ss_date = form.s_ss_date.data
 
-    scenario.retirement_age = form.retirement_age.data
-    scenario.s_retirement_age = form.s_retirement_age.data
+    s.ss_amount = form.ss_amount.data
+    s.s_ss_amount = form.s_ss_amount.data
 
-    scenario.ret_income = form.ret_income.data
-    scenario.s_ret_income = form.s_ret_income.data
+    s.retirement_age = form.retirement_age.data
+    s.s_retirement_age = form.s_retirement_age.data
 
-    scenario.ret_job_ret_age = form.ret_job_ret_age.data
-    scenario.s_ret_job_ret_age = form.s_ret_job_ret_age.data
+    s.ret_income = form.ret_income.data
+    s.s_ret_income = form.s_ret_income.data
 
-    scenario.lifespan_age = form.lifespan_age.data
-    scenario.s_lifespan_age = form.s_lifespan_age.data
+    s.ret_job_ret_age = form.ret_job_ret_age.data
+    s.s_ret_job_ret_age = form.s_ret_job_ret_age.data
 
-    scenario.windfall_amount = form.windfall_amount.data
-    scenario.windfall_age = form.windfall_age.data
+    s.lifespan_age = form.lifespan_age.data
+    s.s_lifespan_age = form.s_lifespan_age.data
 
-    scenario.has_spouse = form.has_spouse.data
-    scenario.nestegg = form.nestegg.data
-    scenario.ret_spend = form.ret_spend.data
+    s.windfall_amount = form.windfall_amount.data
+    s.windfall_age = form.windfall_age.data
+
+    s.has_spouse = form.has_spouse.data
+    s.nestegg = form.nestegg.data
+    s.ret_spend = form.ret_spend.data
 
     # Calculate ages from birthdates and save the,
-    scenario.current_age = calculate_age(date.today(), form.birthdate.data)
-    if (scenario.has_spouse):
-        scenario.s_current_age = calculate_age(date.today(), form.s_birthdate.data)
+    s.current_age = calculate_age(date.today(), form.birthdate.data)
+    if s.has_spouse:
+        s.s_current_age = calculate_age(date.today(), form.s_birthdate.data)
 
     asset_mix_id, asset_mix = get_investment_from_select_field(form.investment)
-    scenario.asset_mix_id = asset_mix_id
+    s.asset_mix_id = asset_mix_id
     return
