@@ -76,12 +76,15 @@ class ScenarioForm(FlaskForm):
     investment = SelectField(label='Investment', coerce=int, validate_choice=False)
 
     submit = SubmitField('Save')
-    submitrun = SubmitField('Save and Run')
-
+    cancel = SubmitField('Cancel')
 
 class DisplaySimResultForm(FlaskForm):
     title = StringField()
 
-    taf = StringField(widget=TextArea(), render_kw={'readonly': True, 'rows': 20})
+    taf = StringField(widget=TextArea(), render_kw={'readonly': True, 'rows': 2})
 
-    submit = SubmitField('Update scenario')
+    submit = SubmitField('Close')
+
+class DisplayAllSimResultForm(FlaskForm):
+    title = StringField()
+    submit = SubmitField('Close')
