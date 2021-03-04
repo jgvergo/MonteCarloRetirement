@@ -10,12 +10,12 @@ mpl.use('Agg')
 plt.style.use('ggplot')
 
 
-def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output, p0_output):
+def plot_graphs(fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output, p0_output):
 
     sd = SimData.query.first()
     for year in range(fd_output.shape[0]):
         fd_output[year].sort()
-        dd_output[year].sort()
+        rs_output[year].sort()
         ss_output[year].sort()
         sss_output[year].sort()
         inv_output[year].sort()
@@ -30,7 +30,7 @@ def plot_graphs(fd_output, dd_output, ss_output, sss_output, inv_output, inf_out
                           'Portfolio value($1,000)',
                           'Outcome percentiles by year',
                           '$'))
-    plot_url.append(plot_confidence_bands(year, dd_output,
+    plot_url.append(plot_confidence_bands(year, rs_output,
                           'Year',
                           'Retirement spend',
                           'Retirement spend percentiles by year',
@@ -237,6 +237,8 @@ def plot_confidence_bands(year, output, x_label, y_label, title, unit):
         ymin *= 0.95
     else:
         ymin *= 1.05
+    if ymin == ymax:
+        ymax = ymin + 100
     plt.ylim(ymin, ymax)
     plt.xlim(0, year)
 
