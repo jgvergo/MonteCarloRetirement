@@ -19,11 +19,6 @@
                     </div>
                 {% endif %}
             </div>
-            {% for plot_url in plot_urls %}
-                <div class="media">
-                    <img src="data:image/png;base64, {{ plot_url }}">
-                </div>
-            {% endfor %}
             <div class="form-group row">
                  {% if form.taf.errors %}
                     {{ form.taf(class="form-control form-control-md is-invalid") }}
@@ -38,6 +33,11 @@
                     </div>
                 {% endif %}
             </div>
+            {% for plot_url in plot_urls %}
+                <div class="media">
+                    <img src="data:image/png;base64, {{ plot_url }}">
+                </div>
+            {% endfor %}
             <div class="form-group">
                 {{ form.submit(class="btn btn-outline-info") }}
             </div>
