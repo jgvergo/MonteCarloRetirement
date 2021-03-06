@@ -9,7 +9,6 @@ from Simulation.utils import calculate_age
 from Simulation.MCSim import run_sim_background, run_all_sim_background
 from Simulation.MCGraphs import plot_graphs
 from datetime import date
-import pandas as pd
 import time
 import json
 from rq.job import Job

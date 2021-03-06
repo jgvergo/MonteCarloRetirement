@@ -6,6 +6,7 @@ from rq import Queue
 import os
 import redis
 
+
 bcrypt = Bcrypt()
 login_manager = LoginManager()
 login_manager.login_view = 'users.login'
@@ -15,6 +16,6 @@ db = SQLAlchemy()
 
 # Initialize Redis
 redis_url = os.getenv('REDISTOGO_URL', 'redis://localhost:6379')
-redis = redis.from_url(redis_url)
-redis_conn = redis.Redis()
+redis_conn = redis.from_url(redis_url)
 q = Queue(connection=redis_conn)
+
