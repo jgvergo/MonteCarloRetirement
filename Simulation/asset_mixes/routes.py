@@ -64,6 +64,7 @@ def save_ui_state(request, form, asset_mix_id, check_pcts):
         acam.asset_mix_id = int(asset_mix_id)
         acam.percentage = float(pcts[idx])
         db.session.add(acam)
+        db.session.commit()
     asset_mix = AssetMix.query.get_or_404(asset_mix_id)
     asset_mix.title = form.title.data
     db.session.commit()
@@ -145,6 +146,7 @@ def update_asset_mix(asset_mix_id):
                 acam.asset_mix_id = int(asset_mix_id)
                 acam.percentage = float(pcts[idx])
                 db.session.add(acam)
+                db.session.commit()
 
             asset_mix.title = form.title.data
             db.session.commit()

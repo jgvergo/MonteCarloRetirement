@@ -5,7 +5,18 @@ from Simulation.models import AssetClass, Scenario, User, AssetMix, AssetMixAsse
 from Simulation.utils import calculate_age
 from datetime import date
 import pandas as pd
+from sqlalchemy.engine import Engine
+from sqlalchemy import event
 
+
+#  Solved a db concurrency problem
+# See https://stackoverflow.com/questions/9671490/how-to-set-sqlite-pragma-statements-with-sqlalchemy
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.close()
+    connect_args = {'timeout': 15}
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -14,6 +25,7 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     db.create_all()
+
 
     bcrypt.init_app(app)
     login_manager.init_app(app)
@@ -58,6 +70,7 @@ def initDatabase():
                 asset_class.avg_ret = 0  #sd.ac_df[column][m_index[0]]
                 asset_class.std_dev = 0  #sd.ac_df[column][sd_index[0]]
                 db.session.add(asset_class)
+                db.session.commit()
 
         # Now that all the AssetClasses have been created, read and save the AssetMixes for the AssetMixes sheet
         # Note that the spreadsheet is constructed so that the asset names in this sheet reference the names in the
@@ -147,7 +160,7 @@ def initSimData():
         # otherwise, create a new db entry
         sd = SimData()
 
-    sd.num_exp = 100
+    sd.num_exp = 2000
     sd.num_sim_bins = 100
     sd.cola = [0.03632608696, 0.02904712979]
     sd.asset_classes = []

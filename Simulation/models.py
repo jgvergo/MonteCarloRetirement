@@ -183,3 +183,9 @@ class SimReturnData(db.Model):
     inf_output = db.Column(db.PickleType, nullable=False)
     sd_output = db.Column(db.PickleType, nullable=False)
     cola_output = db.Column(db.PickleType, nullable=False)
+
+class SimAllReturnData(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    scenario_id = db.Column(db.Integer, nullable=False)
+    job_id = db.Column(db.Integer, nullable=False)
+    df = db.Column(db.PickleType, nullable=False)

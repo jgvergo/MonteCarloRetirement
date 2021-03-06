@@ -4,7 +4,7 @@ from Simulation import db
 from Simulation.extensions import redis_conn
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm, DisplayAllSimResultForm
 from Simulation.utils import populate_investment_dropdown, get_investment_from_select_field, get_asset_mix
-from Simulation.models import Scenario, SimData, SimReturnData
+from Simulation.models import Scenario, SimData, SimReturnData, SimAllReturnData
 from Simulation.utils import calculate_age
 from Simulation.MCSim import run_sim_background, run_all_sim_background
 from Simulation.MCGraphs import plot_graphs
@@ -160,17 +160,26 @@ def display_result(job_id):
     form.taf.data = 'Asset mix name: {}{}' \
                     'Number of Monte Carlo experiments: {:,}'. \
         format(asset_mix.title, nl, sd.num_exp)
-
+    # Clean up the db
+    db.session.delete(srd)
+    db.session.commit()
     return render_template('display_sim_result.html', title='Simulated Scenario',
                            form=form, legend='Simulated Scenario', plot_urls=plot_urls)
 @scenarios.route("/scenario/<string:job_id>/display_all_result", methods=['GET', 'POST'])
 @login_required
 def display_all_result(job_id):
-    srd = SimReturnData.query.filter_by(job_id=job_id).first()
-    scenario = Scenario.query.get_or_404(srd.scenario_id)
+    sard = SimAllReturnData.query.filter_by(job_id=job_id).first()
+    scenario = Scenario.query.get_or_404(sard.scenario_id)
     if scenario.author != current_user:
         abort(403)
-    df = pd.read_csv('output.csv')
+
+    # Grab the dataframe
+    df = sard.df
+
+    # Clean up the db
+    db.session.delete(sard)
+    db.session.commit()
+
     form = DisplayAllSimResultForm()
     return render_template('display_all_sim_result.html', form=form, tables=[df.to_html(classes='data')], titles=df.columns.values)
 
