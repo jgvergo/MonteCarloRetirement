@@ -11,12 +11,12 @@ from sqlalchemy import event
 
 #  Solved a db concurrency problem
 # See https://stackoverflow.com/questions/9671490/how-to-set-sqlite-pragma-statements-with-sqlalchemy
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL")
-    cursor.close()
-    connect_args = {'timeout': 15}
+#@event.listens_for(Engine, "connect")
+#def set_sqlite_pragma(dbapi_connection, connection_record):
+#    cursor = dbapi_connection.cursor()
+#    cursor.execute("PRAGMA journal_mode=WAL")
+#    cursor.close()
+#    connect_args = {'timeout': 15}
 
 def create_app(config_class=Config):
     app = Flask(__name__)
