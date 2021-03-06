@@ -5,8 +5,8 @@ from Simulation.models import AssetClass, Scenario, User, AssetMix, AssetMixAsse
 from Simulation.utils import calculate_age
 from datetime import date
 import pandas as pd
-from sqlalchemy.engine import Engine
-from sqlalchemy import event
+#from sqlalchemy.engine import Engine
+#from sqlalchemy import event
 
 
 #  Solved a db concurrency problem

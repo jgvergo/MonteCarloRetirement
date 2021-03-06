@@ -3,8 +3,8 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_bcrypt import Bcrypt
 from rq import Queue
-from redis import Redis
-
+import os
+import redis
 
 bcrypt = Bcrypt()
 login_manager = LoginManager()
@@ -12,6 +12,9 @@ login_manager.login_view = 'users.login'
 login_manager.login_message_category = 'info'
 mail = Mail()
 db = SQLAlchemy()
-# Tell RQ what Redis connection to use
-redis_conn = Redis()
+
+# Initialize Redis
+redis_url = os.getenv('REDISTOGO_URL', 'redis://localhost:6379')
+redis = redis.from_url(redis_url)
+redis_conn = redis.Redis()
 q = Queue(connection=redis_conn)
