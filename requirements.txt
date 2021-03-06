@@ -18,3 +18,4 @@ flask_mail==0.9.1
 flask_bcrypt==0.7.1
 flask_wtf==0.14.3
 email_validator==1.1.2
+gunicorn==20.0.4
