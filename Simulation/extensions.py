@@ -16,6 +16,7 @@ db = SQLAlchemy()
 
 # Initialize Redis
 redis_url = os.getenv('REDISTOGO_URL', 'redis://localhost:6379')
+print(redis_url)
 redis_conn = redis.from_url(redis_url)
 q = Queue(connection=redis_conn)
-
+print(redis_url, redis_conn, q)
