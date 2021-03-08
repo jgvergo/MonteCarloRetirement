@@ -45,7 +45,7 @@ def create_app(config_class=Config):
     app.register_blueprint(asset_mixes)
     app.register_blueprint(errors)
 
-    initDatabase()
+#    initDatabase()
 
     return app
 
