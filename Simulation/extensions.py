@@ -3,7 +3,7 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_bcrypt import Bcrypt
 from rq import Queue
-from Worker import conn
+from Worker import conn as redis_conn
 
 bcrypt = Bcrypt()
 login_manager = LoginManager()
@@ -13,4 +13,4 @@ mail = Mail()
 db = SQLAlchemy()
 
 # Initialize queue
-q = Queue(connection=conn)
+q = Queue(connection=redis_conn)
