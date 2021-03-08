@@ -45,19 +45,47 @@ def create_app(config_class=Config):
     app.register_blueprint(asset_mixes)
     app.register_blueprint(errors)
 
-#    initDatabase()
+    initDatabase()
 
     return app
 
 
 # The following function re-initializes the database with some useful data
-# It is only here as a convenience for development and debugging
 def initDatabase():
-    ac_list = AssetClass.query.count()
+    # See if theSimData has already been created
+    sd_count = SimData.query.count()
+    if sd_count > 0:
+        # If it has been created, use it
+        sd = SimData.query.first()
+    else:
+        # otherwise, create a new db entry
+        sd = SimData()
 
-    sd = initSimData()
+    sd.num_exp = 2000
+    sd.num_sim_bins = 100
+    sd.cola = [0.03632608696, 0.02904712979]
+    sd.asset_classes = []
+    sd.spend_decay = [0.00, 0.00]
+    sd.debug = True
 
-    if ac_list == 0:
+    if sd_count == 0:
+        # If sd has not been initialized in the past...
+        sd.ac_df = pd.read_excel('AssetClassesMixes.xls', sheet_name='AssetClasses')
+
+        # Drop the Mean and Standard Deviation rows and the Year Column
+        sd.ac_df = sd.ac_df[sd.ac_df.Year != 'Mean']
+        sd.ac_df = sd.ac_df[sd.ac_df.Year != 'Standard Deviation']
+        sd.ac_df.drop('Year', axis=1, inplace=True)
+
+        # Calculate the means and covariance matrix once and save it
+        sd.cov = sd.ac_df.cov()
+        sd.mean = sd.ac_df.mean()
+
+    if sd_count == 0:
+        db.session.add(sd)
+    db.session.commit()
+
+    if AssetClass.query.count() == 0:
         # Save the AssetClass data in the database. The inflation data will be used in the simulation engine
         for column in sd.ac_df:
             if sd.ac_df[column].name == 'Inflation':
@@ -91,6 +119,7 @@ def initDatabase():
                         amac.percentage = item
                         db.session.add(amac)
                         db.session.commit()
+    if User.query.count() == 0:
         # Create user
         hashed_password = bcrypt.generate_password_hash('foobar2020').decode('utf-8')
         user = User(username='jgvergo', email='jgvergo@gmail.com', password=hashed_password)
@@ -98,6 +127,7 @@ def initDatabase():
         db.session.add(user)
         db.session.commit()
 
+    if Scenario.query.count() == 0:
         # Create a single, "sample scenario"
         scenario = Scenario()
         scenario.user_id = user.id
@@ -144,37 +174,4 @@ def initDatabase():
         am = AssetMix.query.filter_by(title='Stocks/Bonds 60/40').first()
         scenario.asset_mix_id = am.id
         db.session.add(scenario)
-        db.session.commit()
-
-def initSimData():
-    # See if theSimData has already been created
-    sd_count = SimData.query.count()
-    if sd_count > 0:
-        # If it has been created, use it
-        sd = SimData.query.first()
-    else:
-        # otherwise, create a new db entry
-        sd = SimData()
-
-    sd.num_exp = 2000
-    sd.num_sim_bins = 100
-    sd.cola = [0.03632608696, 0.02904712979]
-    sd.asset_classes = []
-    sd.spend_decay = [0.00, 0.00]
-    sd.debug = True
-
-    sd.ac_df = pd.read_excel('AssetClassesMixes.xls', sheet_name='AssetClasses')
-    # Drop the Mean and Standard Deviation rows and the Year Column
-    sd.ac_df = sd.ac_df[sd.ac_df.Year != 'Mean']
-    sd.ac_df = sd.ac_df[sd.ac_df.Year != 'Standard Deviation']
-    sd.ac_df.drop('Year', axis=1, inplace=True)
-
-    # Calculate the means and covariance matrix once and save it
-    sd.cov = sd.ac_df.cov()
-    sd.mean = sd.ac_df.mean()
-
-    if sd_count == 0:
-        db.session.add(sd)
     db.session.commit()
-
-    return sd
