@@ -136,7 +136,9 @@ def progress(job_id):
 
             json_data = json.dumps(d)
             yield f"data:{json_data}\n\n"
-            time.sleep(0.2)
+            # Controls the update frequency of the progress bar
+            time.sleep(0.1)
+
     return Response(get_status(), mimetype='text/event-stream')
 
 
