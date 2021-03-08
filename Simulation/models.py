@@ -173,7 +173,7 @@ class SimData(db.Model):
 class SimReturnData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     scenario_id = db.Column(db.Integer, nullable=False)
-    job_id = db.Column(db.Integer, nullable=False)
+    job_id = db.Column(db.String, nullable=False)
     p0_output = db.Column(db.PickleType, nullable=False)
     fd_output = db.Column(db.PickleType, nullable=False)
     rs_output = db.Column(db.PickleType, nullable=False)
@@ -187,5 +187,5 @@ class SimReturnData(db.Model):
 class SimAllReturnData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     scenario_id = db.Column(db.Integer, nullable=False)
-    job_id = db.Column(db.Integer, nullable=False)
+    job_id = db.Column(db.String, nullable=False)
     df = db.Column(db.PickleType, nullable=False)
