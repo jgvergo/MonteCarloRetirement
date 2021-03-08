@@ -35,7 +35,6 @@ def create_app(config_class=Config):
     from Simulation.users.routes import users
     from Simulation.posts.routes import posts
     from Simulation.scenarios.routes import scenarios
-    from Simulation.asset_classes.routes import asset_classes
     from Simulation.asset_mixes.routes import asset_mixes
     from Simulation.errors.handlers import errors
 
@@ -43,7 +42,6 @@ def create_app(config_class=Config):
     app.register_blueprint(users)
     app.register_blueprint(posts)
     app.register_blueprint(scenarios)
-    app.register_blueprint(asset_classes)
     app.register_blueprint(asset_mixes)
     app.register_blueprint(errors)
 
@@ -67,8 +65,6 @@ def initDatabase():
             else:
                 asset_class = AssetClass()
                 asset_class.title = sd.ac_df[column].name
-                asset_class.avg_ret = 0  #sd.ac_df[column][m_index[0]]
-                asset_class.std_dev = 0  #sd.ac_df[column][sd_index[0]]
                 db.session.add(asset_class)
                 db.session.commit()
 
@@ -152,7 +148,7 @@ def initDatabase():
 
 def initSimData():
     # See if theSimData has already been created
-    sd_count = AssetClass.query.count()
+    sd_count = SimData.query.count()
     if sd_count > 0:
         # If it has been created, use it
         sd = SimData.query.first()

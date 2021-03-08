@@ -37,11 +37,9 @@ class AssetClass(db.Model):
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     title = db.Column(db.String(100), nullable=True)
-    avg_ret = db.Column(db.Float, nullable=False)
-    std_dev = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
-        return f"AssetClass('{self.title}', '{self.avg_ret}', '{self.std_dev})"
+        return f"AssetClass('{self.title}')"
 
 
 # AssetMixes are investment vehicles comprised of 4 asset classes
