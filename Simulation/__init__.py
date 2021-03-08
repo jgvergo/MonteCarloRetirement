@@ -123,12 +123,12 @@ def initDatabase():
         # Create user
         hashed_password = bcrypt.generate_password_hash('foobar2020').decode('utf-8')
         user = User(username='jgvergo', email='jgvergo@gmail.com', password=hashed_password)
-        user.id = 1
         db.session.add(user)
         db.session.commit()
 
     if Scenario.query.count() == 0:
         # Create a single, "sample scenario"
+        user = User.query.first()
         scenario = Scenario()
         scenario.user_id = user.id
         scenario.title = 'Sample scenario'
