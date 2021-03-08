@@ -54,10 +54,8 @@ def _run_sim_background(scenario, assetmix):
     srd.inf_output = inf_output
     srd.sd_output = sd_output
     srd.cola_output = cola_output
-    print('In MCSIM.py line 59, srd.job_id = ', srd.job_id)
     db.session.add(srd)
     db.session.commit()
-    print('After commit()')
     return job.id
 
 
