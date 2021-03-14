@@ -4,7 +4,7 @@ from Simulation import db
 from Simulation.extensions import redis_conn
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm, DisplayAllSimResultForm
 from Simulation.utils import populate_investment_dropdown, get_investment_from_select_field, get_asset_mix
-from Simulation.models import Scenario, SimData, SimReturnData, SimAllReturnData
+from Simulation.models import Scenario, SimData
 from Simulation.utils import calculate_age
 from Simulation.MCSim import run_sim_background, run_all_sim_background
 from Simulation.MCGraphs import plot_graphs
@@ -19,7 +19,7 @@ scenarios = Blueprint('scenarios', __name__)
 
 @scenarios.route("/scenario/new", methods=['GET', 'POST'])
 @login_required
-def new_scenario(titles=None):
+def new_scenario():
     # User has clicked on "New Scenario" or has clicked "Save" after filling out a blank form or has clicked "Save and
     # Run" after filling out a blank form
     form = ScenarioForm()
@@ -130,10 +130,6 @@ def progress(job_id):
             else:
                 d['value'] = 0
 
-            # IF there's a result, add this to the stream
-            if job.result:
-                d['result'] = job.result
-
             json_data = json.dumps(d)
             yield f"data:{json_data}\n\n"
             # Controls the update frequency of the progress bar
@@ -146,40 +142,36 @@ def progress(job_id):
 @login_required
 def display_result(job_id):
     sd = SimData.query.first()
-    srd = SimReturnData.query.filter_by(job_id=job_id).first()
-    scenario = Scenario.query.get_or_404(srd.scenario_id)
+    job = Job.fetch(job_id, connection=redis_conn)
+
+    scenario, p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = job.result
+
     if scenario.author != current_user:
         abort(403)
 
-    plot_urls = plot_graphs(srd.fd_output, srd.rs_output, srd.ss_output, srd.sss_output,
-                            srd.inv_output, srd.inf_output, srd.sd_output, srd.cola_output, srd.p0_output)
+    plot_urls = plot_graphs(fd_output, rs_output, ss_output, sss_output,
+                            inv_output, inf_output, sd_output, cola_output, p0_output)
 
     form = DisplaySimResultForm()
     form.title.data = scenario.title
     asset_mix = get_asset_mix(scenario.asset_mix_id)
+
     nl = '\n'
     form.taf.data = 'Asset mix name: {}{}' \
                     'Number of Monte Carlo experiments: {:,}'. \
         format(asset_mix.title, nl, sd.num_exp)
-    # Clean up the db
-    db.session.delete(srd)
-    db.session.commit()
     return render_template('display_sim_result.html', title='Simulated Scenario',
                            form=form, legend='Simulated Scenario', plot_urls=plot_urls)
+
+
 @scenarios.route("/scenario/<string:job_id>/display_all_result", methods=['GET', 'POST'])
 @login_required
 def display_all_result(job_id):
-    sard = SimAllReturnData.query.filter_by(job_id=job_id).first()
-    scenario = Scenario.query.get_or_404(sard.scenario_id)
+    job = Job.fetch(job_id, connection=redis_conn)
+    scenario, df = job.result
+
     if scenario.author != current_user:
         abort(403)
-
-    # Grab the dataframe
-    df = sard.df
-
-    # Clean up the db
-    db.session.delete(sard)
-    db.session.commit()
 
     form = DisplayAllSimResultForm()
     return render_template('display_all_sim_result.html', form=form, tables=[df.to_html(classes='data')], titles=df.columns.values)

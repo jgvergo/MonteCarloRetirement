@@ -5,7 +5,7 @@ from flask_login import current_user
 
 from Simulation.utils import calculate_age
 from Simulation.utils import get_invest_data
-from Simulation.models import SimData, SimReturnData, AssetMix, AssetClass, SimAllReturnData
+from Simulation.models import SimData, AssetMix, AssetClass
 from Simulation.extensions import q, redis_conn
 from rq.registry import FailedJobRegistry, Job
 
@@ -24,39 +24,22 @@ def run_sim_background(scenario, assetmix):
     return job.id
 
 
+# This routine (and any called routine from the routine) run as part of the Worker.py process
 def _run_sim_background(scenario, assetmix):
     from Simulation.config import Config
     from Simulation import create_app
     from rq import get_current_job
-    from Simulation.extensions import db
+
 
     flask_app = create_app(Config)
     flask_app.app_context().push()
 
     job = get_current_job()
-
     p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
         _run_simulation(scenario, assetmix, 1, 0, job)
 
-    # Since we are running in an asynch worker process, write the results to SQLAlchemy
-    # for the main process to retrieve it
-    srd = SimReturnData()
-    srd.job_id = job.id
-    srd.scenario_id = scenario.id
-
-    # Now store the results
-    srd.p0_output = p0_output
-    srd.fd_output = fd_output
-    srd.rs_output = rs_output
-    srd.ss_output = ss_output
-    srd.sss_output = sss_output
-    srd.inv_output = inv_output
-    srd.inf_output = inf_output
-    srd.sd_output = sd_output
-    srd.cola_output = cola_output
-    db.session.add(srd)
-    db.session.commit()
-    return job.id
+    return scenario, p0_output, fd_output, rs_output, ss_output, \
+           sss_output, inv_output, inf_output, sd_output, cola_output
 
 
 def run_all_sim_background(scenario, assetmix):
@@ -64,7 +47,7 @@ def run_all_sim_background(scenario, assetmix):
         abort(403)
     job = q.enqueue(_run_all_sim_background, scenario, assetmix)
     sd = SimData.query.first()
-    if SimData().debug:
+    if sd.debug:
         registry = FailedJobRegistry(queue=q)
 
         # Show all failed job IDs and the exceptions they caused during runtime
@@ -75,12 +58,11 @@ def run_all_sim_background(scenario, assetmix):
     return job.id
 
 
-# This runs in a rq worker
+# This runs in an rq worker background process
 def _run_all_sim_background(scenario, assetmix):
     from Simulation.config import Config
     from Simulation import create_app
     from rq import get_current_job
-    from Simulation.extensions import db
 
     flask_app = create_app(Config)
     flask_app.app_context().push()
@@ -99,13 +81,17 @@ def _run_all_sim_background(scenario, assetmix):
     asset_mix_list = AssetMix.query.order_by(AssetMix.title.asc()).all()
     for i, asset_mix in enumerate(asset_mix_list):
         scenario.asset_mix_id = asset_mix.id
-        p0_output, fd_output = _run_simulation(scenario, True, num_sims, sim_num, job)
+# Fixme - It should not be possible to SAVE an asset_mix unless it has a title
+        if asset_mix.title == None:
+            pass
+        else:
+            p0_output, fd_output = _run_simulation(scenario, True, num_sims, sim_num, job)
 
-        year = p0_output.shape[0] - 1
-        fd_output[year].sort()
-        df.loc[i] = [asset_mix.title, 'Asset Mix', p0_output[year], fd_output[year][int(sd.num_exp / 2)]]
+            year = p0_output.shape[0] - 1
+            fd_output[year].sort()
+            df.loc[i] = [asset_mix.title, 'Asset Mix', p0_output[year], fd_output[year][int(sd.num_exp / 2)]]
 
-        sim_num += 1
+            sim_num += 1
 
     # ...then do the AssetClasses
     asset_class_list = AssetClass.query.order_by(AssetClass.title.asc()).all()
@@ -119,13 +105,7 @@ def _run_all_sim_background(scenario, assetmix):
 
         sim_num += 1
 
-    sard = SimAllReturnData()
-    sard.job_id = job.id
-    sard.scenario_id = scenario.id
-    sard.df = df
-    db.session.add(sard)
-    db.session.commit()
-    return job.id
+    return scenario, df
 
 
 # Returns a random sequence of numbers of length num that are randomly drawn from the specified normal distribution
