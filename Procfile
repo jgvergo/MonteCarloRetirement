@@ -1,2 +1,2 @@
-web: uwsgi run:app
+web: gunicorn run:app
 worker: python Worker.py
