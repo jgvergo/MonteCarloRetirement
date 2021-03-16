@@ -5,18 +5,7 @@ from Simulation.models import AssetClass, Scenario, User, AssetMix, AssetMixAsse
 from Simulation.utils import calculate_age
 from datetime import date
 import pandas as pd
-#from sqlalchemy.engine import Engine
-#from sqlalchemy import event
 
-
-#  Solved a db concurrency problem
-# See https://stackoverflow.com/questions/9671490/how-to-set-sqlite-pragma-statements-with-sqlalchemy
-#@event.listens_for(Engine, "connect")
-#def set_sqlite_pragma(dbapi_connection, connection_record):
-#    cursor = dbapi_connection.cursor()
-#    cursor.execute("PRAGMA journal_mode=WAL")
-#    cursor.close()
-#    connect_args = {'timeout': 15}
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -61,7 +50,7 @@ def initDatabase():
         # otherwise, create a new db entry
         sd = SimData()
 
-    sd.num_exp = 1000
+    sd.num_exp = 100000
     sd.num_sim_bins = 100
     sd.cola = [0.03632608696, 0.02904712979]
     sd.asset_classes = []

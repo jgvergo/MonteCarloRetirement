@@ -10,9 +10,28 @@ from Simulation.extensions import q, redis_conn
 from rq.registry import FailedJobRegistry, Job
 
 
+class RunSimParams():
+    def __init__(self):
+        self.scenario = None
+        self.investments = None
+        self.sd = None
+        self.num_sims = None
+        self.sim_num = None
+        self.investments = None
+
+
 def run_sim_background(scenario, assetmix):
-    job = q.enqueue(_run_sim_background, scenario, assetmix)
     sd = SimData.query.first()
+
+    rsp = RunSimParams()
+    rsp.scenario = scenario
+    rsp.sd = sd
+    rsp.num_sims = 1
+    rsp.sim_num = 0
+    rsp.investments = get_invest_data(scenario.asset_mix_id, assetmix)
+
+    job = q.enqueue(_run_sim_background, rsp)
+
     if sd.debug:
         registry = FailedJobRegistry(queue=q)
 
@@ -25,20 +44,15 @@ def run_sim_background(scenario, assetmix):
 
 
 # This routine (and any called routine from the routine) run as part of the Worker.py process
-def _run_sim_background(scenario, assetmix):
-    from Simulation.config import Config
-    from Simulation import create_app
+def _run_sim_background(rsp):
     from rq import get_current_job
 
-
-    flask_app = create_app(Config)
-    flask_app.app_context().push()
-
     job = get_current_job()
+    rsp.job = job
     p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
-        _run_simulation(scenario, assetmix, 1, 0, job)
+        _run_simulation(rsp)
 
-    return scenario, p0_output, fd_output, rs_output, ss_output, \
+    return rsp.scenario, p0_output, fd_output, rs_output, ss_output, \
            sss_output, inv_output, inf_output, sd_output, cola_output
 
 
@@ -85,7 +99,10 @@ def _run_all_sim_background(scenario, assetmix):
         if asset_mix.title == None:
             pass
         else:
-            p0_output, fd_output = _run_simulation(scenario, True, num_sims, sim_num, job)
+            # Get the investment
+            investments = get_invest_data(scenario.asset_mix_id, assetmix)
+
+            p0_output, fd_output = _run_simulation(scenario, investments, sd, num_sims, sim_num, job)
 
             year = p0_output.shape[0] - 1
             fd_output[year].sort()
@@ -97,7 +114,9 @@ def _run_all_sim_background(scenario, assetmix):
     asset_class_list = AssetClass.query.order_by(AssetClass.title.asc()).all()
     for j, asset_class in enumerate(asset_class_list):
         scenario.asset_mix_id = asset_class.id
-        p0_output, fd_output = _run_simulation(scenario, False, num_sims, sim_num, job)
+        # Get the investment
+        investments = get_invest_data(scenario.asset_mix_id, assetmix)
+        p0_output, fd_output = _run_simulation(scenario, investments, sd, num_sims, sim_num, job)
 
         year = p0_output.shape[0] - 1
         fd_output[year].sort()
@@ -113,15 +132,21 @@ def sim(mean, stddev, num):
     return np.random.normal(mean, stddev, num)
 
 
-def _run_simulation(scenario, assetmix, num_sims, sim_num, job):
+def _run_simulation(rsp):
+
+    # Unpack the parameters
+    scenario = rsp.scenario
+    sd = rsp.sd
+    investments = rsp.investments
+    job = rsp.job
+    num_sims = rsp.num_sims
+    sim_num = rsp.sim_num
 
     # Number of years to simulate
-    if scenario.has_spouse:
+    if rsp.scenario.has_spouse:
         n_yrs = max(scenario.lifespan_age - scenario.current_age, scenario.s_lifespan_age - scenario.s_current_age)
     else:
         n_yrs = scenario.lifespan_age - scenario.current_age
-
-    sd = SimData.query.first()
 
     # These are numpy.ndarrays which hold the simulation results
     fd_output = np.zeros((n_yrs, sd.num_exp))  # Final distribution output
@@ -133,9 +158,6 @@ def _run_simulation(scenario, assetmix, num_sims, sim_num, job):
     sd_output = np.zeros((n_yrs, sd.num_exp))  # Spend decay output
     cola_output = np.zeros((n_yrs, sd.num_exp))  # Cost of living output
     p0_output = np.zeros(n_yrs)  # Percent over zero output
-
-    # Run the simulation with the asset mix specified by the user
-    investments = get_invest_data(scenario.asset_mix_id, assetmix)
 
     # Calculate the age at which each spouse will take social security
     s1ssa_sim = calculate_age(scenario.ss_date, scenario.birthdate)
