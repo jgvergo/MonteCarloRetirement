@@ -18,10 +18,11 @@ def plot_graphs(fd_output, rs_output, ss_output, sss_output, inv_output, inf_out
         rs_output[year].sort()
         ss_output[year].sort()
         sss_output[year].sort()
-        inv_output[year].sort()
-        inf_output[year].sort()
-        sd_output[year].sort()
-        cola_output[year].sort()
+        if sd.debug:
+            inv_output[year].sort()
+            inf_output[year].sort()
+            sd_output[year].sort()
+            cola_output[year].sort()
     plot_url = []
     plot_url.append(plot_final_value_histogram(fd_output))
     plot_url.append(plot_p0(p0_output))

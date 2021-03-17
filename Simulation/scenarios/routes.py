@@ -145,7 +145,14 @@ def display_result(job_id):
     sd = SimData.query.first()
     job = Job.fetch(job_id, connection=redis_conn)
 
-    scenario, p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = job.result
+    if sd.debug:
+        scenario, p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = job.result
+    else:
+        scenario, p0_output, fd_output, rs_output, ss_output, sss_output, = job.result
+        inv_output = None
+        inf_output = None
+        sd_output = None
+        cola_output = None
 
     if scenario.author != current_user:
         abort(403)

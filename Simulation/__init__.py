@@ -5,6 +5,7 @@ from Simulation.models import AssetClass, Scenario, User, AssetMix, AssetMixAsse
 from Simulation.utils import calculate_age
 from datetime import date
 import pandas as pd
+import os
 
 
 def create_app(config_class=Config):
@@ -50,12 +51,12 @@ def initDatabase():
         # otherwise, create a new db entry
         sd = SimData()
 
-    sd.num_exp = 100
+    sd.num_exp = 250
     sd.num_sim_bins = 100
     sd.cola = [0.03632608696, 0.02904712979]
     sd.asset_classes = []
     sd.spend_decay = [0.00, 0.00]
-    sd.debug = False
+    sd.debug = os.getenv("MCR_DEBUG", 'False').lower() in ['true', '1']
 
     if sd_count == 0:
         # If sd has not been initialized in the past...
