@@ -122,7 +122,6 @@ def progress(job_id):
 
             status = job.get_status()
             job.refresh()
-            print('In route, status = ', status)
             d = {'status': status}
 
             if 'progress' in job.meta:
