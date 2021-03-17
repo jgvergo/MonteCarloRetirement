@@ -50,12 +50,12 @@ def initDatabase():
         # otherwise, create a new db entry
         sd = SimData()
 
-    sd.num_exp = 1000
+    sd.num_exp = 10
     sd.num_sim_bins = 100
     sd.cola = [0.03632608696, 0.02904712979]
     sd.asset_classes = []
     sd.spend_decay = [0.00, 0.00]
-    sd.debug = True
+    sd.debug = False
 
     if sd_count == 0:
         # If sd has not been initialized in the past...
