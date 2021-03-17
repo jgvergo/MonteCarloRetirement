@@ -51,7 +51,7 @@ def initDatabase():
         # otherwise, create a new db entry
         sd = SimData()
 
-    sd.num_exp = 250
+    sd.num_exp = os.getenv("MCR_NUM_EXP", 250)
     sd.num_sim_bins = 100
     sd.cola = [0.03632608696, 0.02904712979]
     sd.asset_classes = []
