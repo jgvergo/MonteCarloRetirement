@@ -113,7 +113,6 @@ def run_all_scenario(scenario_id):
 
 @scenarios.route('/progress/<string:job_id>')
 def progress(job_id):
-    print(request.get_json())
     def get_status():
 
         job = Job.fetch(job_id, connection=redis_conn)
