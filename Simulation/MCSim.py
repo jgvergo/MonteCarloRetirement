@@ -30,7 +30,7 @@ def run_sim_background(scenario, assetmix):
     rsp.sim_num = 0
     rsp.investments = get_invest_data(scenario.asset_mix_id, assetmix)
 
-    job = q.enqueue(_run_sim_background, rsp)
+    job = q.enqueue(_run_sim_background, rsp, job_timeout=6000)
 
     if sd.debug:
         registry = FailedJobRegistry(queue=q)
@@ -59,7 +59,7 @@ def _run_sim_background(rsp):
 def run_all_sim_background(scenario, assetmix):
     if scenario.author != current_user:
         abort(403)
-    job = q.enqueue(_run_all_sim_background, scenario, assetmix)
+    job = q.enqueue(_run_all_sim_background, scenario, assetmix, job_timeout=6000)
     sd = SimData.query.first()
     if sd.debug:
         registry = FailedJobRegistry(queue=q)
