@@ -96,6 +96,7 @@ def run_scenario(scenario_id):
         abort(403)
 
     job_id = run_sim_background(scenario, True)
+    print('After enqueueing job id = ', job_id)
     return {'job_id': job_id}
 
 
