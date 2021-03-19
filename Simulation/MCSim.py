@@ -6,6 +6,7 @@ from Simulation.utils import get_invest_data
 from Simulation.models import SimData, AssetMix, AssetClass
 from Simulation.extensions import q, redis_conn
 from rq.registry import FailedJobRegistry, Job
+import os
 
 
 class RunSimParams():
@@ -26,6 +27,7 @@ class RunSimParams():
 
 def run_sim_background(scenario, assetmix):
     sd = SimData.query.first()
+    sd.num_exp = int(os.getenv("MCR_NUM_EXP", 5000))
 
     rsp = RunSimParams()
     rsp.scenario = scenario
@@ -51,6 +53,7 @@ def run_sim_background(scenario, assetmix):
 # This routine (and any called routine from the routine) run as part of the Worker.py process
 def _run_sim_background(rsp_list):
     from rq import get_current_job
+
     rsp = rsp_list[0]
     job = get_current_job()
     rsp.job = job
@@ -68,6 +71,7 @@ def _run_sim_background(rsp_list):
 
 def run_all_sim_background(scenario, assetmix):
     sd = SimData.query.first()
+    sd.num_exp = int(os.getenv("MCR_NUM_EXP", 5000)/10)
 
     # Build the list of run_simulation parameters
     num_sims = len(AssetMix.query.all()) + len(AssetClass.query.all())
