@@ -131,8 +131,8 @@ def plot_final_value_histogram(fd_output):
     # a big spike in the histogram at zero
     # NB: In previous versions, the mode was calculated based on the histogram, but that made it difficult to elide the
     # the zeros
-
     # Find the first index of a non-zero value if the mode is zero
+    min_index = 0
     if mode == 0:
         for index, last in enumerate(fd_last):
             if last == 0:
