@@ -27,17 +27,20 @@
           <div class="collapse navbar-collapse" id="navbarToggle">
             <div class="navbar-nav mr-auto">
               <a class="nav-item nav-link" href="{{ url_for('main.home') }}">Home</a>
-              <a class="nav-item nav-link" href="{{ url_for('main.about') }}">About</a>
+                {% if current_user.is_authenticated %}
+                    <a class="nav-item nav-link" href="{{ url_for('scenarios.new_scenario') }}">New Scenario</a>
+                    <a class="nav-item nav-link" href="{{ url_for('asset_mixes.list_asset_mixes') }}">Asset Mixes</a>
+                    <a class="nav-item nav-link" href="{{ url_for('users.account') }}">Account</a>
+                    <a class="nav-item nav-link" href="{{ url_for('posts.new_post') }}">Feedback</a>
+                    <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Logout</a>
+                {% endif %}
             </div>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
-              {% if current_user.is_authenticated %}
-                <a class="nav-item nav-link" href="{{ url_for('scenarios.new_scenario') }}">New Scenario</a>
-                <a class="nav-item nav-link" href="{{ url_for('asset_mixes.list_asset_mixes') }}">Asset Mixes</a>
-                <a class="nav-item nav-link" href="{{ url_for('users.account') }}">Account</a>
-                <a class="nav-item nav-link" href="{{ url_for('posts.new_post') }}">Feedback</a>
-                <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Logout</a>
-              {% else %}
+              <a class="nav-item nav-link" href="{{ url_for('main.about') }}">About</a>
+              <a class="nav-item nav-link" href="{{ url_for('main.disclaimer') }}">Disclaimer</a>
+              <a class="nav-item nav-link" href="{{ url_for('main.privacy_policy') }}">Privacy Policy</a>
+              {% if not current_user.is_authenticated %}
                 <a class="nav-item nav-link" href="{{ url_for('users.login') }}">Login</a>
                 <a class="nav-item nav-link" href="{{ url_for('users.register') }}">Register</a>
               {% endif %}

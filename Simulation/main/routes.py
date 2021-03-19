@@ -16,3 +16,13 @@ def home():
 @main.route("/about")
 def about():
     return render_template('about.html', title='About')
+
+
+@main.route("/disclaimer")
+def disclaimer():
+    return render_template('disclaimer.html', title='Disclaimer')
+
+
+@main.route("/privacy-policy")
+def privacy_policy():
+    return render_template('privacy-policy.html', title='Privacy Policy')
