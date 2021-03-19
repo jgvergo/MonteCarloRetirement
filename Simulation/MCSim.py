@@ -323,7 +323,7 @@ def _run_simulation(rsp):
                 if sd.debug:
                     inv_output[year][experiment] += (inv[0]/100) * (inv[1][year])
 
-            if (s1_age > scenario.ret_job_ret_age) and (nestegg < 0):
+            if (s1_age > scenario.retirement_age) and (nestegg < 0):
                 nestegg = 0.0
 
     for year in range(n_yrs):
