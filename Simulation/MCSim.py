@@ -1,8 +1,6 @@
 from os import abort
 import numpy as np
 import pandas as pd
-from flask_login import current_user
-
 from Simulation.utils import calculate_age
 from Simulation.utils import get_invest_data
 from Simulation.models import SimData, AssetMix, AssetClass
