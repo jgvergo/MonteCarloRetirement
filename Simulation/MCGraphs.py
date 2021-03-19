@@ -120,14 +120,36 @@ def plot_final_value_histogram(fd_output):
     plt.figure(figsize=(8, 6.5))
     plt.tight_layout()
 
+    year = fd_output.shape[0] - 1  # index of the year to graph, i.e. the final year of the simulation
+
+    # Calculate the mode
+    fd_last = fd_output[year]
+    n = len(fd_last)
+    mode = fd_last[np.argmax(n)]
+
+    # if the mode is zero, set min_index to be the first non-zero entry. This is done to prevent the graphing of
+    # a big spike in the histogram at zero
+    # NB: In previous versions, the mode was calculated based on the histogram, but that made it difficult to elide the
+    # the zeros
+
+    # Find the first index of a non-zero value if the mode is zero
+    if mode == 0:
+        for index, last in enumerate(fd_last):
+            if last == 0:
+                min_index = index + 1
+            else:
+                break
+
     # Don't display the top 5% because they are part of a "long tail" and mess up the visuals; Leave min at 0
-    min_index = 0
     max_index = int(0.95 * sd.num_exp) - 1
+
+    # min_index can be greater than max_index at this point if more than 95% of the final values are zero. If so,
+    # force it back to 0
+    if min_index >= max_index:
+        min_index = 0
 
     # Now create figure 1 - the  distribution of all results.
     # NB: The x axis has the final dollar amount of the simulations and the y axis has the experiment count
-    year = fd_output.shape[0] - 1  # index of the year to graph, i.e. the final year of the simulation
-
     xmin = fd_output[year][min_index]  # This is the min that we will graph
     xmax = fd_output[year][max_index]  # This is the max that we will graph
     xlen = xmax - xmin
@@ -183,8 +205,7 @@ def plot_final_value_histogram(fd_output):
 
     yinc = ylen / 32  # Determined empirically, based on font and graph size
 
-    # Put a line for the mode and label it. Note that we drop the leading bucket, which is frequently zeros
-    mode = arr[np.argmax(n)]
+    # Put a line for the mode and label it.
     plt.axvline(mode + binsize / 2, color='k', linestyle='solid', linewidth=1)  # Mode
     plt.text(mode + xlen / 50, ypos, 'Mode: ${0:,.0f}'.format(mode), color='k')
 
