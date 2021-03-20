@@ -27,7 +27,7 @@ class RunSimParams():
 
 def run_sim_background(scenario, assetmix):
     sd = SimData.query.first()
-    sd.num_exp = int(os.getenv("MCR_NUM_EXP", 5000))
+    sd.num_exp = int(int(os.getenv("MCR_NUM_EXP", 5000))/10)
 
     rsp = RunSimParams()
     rsp.scenario = scenario
@@ -71,7 +71,7 @@ def _run_sim_background(rsp_list):
 
 def run_all_sim_background(scenario, assetmix):
     sd = SimData.query.first()
-    sd.num_exp = int(os.getenv("MCR_NUM_EXP", 5000)/10)
+    sd.num_exp = int(int(os.getenv("MCR_NUM_EXP", 5000))/10)
 
     # Build the list of run_simulation parameters
     num_sims = len(AssetMix.query.all()) + len(AssetClass.query.all())
