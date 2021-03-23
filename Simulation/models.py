@@ -161,7 +161,6 @@ class SimData(db.Model):
     debug = db.Column(db.Boolean, nullable=True)
 
     cola = db.Column(db.PickleType, nullable=True)
-    asset_classes = db.Column(db.PickleType, nullable=True)
     spend_decay = db.Column(db.PickleType, nullable=True)
     mean = db.Column(db.PickleType, nullable=True)
     cov = db.Column(db.PickleType, nullable=True)
