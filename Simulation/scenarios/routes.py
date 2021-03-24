@@ -17,6 +17,10 @@ from rq.job import Job
 scenarios = Blueprint('scenarios', __name__)
 
 
+def currencyK(x):
+    return "${0:,.0f}K".format(x / 1000)
+
+
 @scenarios.route("/scenario/new", methods=['GET', 'POST'])
 @login_required
 def new_scenario():
@@ -180,7 +184,13 @@ def display_all_result(job_id):
         abort(403)
 
     form = DisplayAllSimResultForm()
-    return render_template('display_all_sim_result.html', form=form, tables=[df.to_html(classes='data')], titles=df.columns.values)
+
+    df['50th % Final Nestegg'] = df['50th % Final Nestegg'].apply(currencyK)
+
+    return render_template('display_all_sim_result.html',
+                           table=df.to_html(table_id='DisplayAllTable', classes='table table-bordered text-left table-striped display', index=False),
+                           title='Results for "Run All"',
+                           form=form)
 
 
 def copy_scenario_2_form(s, form):
