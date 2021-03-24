@@ -1,4 +1,3 @@
-from os import abort
 import numpy as np
 import pandas as pd
 from Simulation.utils import calculate_age
@@ -9,7 +8,12 @@ from rq.registry import FailedJobRegistry, Job
 import os
 
 
-class RunSimParams():
+# The convention I adopted in this file is that any function name that starts with an underscore ("_") is run in a
+# worker process
+
+# This object is passed from the web process to the background (worker) process. It contains all the information
+# necessary to do a run or run all simulation
+class RunSimParams:
     def __init__(self):
         self.scenario = None
         self.investments = None
@@ -18,16 +22,16 @@ class RunSimParams():
         self.sim_num = None
 
         # Title and type used for "Run All"
-        self.title = None
-        self.type = None
+        self.investment_title = None
+        self.investment_type = None
 
     def __str__(self):
-        return " % s,  % s" % (self.title, self.type)
+        return " %s,  %s, %d, %d" % (self.investment_title, self.investment_type, self.num_sims, self.sim_num)
 
 
 def run_sim_background(scenario, assetmix):
     sd = SimData.query.first()
-    sd.num_exp = int(int(os.getenv("MCR_NUM_EXP", 5000))/10)
+    sd.num_exp = int(int(os.getenv("MCR_NUM_EXP", 5000)))
 
     rsp = RunSimParams()
     rsp.scenario = scenario
@@ -35,6 +39,8 @@ def run_sim_background(scenario, assetmix):
     rsp.num_sims = 1
     rsp.sim_num = 0
     rsp.investments = get_invest_data(scenario.asset_mix_id, assetmix)
+    rsp.investment_title = 'N/A'
+    rsp.investment_type = 'N/A'
     rsp_list = []
     rsp_list.append(rsp)
     job = q.enqueue(_run_sim_background, rsp_list, job_timeout=6000)
@@ -85,8 +91,8 @@ def run_all_sim_background(scenario, assetmix):
         rsp = RunSimParams()
         rsp.sim_num = sim_num
         rsp.investments = get_invest_data(scenario.asset_mix_id, assetmix)
-        rsp.type = 'Asset Mix'
-        rsp.title = asset_mix.title
+        rsp.investment_type = 'Asset Mix'
+        rsp.investment_title = asset_mix.title
 
         # Only need to pass one sd,scenario and num_sims since they are all identical
         if sim_num == 0:
@@ -104,8 +110,8 @@ def run_all_sim_background(scenario, assetmix):
         rsp = RunSimParams()
         rsp.sim_num = sim_num
         rsp.investments = get_invest_data(scenario.asset_mix_id, assetmix)
-        rsp.type = 'Asset Class'
-        rsp.title = asset_class.title
+        rsp.investment_type = 'Asset Class'
+        rsp.investment_title = asset_class.title
 
         rsp_list.append(rsp)
         sim_num += 1
@@ -138,7 +144,7 @@ def _run_all_sim_background(rsp_list):
         p0_output, fd_output = _run_simulation(rsp)
         year = p0_output.shape[0] - 1
         fd_output[year].sort()
-        df.loc[i] = [rsp.title, rsp.type, p0_output[year], fd_output[year][int(rsp_list[0].sd.num_exp / 2)]]
+        df.loc[i] = [rsp.investment_title, rsp.investment_type, p0_output[year], fd_output[year][int(rsp_list[0].sd.num_exp / 2)]]
 
     return rsp_list[0].scenario, df
 
