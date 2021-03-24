@@ -3,12 +3,18 @@
 <div class="content-section">
     <form action="" method="POST">
         {{ form.hidden_tag() }}
-        {% for table in tables %}
-                    {{titles[loop.index]}}
-                    {{ table|safe }}
-        {% endfor %}
+        {{ title }}
+        {{ table|safe }}
     </form>
 </div>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+  $('#DisplayAllTable').DataTable( {
+  "pagingType": "simple_numbers"
+  } );
+});
+</script>
 {% endblock content %}
-
-
