@@ -122,36 +122,17 @@ def plot_final_value_histogram(fd_output):
 
     year = fd_output.shape[0] - 1  # index of the year to graph, i.e. the final year of the simulation
 
-    # Calculate the mode
+    # fd_last contains the data for the last year of the simulation. It will contain num_exp data points
     fd_last = fd_output[year]
-    n = len(fd_last)
-    mode = fd_last[np.argmax(n)]
 
-    # if the mode is zero, set min_index to be the first non-zero entry. This is done to prevent the graphing of
-    # a big spike in the histogram at zero
-    # NB: In previous versions, the mode was calculated based on the histogram, but that made it difficult to elide the
-    # the zeros
-    # Find the first index of a non-zero value if the mode is zero
+    # Don't display the top 2% because they are part of a "long tail" and mess up the visuals; Leave min at 0
+    max_index = int(0.98 * sd.num_exp) - 1
     min_index = 0
-    if mode == 0:
-        for index, last in enumerate(fd_last):
-            if last == 0:
-                min_index = index + 1
-            else:
-                break
 
-    # Don't display the top 5% because they are part of a "long tail" and mess up the visuals; Leave min at 0
-    max_index = int(0.95 * sd.num_exp) - 1
-
-    # min_index can be greater than max_index at this point if more than 95% of the final values are zero. If so,
-    # force it back to 0
-    if min_index >= max_index:
-        min_index = 0
-
-    # Now create figure 1 - the  distribution of all results.
+    # Now create figure 1 - the  distribution of the results for the final year of the simulation.
     # NB: The x axis has the final dollar amount of the simulations and the y axis has the experiment count
-    xmin = fd_output[year][min_index]  # This is the min that we will graph
-    xmax = fd_output[year][max_index]  # This is the max that we will graph
+    xmin = fd_last[min_index]  # This is the min that we will graph
+    xmax = fd_last[max_index]  # This is the max that we will graph
     xlen = xmax - xmin
 
     # This is to keep np.arange from crashing if xmax is too small. It also causes the mode/mean/median labels to
@@ -176,23 +157,23 @@ def plot_final_value_histogram(fd_output):
 
     # Count zeros. We will throw out the zero results when plotting the histogram
     z_count = 0
-    for i in np.arange(len(fd_output[year])):
-        if fd_output[year][i] == 0:
+    for i in np.arange(len(fd_last)):
+        if fd_last[i] == 0:
             z_count += 1
 
-    # Since we don't plot the top 5% of results, we will consider the
+    # Since we don't plot the top 2% of results, we will consider the
     # results to be "all zero" if > 95% of the results are zero
     all_zeros = False
-    if z_count > 0.95*len(fd_output[year]):
+    if z_count > 0.98*len(fd_last):
         all_zeros = True
 
     if not all_zeros:
-        n, arr, patches = plt.hist(fd_output[year], bins=bins)
+        n, arr, patches = plt.hist(fd_last, bins=bins)
     else:
         # Clean up the few, remaining non-zero results
-        for i in np.arange(len(fd_output[year])):
-            fd_output[year][i] = 0
-        n, arr, patches = plt.hist(fd_output[year], bins=bins)
+        for i in np.arange(len(fd_last)):
+            fd_last[i] = 0
+        n, arr, patches = plt.hist(fd_last, bins=bins)
 
     ax.set_title('Year {year:.0f}'.format(year=year))
 
@@ -206,16 +187,17 @@ def plot_final_value_histogram(fd_output):
     yinc = ylen / 32  # Determined empirically, based on font and graph size
 
     # Put a line for the mode and label it.
+    mode = arr[np.argmax(n)]
     plt.axvline(mode + binsize / 2, color='k', linestyle='solid', linewidth=1)  # Mode
     plt.text(mode + xlen / 50, ypos, 'Mode: ${0:,.0f}'.format(mode), color='k')
 
     # Put a line for the median and label it
-    med = fd_output[year][int(sd.num_exp / 2)]
+    med = fd_last[int(sd.num_exp / 2)]
     plt.axvline(med + binsize / 2, color='g', linestyle='solid', linewidth=1)
     plt.text(med + xlen / 50, ypos - yinc, 'Median: ${0:,.0f}'.format(med), color='g')
 
     # Put a line for the average and label it
-    avg = sum(fd_output[year]) / sd.num_exp
+    avg = sum(fd_last) / sd.num_exp
     plt.axvline(avg + binsize / 2, color='b', linestyle='solid', linewidth=1)  # Mean
     plt.text(avg + xlen / 50, ypos - 2 * yinc, 'Average: ${0:,.0f}'.format(avg), color='b')
 
