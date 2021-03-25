@@ -145,7 +145,11 @@ def progress(job_id):
 @login_required
 def display_result(job_id):
     sd = SimData.query.first()
-    job = Job.fetch(job_id, connection=redis_conn)
+    try:
+        job = Job.fetch(job_id, connection=redis_conn)
+    except:
+        flash('Job expired')
+        return redirect(url_for('main.home'))
 
     if sd.debug:
         scenario, p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = job.result
@@ -156,13 +160,16 @@ def display_result(job_id):
         sd_output = None
         cola_output = None
 
+    form = DisplaySimResultForm()
+    if form.validate_on_submit():
+        return redirect(url_for('scenarios.scenario', scenario_id=scenario.id))
+
     if scenario.author != current_user:
         abort(403)
 
     plot_urls = plot_graphs(fd_output, rs_output, ss_output, sss_output,
                             inv_output, inf_output, sd_output, cola_output, p0_output)
 
-    form = DisplaySimResultForm()
     form.title.data = scenario.title
     asset_mix = get_asset_mix(scenario.asset_mix_id)
 
@@ -177,8 +184,17 @@ def display_result(job_id):
 @scenarios.route("/scenario/<string:job_id>/display_all_result", methods=['GET', 'POST'])
 @login_required
 def display_all_result(job_id):
-    job = Job.fetch(job_id, connection=redis_conn)
+    try:
+        job = Job.fetch(job_id, connection=redis_conn)
+    except:
+        flash('Job expired')
+        return redirect(url_for('main.home'))
+
     scenario, df = job.result
+
+    form = DisplaySimResultForm()
+    if form.validate_on_submit():
+        return redirect(url_for('scenarios.scenario', scenario_id=scenario.id))
 
     if scenario.author != current_user:
         abort(403)
