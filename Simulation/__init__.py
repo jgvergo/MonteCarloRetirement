@@ -52,7 +52,7 @@ def initDatabase():
         sd = SimData()
 
     sd.num_exp = os.getenv("MCR_NUM_EXP", 5000)
-    sd.num_sim_bins = 100
+    sd.num_sim_bins = 25
     sd.cola = [0.03632608696, 0.02904712979]
     sd.spend_decay = [0.00, 0.00]
     sd.debug = os.getenv("MCR_DEBUG", 'False').lower() in ['true', '1']
