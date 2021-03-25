@@ -46,6 +46,7 @@ def sim(mean, stddev, num):
 
 
 def _run_simulation(rsp):
+    print('in _run_simulation')
     job = get_current_job()
 
     # Unpack the parameters
