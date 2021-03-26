@@ -23,8 +23,8 @@ class ScenarioForm(FlaskForm):
 
     savings_rate = DecimalField(label='Savings rate',
                                   validators=[InputRequired(message='Required(can be 0)')],
-                                default=0.15)
-    s_savings_rate = DecimalField(label="Spouse's spouse's savings rate", default=0.15)
+                                default=15)
+    s_savings_rate = DecimalField(label="Spouse's spouse's savings rate", default=15)
 
     ss_date = DateField(label='Date you will take Social Security (MM-DD-YYYY)',
                         format='%m-%d-%Y',
