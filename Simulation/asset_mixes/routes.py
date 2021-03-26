@@ -64,7 +64,7 @@ def save_ui_state(request, form, asset_mix_id, check_pcts):
         acam.asset_mix_id = int(asset_mix_id)
         acam.percentage = float(pcts[idx])
         db.session.add(acam)
-        db.session.commit()
+
     asset_mix = AssetMix.query.get_or_404(asset_mix_id)
     asset_mix.title = form.title.data
     db.session.commit()
@@ -152,12 +152,12 @@ def update_asset_mix(asset_mix_id):
             db.session.commit()
             flash('Your asset mix data have been updated!', 'success')
 
-    elif form.delete.data:
-        # Delete the old AssetMixAssetClasses and the AssetMix
-        AssetMixAssetClass.query.filter_by(asset_mix_id=int(asset_mix_id)).delete()
-        AssetMix.query.filter_by(id=int(asset_mix_id)).delete()
-        db.session.commit()
-        flash('Your asset mix was deleted!', 'success')
+        elif form.delete.data:
+            # Delete the old AssetMixAssetClasses and the AssetMix
+            AssetMixAssetClass.query.filter_by(asset_mix_id=int(asset_mix_id)).delete()
+            AssetMix.query.filter_by(id=int(asset_mix_id)).delete()
+            db.session.commit()
+            flash('Your asset mix was deleted!', 'success')
 
         return redirect(url_for('asset_mixes.list_asset_mixes'))
 
