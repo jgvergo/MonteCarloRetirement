@@ -76,7 +76,7 @@ class ScenarioForm(FlaskForm):
     investment = SelectField(label='Investment', coerce=int, validate_choice=False)
 
     submit = SubmitField('Save')
-    cancel = SubmitField('Cancel')
+    cancel = SubmitField('Cancel', render_kw={'formnovalidate': True})
 
 class DisplaySimResultForm(FlaskForm):
     title = StringField()
