@@ -108,6 +108,9 @@ def initDatabase():
                         amac.percentage = item
                         db.session.add(amac)
                         db.session.commit()
+    db.session.commit()
+
+def addUserAndScenario():
     if User.query.count() == 0:
         # Create user
         hashed_password = bcrypt.generate_password_hash('foobar2020').decode('utf-8')
@@ -163,4 +166,3 @@ def initDatabase():
         am = AssetMix.query.filter_by(title='Stocks/Bonds 60/40').first()
         scenario.asset_mix_id = am.id
         db.session.add(scenario)
-    db.session.commit()
