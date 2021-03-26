@@ -27,7 +27,7 @@ def new_asset_mix():
         # Create a blank AssetMixAssetClass
         amac = AssetMixAssetClass()
         amac.asset_mix_id = asset_mix.id
-        amac.asset_class_id = 0
+        amac.asset_class_id = 1
         amac.percentage = 0.0
         db.session.add(amac)
         db.session.commit()
