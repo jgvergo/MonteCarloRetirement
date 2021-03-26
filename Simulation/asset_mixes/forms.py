@@ -9,7 +9,7 @@ class AssetMixForm(FlaskForm):
     description = StringField(widget=TextArea(), render_kw={'rows': 5})
     add = SubmitField('+')
     submit = SubmitField('Save Asset Mix')
-    delete = SubmitField('Delete Asset Mix')
+    delete = SubmitField('Delete Asset Mix', render_kw={'formnovalidate': True})
 
 
 class AssetMixListForm(FlaskForm):
