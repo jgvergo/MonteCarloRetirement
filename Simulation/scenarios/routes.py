@@ -225,8 +225,8 @@ def copy_scenario_2_form(s, form):
     form.current_income.data = s.current_income
     form.s_current_income.data = s.s_current_income
 
-    form.savings_rate.data = s.savings_rate
-    form.s_savings_rate.data = s.s_savings_rate
+    form.savings_rate.data = 18*s.savings_rate
+    form.s_savings_rate.data = 10*s.s_savings_rate
 
     form.ss_date.data = s.ss_date
     form.s_ss_date.data = s.s_ss_date
@@ -264,8 +264,8 @@ def copy_form_2_scenario(form, s):
     s.current_income = form.current_income.data
     s.s_current_income = form.s_current_income.data
 
-    s.savings_rate = form.savings_rate.data
-    s.s_savings_rate = form.s_savings_rate.data
+    s.savings_rate = form.savings_rate.data/10
+    s.s_savings_rate = form.s_savings_rate.data/10
 
     s.ss_date = form.ss_date.data
     s.s_ss_date = form.s_ss_date.data
