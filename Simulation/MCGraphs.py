@@ -10,7 +10,7 @@ mpl.use('Agg')
 plt.style.use('ggplot')
 
 
-def plot_graphs(fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output, p0_output):
+def plot_graphs(fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output, p0_output, has_spouse):
 
     sd = SimData.query.first()
     for year in range(fd_output.shape[0]):
@@ -41,7 +41,8 @@ def plot_graphs(fd_output, rs_output, ss_output, sss_output, inv_output, inf_out
                           'Primary user social security',
                           'Social security percentiles by year (primary user)',
                           '$'))
-    plot_url.append(plot_confidence_bands(year, sss_output,
+    if has_spouse:
+        plot_url.append(plot_confidence_bands(year, sss_output,
                           'Year',
                           'Spouse social security',
                           'Social security percentiles by year (spouse)',

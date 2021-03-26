@@ -175,7 +175,7 @@ def display_result(job_id):
         abort(403)
 
     plot_urls = plot_graphs(fd_output, rs_output, ss_output, sss_output,
-                            inv_output, inf_output, sd_output, cola_output, p0_output)
+                            inv_output, inf_output, sd_output, cola_output, p0_output, scenario.has_spouse)
 
     form.title.data = scenario.title
     print('routes line 174, scenario, asset_mix_id = ', scenario, scenario.asset_mix_id)
