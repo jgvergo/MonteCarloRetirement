@@ -26,7 +26,14 @@ def currencyK(x):
 def new_scenario():
     # User has clicked on "New Scenario" or has clicked "Save" after filling out a blank form or has clicked "Save and
     # Run" after filling out a blank form
+
     form = ScenarioForm()
+
+    # Handle a cancel button click
+    if request.method == 'POST':
+        if form.cancel.data:
+            return redirect(url_for('main.home'))
+
     populate_investment_dropdown(form.investment, kind='AssetMix')
 
     if form.validate_on_submit():
@@ -171,6 +178,7 @@ def display_result(job_id):
                             inv_output, inf_output, sd_output, cola_output, p0_output)
 
     form.title.data = scenario.title
+    print('routes line 174, scenario, asset_mix_id = ', scenario, scenario.asset_mix_id)
     asset_mix = get_asset_mix(scenario.asset_mix_id)
 
     nl = '\n'
