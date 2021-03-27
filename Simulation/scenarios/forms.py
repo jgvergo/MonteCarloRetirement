@@ -11,33 +11,33 @@ class ScenarioForm(FlaskForm):
     birthdate = DateField(label='Date of birth (MM-DD-YYYY)',
                           format='%m-%d-%Y',
                           validators=[InputRequired(message='Required')],
-                          default=date(month=1, day=1, year=2000))
+                          default=date(month=3, day=28, year=1971))
     s_birthdate = DateField(label='Date of birth(MM-DD-YYYY)',
                             format='%m-%d-%Y',
-                            default=date(month=1, day=1, year=2000))
+                            default=date(month=3, day=28, year=1971))
 
     current_income = IntegerField(label='Current income',
                                   validators=[InputRequired(message='Required(can be 0)')],
-                                  default=50000)
-    s_current_income = IntegerField(label="Spouse's current income", default=50000)
+                                  default=80000)
+    s_current_income = IntegerField(label="Spouse's current income", default=80000)
 
     savings_rate = DecimalField(label='Savings rate',
-                                  validators=[InputRequired(message='Required(can be 0)')],
-                                default=15)
-    s_savings_rate = DecimalField(label="Spouse's spouse's savings rate", default=15)
+                                validators=[InputRequired(message='Required(can be 0)')],
+                                default=6)
+    s_savings_rate = DecimalField(label="Spouse's spouse's savings rate", default=6)
 
     ss_date = DateField(label='Date you will take Social Security (MM-DD-YYYY)',
                         format='%m-%d-%Y',
                         validators=[InputRequired(message='Required')],
-                        default=date(month=1, day=1, year=2065))
+                        default=date(month=4, day=1, year=2041))
     s_ss_date = DateField(label='Date your spouse will take Social Security(MM-DD-YYYY)',
                           format='%m-%d-%Y',
-                          default=date(month=1, day=1, year=2065))
+                          default=date(month=4, day=1, year=2041))
 
     ss_amount = IntegerField(label='SS amount',
                              validators=[InputRequired(message='Required(can be 0)')],
-                             default=60000)
-    s_ss_amount = IntegerField(label="Spouse's SS amount", default=60000)
+                             default=40000)
+    s_ss_amount = IntegerField(label="Spouse's SS amount", default=40000)
 
     retirement_age = IntegerField(label='Retirement age',
                                   validators=[NumberRange(min=35, max=100,
@@ -47,8 +47,8 @@ class ScenarioForm(FlaskForm):
 
     ret_income = IntegerField(label='Retirement income',
                               validators=[InputRequired(message='Required(can be 0)')],
-                              default=100000)
-    s_ret_income = IntegerField(label="Spouse's retirement income", default=100000)
+                              default=30000)
+    s_ret_income = IntegerField(label="Spouse's retirement income", default=30000)
 
     ret_job_ret_age = IntegerField(label='Age at which you will fully retire',
                                    validators=[InputRequired(message='Required')], default=70)
@@ -58,17 +58,17 @@ class ScenarioForm(FlaskForm):
                                 validators=[InputRequired(message='Required(can be 0)')], default=95)
     s_lifespan_age = IntegerField(label="Spouse's expected lifespan in years", default=95)
 
-    windfall_amount = IntegerField(label='Windfall amount',
+    windfall_amount = IntegerField(label='One-time financial event',
                                    validators=[NumberRange(min=0, max=1000000000,
-                                                           message='Windfall amount must be between 0 and 1,000,000,000')],
-                                   default=1000000)
-    windfall_age = IntegerField(label='Windfall age',
+                                                           message='One-time financial event amount must be between 0 and 1,000,000,000')],
+                                   default=200000)
+    windfall_age = IntegerField(label='One-time financial event age',
                                 validators=[NumberRange(min=30, max=100,
-                                                        message='Windfall amount must be between 30 and 100')],
-                                default=65)
+                                                        message='One-time financial event age must be between 30 and 100')],
+                                default=70)
 
     nestegg = IntegerField(label="Your investable savings",
-                           validators=[InputRequired(message='Required(can be 0)')], default=100000)
+                           validators=[InputRequired(message='Required(can be 0)')], default=500000)
     ret_spend = IntegerField(label="Expected annual spending in retirement",
                              validators=[InputRequired(message='Required')], default=150000)
     has_spouse = BooleanField(label='Married', default=False)
