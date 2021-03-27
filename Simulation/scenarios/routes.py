@@ -106,7 +106,7 @@ def run_scenario(scenario_id):
     if scenario.author != current_user:
         abort(403)
 
-    job_id = run_sim_background(scenario, True)
+    job_id = run_sim_background(scenario)
     return {'job_id': job_id}
 
 
@@ -117,7 +117,7 @@ def run_all_scenario(scenario_id):
     if scenario.author != current_user:
         abort(403)
 
-    job_id = run_all_sim_background(scenario, True)
+    job_id = run_all_sim_background(scenario)
 
     return {'job_id': job_id}
 
@@ -225,8 +225,8 @@ def copy_scenario_2_form(s, form):
     form.current_income.data = s.current_income
     form.s_current_income.data = s.s_current_income
 
-    form.savings_rate.data = 18*s.savings_rate
-    form.s_savings_rate.data = 10*s.s_savings_rate
+    form.savings_rate.data = 100*s.savings_rate
+    form.s_savings_rate.data = 100*s.s_savings_rate
 
     form.ss_date.data = s.ss_date
     form.s_ss_date.data = s.s_ss_date
@@ -264,8 +264,8 @@ def copy_form_2_scenario(form, s):
     s.current_income = form.current_income.data
     s.s_current_income = form.s_current_income.data
 
-    s.savings_rate = form.savings_rate.data/10
-    s.s_savings_rate = form.s_savings_rate.data/10
+    s.savings_rate = form.savings_rate.data/100
+    s.s_savings_rate = form.s_savings_rate.data/100
 
     s.ss_date = form.ss_date.data
     s.s_ss_date = form.s_ss_date.data
