@@ -27,16 +27,16 @@ class RunSimParams:
         return " %s,  %s, %d, %d" % (self.investment_title, self.investment_type, self.num_sims, self.sim_num)
 
 
-def run_sim_background(scenario, assetmix):
+def run_sim_background(scenario):
     sd = SimData.query.first()
-    sd.num_exp = int(int(os.getenv("MCR_NUM_EXP", 5000)))
+    sd.num_exp = int(int(os.getenv("MCR_RUN_NUM_EXP", 5000)))
 
     rsp = RunSimParams()
     rsp.scenario = scenario
     rsp.sd = sd
     rsp.num_sims = 1
     rsp.sim_num = 0
-    rsp.investments = get_invest_data(scenario.asset_mix_id, assetmix)
+    rsp.investments = get_invest_data(scenario.asset_mix_id, True)
     rsp.investment_title = 'N/A'
     rsp.investment_type = 'N/A'
     rsp_list = []
@@ -54,9 +54,9 @@ def run_sim_background(scenario, assetmix):
     return job.id
 
 
-def run_all_sim_background(scenario, assetmix):
+def run_all_sim_background(scenario):
     sd = SimData.query.first()
-    sd.num_exp = int(int(os.getenv("MCR_NUM_EXP", 5000))/10)
+    sd.num_exp = int(int(os.getenv("MCR_RUNALL_NUM_EXP", 5000)))
 
     # Build the list of run_simulation parameters
     num_sims = len(AssetMix.query.all()) + len(AssetClass.query.all())
@@ -69,7 +69,7 @@ def run_all_sim_background(scenario, assetmix):
         scenario.asset_mix_id = asset_mix.id
         rsp = RunSimParams()
         rsp.sim_num = sim_num
-        rsp.investments = get_invest_data(scenario.asset_mix_id, assetmix)
+        rsp.investments = get_invest_data(scenario.asset_mix_id, True)
         rsp.investment_type = 'Asset Mix'
         rsp.investment_title = asset_mix.title
 
@@ -88,7 +88,7 @@ def run_all_sim_background(scenario, assetmix):
         scenario.asset_mix_id = asset_class.id
         rsp = RunSimParams()
         rsp.sim_num = sim_num
-        rsp.investments = get_invest_data(scenario.asset_mix_id, assetmix)
+        rsp.investments = get_invest_data(scenario.asset_mix_id, False)
         rsp.investment_type = 'Asset Class'
         rsp.investment_title = asset_class.title
 
