@@ -1,6 +1,8 @@
 from dateutil.relativedelta import relativedelta
 from Simulation.models import AssetClass, AssetMix, AssetMixAssetClass
 from wtforms import SelectField
+import os
+import inspect, logging
 
 def get_invest_data(id, assetmix):
     invest = []
@@ -29,8 +31,12 @@ def get_asset_mix(asset_mix_id: int):
 
     # Get the full set and search for the one that matches the id
     asset_mix_list = AssetMix.query.all()
-    item = next(am for am in asset_mix_list if am.id == asset_mix_id)
-    return item
+    for am in asset_mix_list:
+        if am.id == asset_mix_id:
+            mcr_log('Found am {}'.format(am.id), 'info')
+            return am
+    mcr_log('Non-existent asset mix', 'error')
+
 
 
 def populate_investment_dropdown(sf, id=0, kind='AssetMix'):
@@ -127,3 +133,70 @@ def does_key_exist(dict, chk_key):
         if key == chk_key:
             return True
     return False
+
+
+global logIt
+logIt = os.getenv("MCR_LOG", 'True').lower() in ['true', '1']
+# create logger
+logger = logging.getLogger('simple_example')
+logger.setLevel(logging.NOTSET)
+
+# Logging subsystem
+def mcr_log(message, level):
+    if logIt:
+        # Get the previous frame in the stack, otherwise it would be this function!!!
+        func = inspect.currentframe().f_back.f_code
+        logFunc = level_to_log(level)
+        logFunc(message, func)
+
+def level_to_log(argument):
+    switcher = {
+        'info': logInfo,
+        'debug': logDebug,
+        'critical': logCritical,
+        'error': logError
+    }
+    # Get the function from switcher dictionary
+    logFunc = switcher.get(argument, lambda: "Invalid logging level")
+    # Return the log function
+    return logFunc
+
+
+def logInfo(message, func):
+    logging.info("mcr_log: %s: %s in %s:%i" % (
+        message,
+        func.co_name,
+        func.co_filename,
+        func.co_firstlineno
+    ))
+    return
+
+
+def logDebug(message, func):
+    logging.debug("mcr_log: %s: %s in %s:%i" % (
+        message,
+        func.co_name,
+        func.co_filename,
+        func.co_firstlineno
+    ))
+    return
+
+
+def logCritical(message, func):
+    logging.critical("mcr_log: %s: %s in %s:%i" % (
+        message,
+        func.co_name,
+        func.co_filename,
+        func.co_firstlineno
+    ))
+    return
+
+
+def logError(message, func):
+    logging.error("mcr_log: %s: %s in %s:%i" % (
+        message,
+        func.co_name,
+        func.co_filename,
+        func.co_firstlineno
+    ))
+    return
