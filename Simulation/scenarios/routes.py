@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 from Simulation import db
 from Simulation.extensions import redis_conn
 from Simulation.scenarios.forms import ScenarioForm, DisplaySimResultForm, DisplayAllSimResultForm
-from Simulation.utils import populate_investment_dropdown, get_investment_from_select_field, get_asset_mix
+from Simulation.utils import populate_investment_dropdown, get_investment_from_select_field, get_asset_mix, mcr_log
 from Simulation.models import Scenario, SimData
 from Simulation.utils import calculate_age
 from Simulation.MCSim import run_sim_background, run_all_sim_background
@@ -155,7 +155,7 @@ def display_result(job_id):
     try:
         job = Job.fetch(job_id, connection=redis_conn)
     except:
-        flash('Job expired')
+        mcr_log('Job expired', 'critical')
         return redirect(url_for('main.home'))
 
     if sd.debug:
@@ -178,7 +178,7 @@ def display_result(job_id):
                             inv_output, inf_output, sd_output, cola_output, p0_output, scenario.has_spouse)
 
     form.title.data = scenario.title
-    print('routes line 174, scenario, asset_mix_id = ', scenario, scenario.asset_mix_id)
+    mcr_log('scenario = {}, asset_mix_id = {}'.format(scenario, scenario.asset_mix_id), 'debug')
     asset_mix = get_asset_mix(scenario.asset_mix_id)
 
     nl = '\n'
