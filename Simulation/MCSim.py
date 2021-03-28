@@ -1,4 +1,4 @@
-from Simulation.utils import get_invest_data
+from Simulation.utils import get_invest_data, mcr_log
 from Simulation.models import SimData, AssetMix, AssetClass
 from Simulation.extensions import q, redis_conn
 from Simulation.BackgroundSim import _run_sim_background, _run_all_sim_background
@@ -49,7 +49,7 @@ def run_sim_background(scenario):
         # Show all failed job IDs and the exceptions they caused during runtime
         for job_id in registry.get_job_ids():
             job = Job.fetch(job_id, connection=redis_conn)
-            print(job_id, job.exc_info)
+            mcr_log('job id = {}, job exe_info = {}'.format(job_id, job.exc_info), 'info')
 
     return job.id
 
