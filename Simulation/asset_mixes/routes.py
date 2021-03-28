@@ -3,7 +3,7 @@ from Simulation import db
 from Simulation.asset_mixes.forms import AssetMixForm, AssetMixListForm
 from Simulation.models import AssetMix, AssetMixAssetClass
 from flask_login import login_required
-from Simulation.utils import populate_investment_dropdown
+from Simulation.utils import populate_investment_dropdown, mcr_log
 from wtforms import SelectField, DecimalField, SubmitField
 from wtforms.validators import InputRequired
 from Simulation.utils import get_key, does_key_exist
@@ -35,7 +35,7 @@ def new_asset_mix():
 
         # redirect to the update URL (seemed easiest way to handle it)
         return redirect('{:,.0f}/update'.format(asset_mix.id))
-    print('HELP - asset_mixes/routes.py')  # We should never get here
+    mcr_log('We should never get here', 'critical')
     return
 
 
