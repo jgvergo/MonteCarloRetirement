@@ -3,6 +3,8 @@ from Simulation.models import AssetClass, AssetMix, AssetMixAssetClass
 from wtforms import SelectField
 import os
 import inspect, logging
+import ntpath
+
 
 def get_invest_data(id, assetmix):
     invest = []
@@ -134,25 +136,49 @@ def does_key_exist(dict, chk_key):
             return True
     return False
 
-
-global logIt
-logIt = os.getenv("MCR_LOG", 'True').lower() in ['true', '1']
 # create logger
-logger = logging.getLogger('simple_example')
-logger.setLevel(logging.NOTSET)
+logger = logging.getLogger('mcr_web_logger')
 
-# Logging subsystem
+logLevel = os.getenv("MCR_LOG_LEVEL", 'DEBUG')
+
+if logLevel == 'NOTSET':
+    logger.setLevel(logging.NOTSET)
+elif logLevel == 'INFO':
+    logger.setLevel(logging.INFO)
+elif logLevel == 'DEBUG':
+    logger.setLevel(logging.DEBUG)
+elif logLevel == 'WARNING':
+    logger.setLevel(logging.WARNING)
+elif logLevel == 'CRITICAL':
+    logger.setLevel(logging.CRITICAL)
+elif logLevel == 'ERROR':
+    logger.setLevel(logging.ERROR)
+
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# add formatter to ch
+ch.setFormatter(formatter)
+
+# add ch to logger
+logger.addHandler(ch)
+
+# This is the function that should be called from other application code
 def mcr_log(message, level):
-    if logIt:
-        # Get the previous frame in the stack, otherwise it would be this function!!!
-        func = inspect.currentframe().f_back.f_code
-        logFunc = level_to_log(level)
-        logFunc(message, func)
+    # Get the previous frame in the stack, otherwise it would be this function!!!
+    func = inspect.currentframe().f_back.f_code
+    logFunc = level_to_log(level)
+    logFunc(message, func)
 
 def level_to_log(argument):
     switcher = {
         'info': logInfo,
         'debug': logDebug,
+        'warning': logWarning,
         'critical': logCritical,
         'error': logError
     }
@@ -163,40 +189,50 @@ def level_to_log(argument):
 
 
 def logInfo(message, func):
-    logging.info("mcr_log: %s: %s in %s:%i" % (
+    logger.info("Message = %s, Function name = %s, Filename = %s, Line number = %i" % (
         message,
         func.co_name,
-        func.co_filename,
+        ntpath.basename(func.co_filename),
         func.co_firstlineno
     ))
     return
 
 
 def logDebug(message, func):
-    logging.debug("mcr_log: %s: %s in %s:%i" % (
+    logger.debug("Message = %s, Function name = %s, Filename = %s, Line number = %i" % (
         message,
         func.co_name,
-        func.co_filename,
+        ntpath.basename(func.co_filename),
+        func.co_firstlineno
+    ))
+    return
+
+
+def logWarning(message, func):
+    logger.warning("Message = %s, Function name = %s, Filename = %s, Line number = %i" % (
+        message,
+        func.co_name,
+        ntpath.basename(func.co_filename),
         func.co_firstlineno
     ))
     return
 
 
 def logCritical(message, func):
-    logging.critical("mcr_log: %s: %s in %s:%i" % (
+    logger.critical("Message = %s, Function name = %s, Filename = %s, Line number = %i" % (
         message,
         func.co_name,
-        func.co_filename,
+        ntpath.basename(func.co_filename),
         func.co_firstlineno
     ))
     return
 
 
 def logError(message, func):
-    logging.error("mcr_log: %s: %s in %s:%i" % (
+    logger.error("Message = %s, Function name = %s, Filename = %s, Line number = %i" % (
         message,
         func.co_name,
-        func.co_filename,
+        ntpath.basename(func.co_filename),
         func.co_firstlineno
     ))
     return
