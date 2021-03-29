@@ -138,25 +138,29 @@ def does_key_exist(dict, chk_key):
 
 # create logger
 logger = logging.getLogger('mcr_web_logger')
+ch = logging.StreamHandler()
 
 logLevel = os.getenv("MCR_LOG_LEVEL", 'DEBUG')
 
 if logLevel == 'NOTSET':
     logger.setLevel(logging.NOTSET)
+    ch.setLevel(logging.NOTSET)
 elif logLevel == 'INFO':
     logger.setLevel(logging.INFO)
+    ch.setLevel(logging.INFO)
 elif logLevel == 'DEBUG':
     logger.setLevel(logging.DEBUG)
+    ch.setLevel(logging.DEBUG)
 elif logLevel == 'WARNING':
     logger.setLevel(logging.WARNING)
+    ch.setLevel(logging.WARNING)
 elif logLevel == 'CRITICAL':
     logger.setLevel(logging.CRITICAL)
+    ch.setLevel(logging.CRITICAL)
 elif logLevel == 'ERROR':
     logger.setLevel(logging.ERROR)
+    ch.setLevel(logging.ERROR)
 
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
 
 # create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
