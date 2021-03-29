@@ -178,7 +178,7 @@ def display_result(job_id):
                             inv_output, inf_output, sd_output, cola_output, p0_output, scenario.has_spouse)
 
     form.title.data = scenario.title
-    mcr_log('scenario = {}, asset_mix_id = {}'.format(scenario, scenario.asset_mix_id), 'debug')
+    mcr_log('asset_mix_id = {}'.format(scenario.asset_mix_id), 'debug')
     asset_mix = get_asset_mix(scenario.asset_mix_id)
 
     nl = '\n'
