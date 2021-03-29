@@ -49,7 +49,7 @@ def run_sim_background(scenario):
         # Show all failed job IDs and the exceptions they caused during runtime
         for job_id in registry.get_job_ids():
             job = Job.fetch(job_id, connection=redis_conn)
-            mcr_log('job id = {}, job exe_info = {}'.format(job_id, job.exc_info), 'info')
+            mcr_log('job id = {}, job exe_info = {}'.format(job_id, job.exc_info), 'warning')
 
     return job.id
 
