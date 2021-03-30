@@ -53,9 +53,7 @@ def populate_investment_dropdown(sf, id=0, kind='AssetMix'):
         for asset_class in asset_class_list:
             titles.append((asset_class.id, asset_class.title))
     else:
-        # Force an error
-        titles[-1] = ''
-
+        mcr_log('Unknown kind of investment', 'error')
     # Set up the SelectField dropdown
     sf.choices = titles
     sf.data = id
