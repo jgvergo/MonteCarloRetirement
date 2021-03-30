@@ -44,11 +44,9 @@ def new_scenario():
 
         db.session.add(scenario)
         db.session.commit()
-        flash('Your scenario has been created!', 'success')
 
-        if form.submit.data:
-            flash('Your scenario has been updated!', 'success')
-            return redirect(url_for('main.home'))
+        flash('Your scenario has been created!', 'success')
+        return redirect(url_for('main.home'))
 
     # If we get here, the user has selected "New Scenario" and we are rendering a form with no data
     return render_template('create_scenario.html', title='New Scenario',
