@@ -48,6 +48,7 @@
   const runButton = document.getElementById('runButton')
   const runAllButton = document.getElementById('runAllButton')
   const runProgressBar = document.getElementById('runProgressBar')
+
   var getLocation = function(href) {
       var l = document.createElement("a");
       l.href = href;
@@ -66,9 +67,16 @@
     runProgressBar.innerHTML = value + '%';
   }
 
-  runButton.addEventListener('click', function(e) {
+  runButton.addEventListener('click', runButtonEventListener);
+  function  runButtonEventListener() {
 
+    // Disable the buttons while the simulation is running
+    runButton.removeEventListener('click', runButtonEventListener);
+    runAllButton.removeEventListener('click', runAllButtonEventListener);
+
+    // Display the progress bar
     progress.style.display = 'block';
+
     // Reset progress bar in case of re-click.
     update_bar(0);
 
@@ -125,8 +133,13 @@
         }
       })
     });
-  });
-  runAllButton.addEventListener('click', function(e) {
+  };
+  runAllButton.addEventListener('click', runAllButtonEventListener);
+  function  runAllButtonEventListener() {
+
+    // Disable the buttons while the simulation is running
+    runButton.removeEventListener('click', runButtonEventListener);
+    runAllButton.removeEventListener('click', runAllButtonEventListener);
 
     progress.style.display = 'block';
     // Reset progress bar in case of re-click.
@@ -188,7 +201,7 @@
         }
       })
     });
-  });
+  };
   </script>
 <body onload="hideProgressBar()">
 {% endblock content %}
