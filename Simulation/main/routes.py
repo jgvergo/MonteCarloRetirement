@@ -33,4 +33,4 @@ def privacy_policy():
 
 @main.route("/FAQ")
 def FAQ():
-    return render_template('faq.html', title='Frequently Asked Questions')
+    return render_template('FAQ.html', title='Frequently Asked Questions')
