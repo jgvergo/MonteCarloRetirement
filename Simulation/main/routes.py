@@ -30,3 +30,7 @@ def disclaimer():
 @main.route("/privacy-policy")
 def privacy_policy():
     return render_template('privacy-policy.html', title='Privacy Policy')
+
+@main.route("/FAQ")
+def FAQ():
+    return render_template('faq.html', title='Frequently Asked Questions')
