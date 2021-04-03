@@ -11,9 +11,13 @@ main = Blueprint('main', __name__)
 def home():
     user_id = current_user.get_id()
     page = request.args.get('page', 1, type=int)
-    scenarios = Scenario.query.filter_by(user_id=user_id)\
-                        .order_by(Scenario.date_posted.desc())\
-                        .paginate(page=page, per_page=10)
+    if user_id == '1':
+        scenarios = Scenario.query.order_by(Scenario.date_posted.desc()) \
+                                  .paginate(page=page, per_page=10)
+    else:
+        scenarios = Scenario.query.filter_by(user_id=user_id)\
+                            .order_by(Scenario.date_posted.desc())\
+                            .paginate(page=page, per_page=10)
     return render_template('home.html', scenarios=scenarios)
 
 
