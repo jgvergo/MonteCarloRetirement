@@ -8,11 +8,11 @@ from datetime import date
 class ScenarioForm(FlaskForm):
     title = StringField(label='Title',
                         validators=[InputRequired(message='Title is required')])
-    birthdate = DateField(label='Date of birth (MM-DD-YYYY)',
+    birthdate = DateField(label='Date of birth',
                           format='%m-%d-%Y',
                           validators=[InputRequired(message='Required')],
                           default=date(month=3, day=28, year=1971))
-    s_birthdate = DateField(label='Date of birth(MM-DD-YYYY)',
+    s_birthdate = DateField(label='Date of birth',
                             format='%m-%d-%Y',
                             default=date(month=3, day=28, year=1971))
 
@@ -26,11 +26,11 @@ class ScenarioForm(FlaskForm):
                                 default=6)
     s_savings_rate = DecimalField(label="Spouse's spouse's savings rate", default=6)
 
-    ss_date = DateField(label='Date you will take Social Security (MM-DD-YYYY)',
+    ss_date = DateField(label='Date you will take Social Security',
                         format='%m-%d-%Y',
                         validators=[InputRequired(message='Required')],
                         default=date(month=4, day=1, year=2041))
-    s_ss_date = DateField(label='Date your spouse will take Social Security(MM-DD-YYYY)',
+    s_ss_date = DateField(label='Date your spouse will take Social Security',
                           format='%m-%d-%Y',
                           default=date(month=4, day=1, year=2041))
 
