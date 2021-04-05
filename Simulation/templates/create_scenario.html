@@ -4,8 +4,9 @@
     <form action="" method="POST">
         {{ form.hidden_tag() }}
         <form>
-            <div class="form-group row">
-                {{ form.title.label(class="col-md-4 col-form-label text-right") }}
+            <div class="form-group row align-items-center">
+                {{ form.title.label(class="col-md-3 col-form-label text-right") }}
+                <img src="/static/information_icon.png" width="15" height="15" title="Enter a title for your scenario. The title should reflect the important parameters of the scenario. For example, if you are creating a scenario where you will take social security at age 70, you might want to entitle the scenario SS70">
                 {% if form.title.errors %}
                     {{ form.title(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
@@ -19,8 +20,9 @@
                     </div>
                 {% endif %}
             </div>
-            <div class="form-group row">
-                {{ form.has_spouse.label(class="col-md-4 text-right") }}
+            <div class="form-group row align-items-center">
+                {{ form.has_spouse.label(class="col-md-3 col-form-label text-right") }}
+                <img src="/static/information_icon.png" width="15" height="15" title="Check this if your scenario includes a spouse. If checked, you will need to enter information for your spouse in the right column.">
                 {% if form.has_spouse.errors %}
                     {{ form.has_spouse(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
@@ -34,13 +36,14 @@
                     </div>
                 {% endif %}
             </div>
-            <div class="form-group row">
-                <div class="col-md-4 text-right"><p> </p></div>
+            <div class="form-group row align-items-center">
+                <div class="col-md-3 text-right"><p> </p></div>
                 <div class="col-md-4 text-center"><p>Self</p></div>
                 <div class="col-md-4 text-center"><p>Spouse</p></div>
             </div>
-            <div class="form-group row">
-                {{ form.birthdate.label(class="col-md-4 col-form-label text-right") }}
+            <div class="form-group row align-items-center">
+                {{ form.birthdate.label(class="col-md-3 col-form-label text-right") }}
+                <img src="/static/information_icon.png" width="15" height="15" title="Enter you birthdate">
                 {% if form.birthdate.errors %}
                     {{ form.birthdate(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
@@ -69,8 +72,9 @@
 
             <div class="content-section">
                 <div class="col-md-12 text-center"><p><u>Pre-retirement information</u></p></div>
-                <div class="form-group row">
-                    {{ form.current_income.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.current_income.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="Enter your current income">
                     {% if form.current_income.errors %}
                         {{ form.current_income(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -96,8 +100,9 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="form-group row">
-                    {{ form.savings_rate.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.savings_rate.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="Enter the percentage of your salary that you save each year. For example, if you make $100,000/yr and you save $6,300/yr, enter 6.3">
                     {% if form.savings_rate.errors %}
                         {{ form.savings_rate(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -127,8 +132,9 @@
 
             <div class="content-section">
                 <div class="col-md-12 text-center"><p><u>Social security information</u></p></div>
-                <div class="form-group row">
-                    {{ form.ss_date.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.ss_date.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="Enter the date (MM-DD-YYYY) that you plan to take social security. You can explore your options at https://www.ssa.gov">
                     {% if form.ss_date.errors %}
                         {{ form.ss_date(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -154,8 +160,9 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="form-group row">
-                    {{ form.ss_amount.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.ss_amount.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="Enter the amount of your ANNUAL social security benefits. You can explore your options at https://www.ssa.gov">
                     {% if form.ss_amount.errors %}
                         {{ form.ss_amount(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -185,8 +192,9 @@
 
             <div class="content-section">
                 <div class="col-md-12 text-center"><p><u>Retirement information</u></p></div>
-                <div class="form-group row">
-                    {{ form.retirement_age.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.retirement_age.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="Enter the age at which you will leave your full-time career job">
                     {% if form.retirement_age.errors %}
                         {{ form.retirement_age(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -212,8 +220,9 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="form-group row">
-                    {{ form.ret_income.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.ret_income.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="If youy plan to work after retiring from your full time career, estimate the annual income from your 'second career'">
                     {% if form.ret_income.errors %}
                         {{ form.ret_income(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -239,8 +248,9 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="form-group row">
-                    {{ form.ret_job_ret_age.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.ret_job_ret_age.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="Enter the age you plan to fully retire. After this age, you will not generate any additional income and you will live off of your investments">
                     {% if form.ret_job_ret_age.errors %}
                         {{ form.ret_job_ret_age(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -266,8 +276,9 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="form-group row">
-                    {{ form.lifespan_age.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.lifespan_age.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="Enter the age that you estimate that you will live to. This will determine how many years are simulated. Most people will enter 95 just to see how their portfolio will perform if they live that long">
                     {% if form.lifespan_age.errors %}
                         {{ form.lifespan_age(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -297,8 +308,9 @@
 
             <div class="content-section">
                 <div class="col-md-12 text-center"><p><u>Shared portfolio information</u></p></div>
-                <div class="form-group row">
-                    {{ form.nestegg.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.nestegg.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="Enter the amount of your current savings">
                     {% if form.nestegg.errors %}
                         {{ form.nestegg(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -312,8 +324,9 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="form-group row">
-                    {{ form.windfall_amount.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.windfall_amount.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="If you anticipate an inheritance, enter the amount here (e.g. $200,000). You can also plan for a major expense such as a trip around the word by enter a negative number here (e.g. -$30,000)">
                     {% if form.windfall_amount.errors %}
                         {{ form.windfall_amount(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -327,8 +340,9 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="form-group row">
-                    {{ form.windfall_age.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.windfall_age.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="Enter the age that you estimate the financial event will take place">
                     {% if form.windfall_age.errors %}
                         {{ form.windfall_age(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -342,8 +356,9 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="form-group row">
-                    {{ form.ret_spend.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.ret_spend.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="Enter the amount of money you expect to spend annually at the start of you retirement from you full time job. Keep in mind that you will need to anticipate the impact of inflation on your estimate">
                     {% if form.ret_spend.errors %}
                         {{ form.ret_spend(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
@@ -357,8 +372,9 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="form-group row">
-                    {{ form.investment.label(class="col-md-4 col-form-label text-right") }}
+                <div class="form-group row align-items-center">
+                    {{ form.investment.label(class="col-md-3 col-form-label text-right") }}
+                    <img src="/static/information_icon.png" width="15" height="15" title="Select the Asset Mix that reflects how you will invest your current nestegg and future savings.">
                     {% if form.investment.errors %}
                         {{ form.investment(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
