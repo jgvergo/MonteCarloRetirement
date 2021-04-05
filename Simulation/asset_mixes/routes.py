@@ -1,7 +1,7 @@
 from flask import render_template, url_for, flash, redirect, request, Blueprint
 from Simulation import db
 from Simulation.asset_mixes.forms import AssetMixForm, AssetMixListForm
-from Simulation.models import AssetMix, AssetMixAssetClass
+from Simulation.models import AssetMix, AssetMixAssetClass, Scenario
 from flask_login import login_required
 from Simulation.utils import populate_investment_dropdown, mcr_log
 from wtforms import SelectField, DecimalField, SubmitField
@@ -153,6 +153,15 @@ def update_asset_mix(asset_mix_id):
             flash('Your asset mix data have been updated!', 'success')
 
         elif form.delete.data:
+            # Check to see if the AssetMix is a system supplied AssetMix or if it's being used in a scenario
+            # If so, do not allow it to be deleted
+            scenarios = Scenario.query.filter_by(asset_mix_id=int(asset_mix_id))
+            if asset_mix_id <=20:
+                flash('You may not delete that AssetMix. You can only delete Asset Mixes that you have created.')
+                return redirect(url_for('main.home'))
+            if scenarios != None:
+                flash('You must remove the AssetMix from all scenarios before it can be deleted')
+                return redirect(url_for('main.home'))
             # Delete the old AssetMixAssetClasses and the AssetMix
             AssetMixAssetClass.query.filter_by(asset_mix_id=int(asset_mix_id)).delete()
             AssetMix.query.filter_by(id=int(asset_mix_id)).delete()
