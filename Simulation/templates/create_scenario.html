@@ -43,7 +43,7 @@
             </div>
             <div class="form-group row align-items-center">
                 {{ form.birthdate.label(class="col-md-3 col-form-label text-right") }}
-                <img src="/static/information_icon.png" width="15" height="15" title="Enter you birthdate">
+                <img src="/static/information_icon.png" width="15" height="15" title="Enter your birthdate">
                 {% if form.birthdate.errors %}
                     {{ form.birthdate(class="form-control form-control-md is-invalid") }}
                     <div class="invalid-feedback">
@@ -74,7 +74,7 @@
                 <div class="col-md-12 text-center"><p><u>Pre-retirement information</u></p></div>
                 <div class="form-group row align-items-center">
                     {{ form.current_income.label(class="col-md-3 col-form-label text-right") }}
-                    <img src="/static/information_icon.png" width="15" height="15" title="Enter your current income">
+                    <img src="/static/information_icon.png" width="15" height="15" title="Enter your current income. Note that this field should only reflect outside income (i.e. a salary or other external source of income)">
                     {% if form.current_income.errors %}
                         {{ form.current_income(class="form-control form-control-md is-invalid") }}
                         <div class="invalid-feedback">
