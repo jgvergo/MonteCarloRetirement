@@ -1,8 +1,8 @@
 from flask import render_template, url_for, flash, redirect, request, Blueprint
 from Simulation import db
 from Simulation.asset_mixes.forms import AssetMixForm, AssetMixListForm
-from Simulation.models import AssetMix, AssetMixAssetClass, Scenario
-from flask_login import login_required
+from Simulation.models import AssetMix, AssetMixAssetClass, Scenario, User
+from flask_login import login_required, current_user
 from Simulation.utils import populate_investment_dropdown, mcr_log
 from wtforms import SelectField, DecimalField, SubmitField
 from wtforms.validators import InputRequired
@@ -21,6 +21,7 @@ def new_asset_mix():
         asset_mix = AssetMix()
         asset_mix.title = ''
         asset_mix.description = ''
+        asset_mix.user_id = current_user.get_id()
         db.session.add(asset_mix)
         db.session.commit()
 
@@ -122,6 +123,15 @@ def update_asset_mix(asset_mix_id):
     # This section handles the Save and Delete buttons
     if form.validate_on_submit():
         if form.submit.data:
+            # Check to see if the AssetMix is a system supplied AssetMix
+            # If so, do not allow it to be saved
+            am = AssetMix.query.filter_by(id=int(asset_mix_id)).first()
+            suid = User.query.filter_by(username='montecarloretirement').first().get_id()
+            if am.user_id == int(suid):
+                flash('You may not change that AssetMix. You can only modify Asset Mixes that you have created.',
+                      'danger')
+                return redirect(url_for('asset_mixes.list_asset_mixes'))
+
             # Save was clicked, make sure the Asset Classes have been selected and the percentages add up to zero
             if save_ui_state(request, form=form, asset_mix_id=asset_mix_id, check_pcts=True) == 'Not100':
                 # Rebuild the form so the user can continue editing it
@@ -153,14 +163,18 @@ def update_asset_mix(asset_mix_id):
             flash('Your asset mix data have been updated!', 'success')
 
         elif form.delete.data:
-            # Check to see if the AssetMix is a system supplied AssetMix or if it's being used in a scenario
+            # Check to see if the AssetMix is a system supplied AssetMix
             # If so, do not allow it to be deleted
-            scenarios = Scenario.query.filter_by(asset_mix_id=int(asset_mix_id))
-            if asset_mix_id <=20:
-                flash('You may not delete that AssetMix. You can only delete Asset Mixes that you have created.')
-                return redirect(url_for('main.home'))
-            if scenarios != None:
-                flash('You must remove the AssetMix from all scenarios before it can be deleted')
+            am = AssetMix.query.filter_by(id=int(asset_mix_id)).first()
+            suid = User.query.filter_by(username='montecarloretirement').first().get_id()
+            if am.user_id == int(suid):
+                flash('You may not delete that AssetMix. You can only delete Asset Mixes that you have created.', 'danger')
+                return redirect(url_for('asset_mixes.list_asset_mixes'))
+
+            # Check to see if the AssetMix is being used in a scenario
+            # If so, do not allow it to be deleted
+            if Scenario.query.filter_by(asset_mix_id=asset_mix_id).count() > 0:
+                flash('You must remove the AssetMix from all scenarios before it can be deleted', 'danger')
                 return redirect(url_for('main.home'))
             # Delete the old AssetMixAssetClasses and the AssetMix
             AssetMixAssetClass.query.filter_by(asset_mix_id=int(asset_mix_id)).delete()
@@ -181,7 +195,6 @@ def update_asset_mix(asset_mix_id):
 # Given a set of AssetClassAssetMixes, dynamically populate the form
 def BuildACAM(asset_mix_asset_classes, form):
     form.investments = []
-    foo = 0
     for row in asset_mix_asset_classes:
         bletch = SubmitField(label='x')
         remove = bletch.bind(form=form, name=str(row.id))
@@ -195,7 +208,6 @@ def BuildACAM(asset_mix_asset_classes, form):
         pct.data = row.percentage
 
         form.investments.append([sf, pct, remove])
-        foo += 1
     return
 
 @asset_mixes.route("/asset_mixes/list", methods=['GET', 'POST'])
