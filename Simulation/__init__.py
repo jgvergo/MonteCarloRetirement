@@ -74,6 +74,16 @@ def initDatabase():
         db.session.add(sd)
     db.session.commit()
 
+    # Create a "system" user if it has not been done yet. This user "owns" (is associated with)
+    # all the system generated AssetMixes
+    if User.query.count() == 0:
+        user = User(username='montecarloretirement', email='montecarloretirement@gmail.com', password=bcrypt.generate_password_hash('NOTUSED').decode('utf-8'))
+        db.session.add(user)
+        db.session.commit()
+    else:
+        user = User.query.filter_by(name='montecarloretirement').first()
+    user_id = user.get_id()
+
     if AssetClass.query.count() == 0:
         # Save the AssetClass data in the database. The inflation data will be used in the simulation engine
         for column in sd.ac_df:
@@ -95,6 +105,7 @@ def initDatabase():
                 if isinstance(item, str):
                     am.title = item
                     am.description = ''
+                    am.user_id = user_id
                     db.session.add(am)
                     db.session.commit()
                 elif isinstance(item, float):
@@ -108,10 +119,16 @@ def initDatabase():
                         amac.percentage = item
                         db.session.add(amac)
                         db.session.commit()
+
     db.session.commit()
 
+    # This is a convenience function that should be removed from the production system
+    addUserAndScenario()
+
+
+# This function is currently unused
 def addUserAndScenario():
-    if User.query.count() == 0:
+    if User.query.filter_by(username='jgvergo').count() == 0:
         # Create user
         hashed_password = bcrypt.generate_password_hash('foobar2020').decode('utf-8')
         user = User(username='jgvergo', email='jgvergo@gmail.com', password=hashed_password)
@@ -120,9 +137,9 @@ def addUserAndScenario():
 
     if Scenario.query.count() == 0:
         # Create a single, "sample scenario"
-        user = User.query.first()
+        user = User.query.filter_by(username='jgvergo').first()
         scenario = Scenario()
-        scenario.user_id = user.id
+        scenario.user_id = user.get_id()
         scenario.title = 'Sample scenario'
 
         scenario.birthdate = date(month=10, day=18, year=1957)
@@ -144,7 +161,7 @@ def addUserAndScenario():
         scenario.s_retirement_age = 59
 
         scenario.ret_income = 0
-        scenario.s_ret_income = 0
+        scenario.s_ret_income = 5000
 
         scenario.ret_job_ret_age = 68
         scenario.s_ret_job_ret_age = 65
@@ -152,12 +169,12 @@ def addUserAndScenario():
         scenario.lifespan_age = 95
         scenario.s_lifespan_age = 95
 
-        scenario.windfall_amount = 1000000
+        scenario.windfall_amount = 0
         scenario.windfall_age = 70
 
         scenario.has_spouse = True
-        scenario.nestegg = 1000000
-        scenario.ret_spend = 150000
+        scenario.nestegg = 2700000
+        scenario.ret_spend = 112500
 
         # Calculate ages from birthdates and save the,
         scenario.current_age = calculate_age(date.today(), scenario.birthdate)
@@ -166,3 +183,4 @@ def addUserAndScenario():
         am = AssetMix.query.filter_by(title='Stocks/Bonds 60/40').first()
         scenario.asset_mix_id = am.id
         db.session.add(scenario)
+        db.session.commit()
