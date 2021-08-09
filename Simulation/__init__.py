@@ -77,11 +77,13 @@ def initDatabase():
     # Create a "system" user if it has not been done yet. This user "owns" (is associated with)
     # all the system generated AssetMixes
     if User.query.count() == 0:
-        user = User(username='montecarloretirement', email='montecarloretirement@gmail.com', password=bcrypt.generate_password_hash('NOTUSED').decode('utf-8'))
+        user = User(username='montecarloretirement',
+                    email='montecarloretirement@gmail.com',
+                    password=bcrypt.generate_password_hash('NOTUSED').decode('utf-8'))
         db.session.add(user)
         db.session.commit()
     else:
-        user = User.query.filter_by(name='montecarloretirement').first()
+        user = User.query.filter_by(username='montecarloretirement').first()
     user_id = user.get_id()
 
     if AssetClass.query.count() == 0:
@@ -178,7 +180,7 @@ def addUserAndScenario():
 
         # Calculate ages from birthdates and save the,
         scenario.current_age = calculate_age(date.today(), scenario.birthdate)
-        if (scenario.has_spouse):
+        if scenario.has_spouse:
             scenario.s_current_age = calculate_age(date.today(), scenario.s_birthdate)
         am = AssetMix.query.filter_by(title='Stocks/Bonds 60/40').first()
         scenario.asset_mix_id = am.id
