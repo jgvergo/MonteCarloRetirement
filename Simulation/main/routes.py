@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-from flask_login import current_user, login_manager
+from flask_login import current_user
 from Simulation.models import Scenario
 
 
