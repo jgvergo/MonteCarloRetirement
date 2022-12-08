@@ -1,3 +1,4 @@
+import pandas as pd
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint, Response
 from flask_login import current_user, login_required
 from Simulation import db
@@ -196,8 +197,9 @@ def display_all_result(job_id):
         flash('Job expired')
         return redirect(url_for('main.home'))
 
-    scenario, df = job.result
-
+    scenario = job.result
+    df = pd.read_csv('RunAll.csv')
+    # os.system('rm -f RunAll.csv')
     form = DisplaySimResultForm()
     if form.validate_on_submit():
         return redirect(url_for('scenarios.scenario', scenario_id=scenario.id))
@@ -208,6 +210,10 @@ def display_all_result(job_id):
     form = DisplayAllSimResultForm()
 
     df['50th % Final Nestegg'] = df['50th % Final Nestegg'].apply(currencyK)
+
+    names = df.columns.tolist()
+    names[0] = '#'
+    df.columns = names
 
     return render_template('display_all_sim_result.html',
                            table=df.to_html(table_id='DisplayAllTable', classes='table table-bordered text-left table-striped display', index=False),

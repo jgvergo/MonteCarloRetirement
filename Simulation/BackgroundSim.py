@@ -36,9 +36,10 @@ def _run_all_sim_background(rsp_list):
         p0_output, fd_output = _run_simulation(rsp)
         year = p0_output.shape[0] - 1
         fd_output[year].sort()
+        print(i, rsp)
         df.loc[i] = [rsp.investment_title, rsp.investment_type, p0_output[year], fd_output[year][int(rsp_list[0].sd.num_exp / 2)]]
-
-    return rsp_list[0].scenario, df
+    df.to_csv('RunAll.csv')
+    return rsp_list[0].scenario
 
 
 # Returns a random sequence of numbers of length num that are randomly drawn from the specified normal distribution

@@ -16,7 +16,30 @@
 <script type="text/javascript">
 $(document).ready(function() {
   $('#DisplayAllTable').DataTable( {
-  "pagingType": "simple_numbers"
+  "pagingType": "simple_numbers",
+  'columnDefs': [
+    {
+        "targets": 0, // your case first column
+        "className": "text-center",
+        "width": "4%"
+   },
+   {
+        "targets": 1,
+        "className": "text-left",
+   },
+   {
+        "targets": 2,
+        "className": "text-left",
+   },
+   {
+        "targets": 3,
+        "className": "text-left",
+   },
+   {
+        "targets": 4,
+        "className": "text-left",
+   }
+ ]
   } );
 });
 </script>
