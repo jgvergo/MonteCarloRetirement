@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint, Response
 from flask_login import current_user, login_required
@@ -156,11 +157,42 @@ def display_result(job_id):
     except:
         mcr_log('Job expired', 'critical')
         return redirect(url_for('main.home'))
-
+    print('Redis job status: %s' % job.get_status())
     if sd.debug:
-        scenario, p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = job.result
+        scenario = job.result
+        p0_output = np.fromfile('p0_output.bin')
+        fd_output = np.fromfile('fd_output.bin')
+        rs_output = np.fromfile('rs_output.bin')
+        ss_output = np.fromfile('ss_output.bin')
+        sss_output = np.fromfile('sss_output.bin')
+        inv_output = np.fromfile('inv_output.bin')
+        inf_output = np.fromfile('inf_output.bin')
+        sd_output = np.fromfile('sd_output.bin')
+        cola_output = np.fromfile('cola_output.bin')
+
+        n_yrs = len(p0_output)
+        fd_output = fd_output.reshape(n_yrs, sd.num_exp)
+        rs_output = rs_output.reshape(n_yrs, sd.num_exp)
+        ss_output = ss_output.reshape(n_yrs, sd.num_exp)
+        sss_output = sss_output.reshape(n_yrs, sd.num_exp)
+        inv_output = inv_output.reshape(n_yrs, sd.num_exp)
+        inf_output = inf_output.reshape(n_yrs, sd.num_exp)
+        sd_output = sd_output.reshape(n_yrs, sd.num_exp)
+        cola_output = cola_output.reshape(n_yrs, sd.num_exp)
     else:
-        scenario, p0_output, fd_output, rs_output, ss_output, sss_output, = job.result
+        scenario = job.result
+        p0_output = np.fromfile('p0_output.bin')
+        fd_output = np.fromfile('fd_output.bin')
+        rs_output = np.fromfile('rs_output.bin')
+        ss_output = np.fromfile('ss_output.bin')
+        sss_output = np.fromfile('sss_output.bin')
+
+        n_yrs = len(p0_output)
+        fd_output = fd_output.reshape(n_yrs, sd.num_exp)
+        rs_output = rs_output.reshape(n_yrs, sd.num_exp)
+        ss_output = ss_output.reshape(n_yrs, sd.num_exp)
+        sss_output = sss_output.reshape(n_yrs, sd.num_exp)
+
         inv_output = None
         inf_output = None
         sd_output = None

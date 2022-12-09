@@ -12,13 +12,26 @@ def _run_sim_background(rsp_list):
     if rsp.sd.debug:
         p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output = \
             _run_simulation(rsp)
+        p0_output.tofile('p0_output.bin')
+        fd_output.tofile('fd_output.bin')
+        rs_output.tofile('rs_output.bin')
+        ss_output.tofile('ss_output.bin')
+        sss_output.tofile('sss_output.bin')
+        inv_output.tofile('inv_output.bin')
+        inf_output.tofile('inf_output.bin')
+        sd_output.tofile('sd_output.bin')
+        cola_output.tofile('cola_output.bin')
 
-        return rsp.scenario, p0_output, fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output
+        return rsp.scenario
 
     else:
         p0_output, fd_output, rs_output, ss_output, sss_output, = _run_simulation(rsp)
-
-        return rsp.scenario, p0_output, fd_output, rs_output, ss_output, sss_output
+        p0_output.tofile('p0_output.bin')
+        fd_output.tofile('fd_output.bin')
+        rs_output.tofile('rs_output.bin')
+        ss_output.tofile('ss_output.bin')
+        sss_output.tofile('sss_output.bin')
+        return rsp.scenario
 
 
 # This runs in an rq worker background process
@@ -36,7 +49,6 @@ def _run_all_sim_background(rsp_list):
         p0_output, fd_output = _run_simulation(rsp)
         year = p0_output.shape[0] - 1
         fd_output[year].sort()
-        print(i, rsp)
         df.loc[i] = [rsp.investment_title, rsp.investment_type, p0_output[year], fd_output[year][int(rsp_list[0].sd.num_exp / 2)]]
     df.to_csv('RunAll.csv')
     return rsp_list[0].scenario
