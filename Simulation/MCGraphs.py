@@ -10,15 +10,21 @@ mpl.use('Agg')
 plt.style.use('ggplot')
 
 
-def plot_graphs(fd_output, rs_output, ss_output, sss_output, inv_output, inf_output, sd_output, cola_output, p0_output, has_spouse):
+def plot_graphs(fd_output, rs_output, ss_output, sss_output,
+                inv_output, inf_output, sd_output, cola_output, p0_output, has_spouse):
 
     sd = SimData.query.first()
-    for year in range(fd_output.shape[0]):
+    # The number of years in the simulation
+    years = fd_output.shape[0]
+    for year in range(years):
         fd_output[year].sort()
         rs_output[year].sort()
         ss_output[year].sort()
         sss_output[year].sort()
-        if sd.debug:
+
+    if sd.debug:
+        # These arrays have one less year than the primary output arrays
+        for year in range(years-1):
             inv_output[year].sort()
             inf_output[year].sort()
             sd_output[year].sort()
@@ -26,45 +32,45 @@ def plot_graphs(fd_output, rs_output, ss_output, sss_output, inv_output, inf_out
     plot_url = []
     plot_url.append(plot_final_value_histogram(fd_output))
     plot_url.append(plot_p0(p0_output))
-    plot_url.append(plot_confidence_bands(year, fd_output,
+    plot_url.append(plot_confidence_bands(years-1, fd_output,
                           'Year',
                           'Portfolio value($1,000)',
                           'Outcome percentiles by year',
                           '$'))
-    plot_url.append(plot_confidence_bands(year, rs_output,
+    plot_url.append(plot_confidence_bands(years-1, rs_output,
                           'Year',
                           'Retirement spend',
                           'Retirement spend percentiles by year',
                           '$'))
-    plot_url.append(plot_confidence_bands(year, ss_output,
+    plot_url.append(plot_confidence_bands(years-1, ss_output,
                           'Year',
                           'Primary user social security',
                           'Social security percentiles by year (primary user)',
                           '$'))
     if has_spouse:
-        plot_url.append(plot_confidence_bands(year, sss_output,
+        plot_url.append(plot_confidence_bands(years-1, sss_output,
                           'Year',
                           'Spouse social security',
                           'Social security percentiles by year (spouse)',
                           '$'))
 
     if sd.debug:
-        plot_url.append(plot_confidence_bands(year, inv_output*100,
+        plot_url.append(plot_confidence_bands(years-2, inv_output*100,
                           'Year',
                           'Investment returns(%)',
                           'Investment returns percentiles by year',
                           '%'))
-        plot_url.append(plot_confidence_bands(year, (inf_output-1)*100,
+        plot_url.append(plot_confidence_bands(years-2, inf_output*100,
                               'Year',
                               'Inflation (%)',
                               'Inflation percentiles by year',
                               '%'))
-        plot_url.append(plot_confidence_bands(year, sd_output*100,
+        plot_url.append(plot_confidence_bands(years-2, sd_output*100,
                               'Year',
                               'Spend decay (%)',
                               'Spend decay percentiles by year',
                               '%'))
-        plot_url.append(plot_confidence_bands(year, cola_output*100,
+        plot_url.append(plot_confidence_bands(years-2, cola_output*100,
                               'Year',
                               'Cola (%)',
                               'Cola percentiles by year',
@@ -112,6 +118,7 @@ def plot_p0(p0_output):
     img.seek(0)
     plot_url = base64.b64encode(img.getvalue()).decode()
     return plot_url
+
 
 def plot_final_value_histogram(fd_output):
     img = io.BytesIO()

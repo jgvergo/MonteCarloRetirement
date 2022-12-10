@@ -82,10 +82,10 @@ def _run_simulation(rsp):
     sss_output = np.zeros((n_yrs, sd.num_exp))  # Spouse's social security output
     p0_output = np.zeros(n_yrs)  # Percent over zero output
     if sd.debug:
-        inv_output = np.zeros((n_yrs, sd.num_exp))  # Investments output
-        inf_output = np.zeros((n_yrs, sd.num_exp))  # Inflation output
-        sd_output = np.zeros((n_yrs, sd.num_exp))  # Spend decay output
-        cola_output = np.zeros((n_yrs, sd.num_exp))  # Cost of living output
+        inv_output = np.zeros((n_yrs-1, sd.num_exp))  # Investments output
+        inf_output = np.zeros((n_yrs-1, sd.num_exp))  # Inflation output
+        sd_output = np.zeros((n_yrs-1, sd.num_exp))  # Spend decay output
+        cola_output = np.zeros((n_yrs-1, sd.num_exp))  # Cost of living output
 
     # Calculate the age at which each spouse will take social security
     s1ssa_sim = calculate_age(scenario.ss_date, scenario.birthdate)
@@ -94,9 +94,10 @@ def _run_simulation(rsp):
 
     # Run the experiments
     for experiment in range(sd.num_exp):
-
+        # Update the progress bar in the main process
         job.meta['progress'] = round(100.0 * ((sim_num/num_sims) + (experiment / sd.num_exp)/num_sims), 1)
         job.save_meta()
+
         s1_age = scenario.current_age
         if scenario.has_spouse:
             s2_age = scenario.s_current_age
@@ -122,9 +123,15 @@ def _run_simulation(rsp):
             else:                                       # Fully retired
                 s2_income = 0
 
-        # Set the initial social security amount to 0.
-        s1ss = 0
-        s2ss = 0
+        # Set the initial social security amount.
+        if s1_age >= s1ssa_sim:
+            s1ss = scenario.ss_amount
+        else:
+            s1ss = 0
+        if s2_age >= s2ssa_sim:
+            s2ss = scenario.s_ss_amount
+        else:
+            s2ss = 0
 
         nestegg = scenario.nestegg
 
@@ -151,21 +158,18 @@ def _run_simulation(rsp):
         # Generate a random sequence of social security cost of living increases
         cola = sim(sd.cola[0], sd.cola[1], n_yrs)
 
-        for year in range(n_yrs):
-            fd_output[year][experiment] = nestegg  # Record the results
-            rs_output[year][experiment] = ret_spend
-
-            if sd.debug:
-                # inv_output is calculated and recorded when nestegg is calculated, below
-                inf_output[year][experiment] = s_inflation[year]
-                sd_output[year][experiment] = s_spend_decay[year]
-                cola_output[year][experiment] = cola[year]
+        # Start off with the value provided by the user for the current ("zeroith") year
+        fd_output[0][experiment] = nestegg
+        rs_output[0][experiment] = ret_spend
+        ss_output[0][experiment] = s1ss
+        sss_output[0][experiment] = s2ss
+        for year in range(1, n_yrs):
             s1_age += 1
             if scenario.has_spouse:
                 s2_age += 1
 
             # Calculate the primary user's new salary, nestegg and ret_spend amount
-            if s1_age < scenario.retirement_age:            # Working
+            if s1_age < scenario.retirement_age:            # Still working
                 nestegg += s1_income * scenario.savings_rate
                 s1_income *= s_inflation[year]
 
@@ -187,7 +191,7 @@ def _run_simulation(rsp):
                 ret_spend *= (1.0 - s_spend_decay[year])
                 nestegg -= ret_spend
 
-            # For spouse, just adjust the income
+            # For spouse, just adjust the nestegg and income
             if scenario.has_spouse:
                 if s2_age < scenario.s_retirement_age:  # Working
                     nestegg += s2_income * scenario.s_savings_rate
@@ -234,10 +238,22 @@ def _run_simulation(rsp):
                 # The investment return for this year/experiment is the weighted sum of the asset class returns
                 # times the percentage of the portfolio invested in the asset class
                 if sd.debug:
-                    inv_output[year][experiment] += (inv[0]/100) * (inv[1][year])
+                    inv_output[year-1][experiment] += (inv[0]/100) * (inv[1][year-1])
 
             if (s1_age > scenario.retirement_age) and (nestegg < 0):
                 nestegg = 0.0
+
+            # Save all the calculated values
+            fd_output[year][experiment] = nestegg  # Record the results
+            rs_output[year][experiment] = ret_spend
+            ss_output[year][experiment] = s1ss
+            sss_output[year][experiment] = s2ss
+
+            if sd.debug:
+                # inv_output is calculated and recorded when nestegg is calculated, below
+                inf_output[year-1][experiment] = s_inflation[year]
+                sd_output[year-1][experiment] = s_spend_decay[year]
+                cola_output[year-1][experiment] = cola[year]
 
     for year in range(n_yrs):
         # Calculate the percentage of results over zero

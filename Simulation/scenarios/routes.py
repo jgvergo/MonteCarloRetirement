@@ -175,10 +175,10 @@ def display_result(job_id):
         rs_output = rs_output.reshape(n_yrs, sd.num_exp)
         ss_output = ss_output.reshape(n_yrs, sd.num_exp)
         sss_output = sss_output.reshape(n_yrs, sd.num_exp)
-        inv_output = inv_output.reshape(n_yrs, sd.num_exp)
-        inf_output = inf_output.reshape(n_yrs, sd.num_exp)
-        sd_output = sd_output.reshape(n_yrs, sd.num_exp)
-        cola_output = cola_output.reshape(n_yrs, sd.num_exp)
+        inv_output = inv_output.reshape(n_yrs-1, sd.num_exp)
+        inf_output = inf_output.reshape(n_yrs-1, sd.num_exp)
+        sd_output = sd_output.reshape(n_yrs-1, sd.num_exp)
+        cola_output = cola_output.reshape(n_yrs-1, sd.num_exp)
     else:
         scenario = job.result
         p0_output = np.fromfile('p0_output.bin')
