@@ -19,6 +19,7 @@ def get_invest_data(id, assetmix):
         invest.append([ac.title, 100.0])
     return invest
 
+
 # Given an index, get the AssetClass
 def get_asset_class(asset_class_id: int):
 
