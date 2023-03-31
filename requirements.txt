@@ -10,7 +10,7 @@ DateTime==4.3
 itsdangerous==1.1.0
 matplotlib==3.3.1
 rq==1.11.1
-redis==4.4.0
+redis==4.4.4
 requests==2.25.1
 flask_sqlalchemy==2.4.4
 flask_login==0.5.0
